@@ -58,7 +58,7 @@ export function AppSidebar() {
   )
 }
 
-function SidebarItem({ href, icon: Icon, text, isExpanded }) {
+function SidebarItem({ href, icon: Icon, text, isExpanded }: any) {
   return (
     <Button variant="ghost" className="w-full justify-start" asChild>
       <Link href={href}>
