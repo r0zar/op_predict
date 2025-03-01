@@ -63,7 +63,7 @@ export default function RootLayout({
               </div>
             </header>
             <main className="flex-1">{children}</main>
-            <footer className="w-full border-t bg-background py-6 md:py-12">
+            <footer className="w-full border-t bg-background py-6 md:py-12 justify-items-center">
               <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
