@@ -25,15 +25,16 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/explore">
-                    <Button size="lg" className="gap-1.5 items-center">
-                      Explore Markets
-                      <ChevronRight className="h-4 w-4" />
+                  <Button size="lg" className="gap-1.5 items-center" disabled>
+                    Explore Markets
+                    <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Link href="/how-it-works">
+                    <Button size="lg" variant="outline" className="items-center">
+                      Learn More
                     </Button>
                   </Link>
-                  <Button size="lg" variant="outline" className="items-center">
-                    Learn More
-                  </Button>
                 </div>
               </div>
               <div className="flex justify-items-center justify-center">
@@ -144,12 +145,11 @@ export default function Home() {
               />
             </div>
             <div className="flex justify-center">
-              <Link href="/explore">
-                <Button variant="outline" size="lg" className="gap-1.5 items-center">
-                  View All Markets
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              <Button variant="outline" size="lg" className="gap-1.5 items-center" disabled>
+                View All Markets
+                <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </section>

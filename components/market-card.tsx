@@ -23,7 +23,7 @@ export function MarketCard({ title, participants, poolAmount, yesPercentage, cat
           <Badge variant="outline" className="bg-primary/10 text-primary">
             {category}
           </Badge>
-          <div className="flex justify-items-center text-sm text-muted-foreground">
+          <div className="flex justify-items-center text-sm text-muted-foreground items-center">
             <Clock className="mr-1 h-3 w-3" />
             <span>Ends: {endDate}</span>
           </div>
