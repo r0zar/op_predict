@@ -37,7 +37,7 @@ const categories = [
   "Health",
 ]
 
-const MarketCard = ({ title, category, metric, metricLabel }) => (
+const MarketCard = ({ title, category, metric, metricLabel }: { title: string; category: string; metric: string; metricLabel: string }) => (
   <Card className="w-[300px] flex-shrink-0">
     <CardHeader>
       <CardTitle className="text-lg">{title}</CardTitle>
@@ -51,7 +51,7 @@ const MarketCard = ({ title, category, metric, metricLabel }) => (
   </Card>
 )
 
-const CategorySection = ({ title, icon: Icon, markets }) => (
+const CategorySection = ({ title, icon: Icon, markets }: { title: string; icon: any; markets: any }) => (
   <section className="mb-8">
     <h2 className="text-2xl font-semibold mb-4 flex justify-items-center">
       <Icon className="mr-2" />
@@ -59,7 +59,7 @@ const CategorySection = ({ title, icon: Icon, markets }) => (
     </h2>
     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
       <div className="flex w-max space-x-4 p-4">
-        {markets.map((market) => (
+        {markets.map((market: any) => (
           <MarketCard
             key={market.id}
             title={market.title}
