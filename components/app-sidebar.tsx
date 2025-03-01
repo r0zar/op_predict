@@ -15,6 +15,7 @@ import {
   Wallet,
   Settings,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function AppSidebar() {
   const [isExpanded, setIsExpanded] = useState(true)
@@ -24,7 +25,7 @@ export function AppSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute -right-3 top-4 z-10"
+        className={cn("absolute -right-5 top-2 z-10 items-center bg-transparent border-primary/10 hover:border-primary/50 hover:bg-primary/20 transition-all duration-300", isExpanded && "bg-primary/5 border-primary/5", !isExpanded && "text-transparent")}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {isExpanded ? <ChevronLeft /> : <ChevronRight />}
