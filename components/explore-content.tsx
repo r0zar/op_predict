@@ -301,13 +301,3 @@ function NavigationSidebar() {
     </Card>
   )
 }
-
-const handleFilterChange = (event: React.ChangeEvent<HTMLSelectElement>, filterType: string) => {
-  // Implementation of handleFilterChange function
-}
-
-const filteredData: YourSpecificDataType[] = data.filter((item) => {
-  // Implementation of filteredData function
-  return true; // Placeholder return, actual implementation needed
-})
-
