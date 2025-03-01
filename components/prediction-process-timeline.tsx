@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, useInView, useScroll, useSpring, useTransform } from "framer-motion"
+import { cn } from "@/lib/utils"
 
 const timelineEvents = [
   {
@@ -79,16 +80,6 @@ export function PredictionProcessTimeline() {
     }
   )
 
-  // Create a shared pulsing animation value for boxes
-  const pulseAnimation = useTransform(
-    smoothProgress,
-    (value) => {
-      // Use a different frequency to make it visually distinct but related
-      const pulseValue = Math.sin(value * 8 + performance.now() / 1000) * 0.5 + 0.5;
-      return `rgba(255, 165, 0, ${pulseValue * 0.7})`;
-    }
-  )
-
   // Set visibility when timeline comes into view
   useEffect(() => {
     // Implementation of useEffect
@@ -145,7 +136,6 @@ export function PredictionProcessTimeline() {
               index={index}
               isExpanded={expandedEvent === index}
               onToggle={() => setExpandedEvent(expandedEvent === index ? null : index)}
-              pulseColor={pulseAnimation}
             />
           ))}
         </div>
@@ -159,13 +149,11 @@ function TimelineEvent({
   index,
   isExpanded,
   onToggle,
-  pulseColor,
 }: {
   event: (typeof timelineEvents)[0]
   index: number
   isExpanded: boolean
   onToggle: () => void
-  pulseColor: any
 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.5 })
@@ -185,7 +173,7 @@ function TimelineEvent({
         </div>
       </div>
       <motion.div
-        className="w-5/12 cursor-pointer transition-all"
+        className={cn("w-5/12 cursor-pointer")}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onToggle}
@@ -199,14 +187,7 @@ function TimelineEvent({
           }
         }}
       >
-        <motion.div
-          className="p-4 bg-card rounded-lg shadow-md border border-primary/10"
-          style={{
-            boxShadow: isExpanded ? `0 0 8px ${pulseColor}, 0 0 12px ${pulseColor}` : "",
-            borderColor: isExpanded ? pulseColor : "",
-            transition: "border-color 0.3s ease"
-          }}
-        >
+        <div className={cn("p-4 bg-card rounded-lg shadow-md border border-primary/10 hover:border-primary/50 transition-all duration-300", isExpanded && "hover:border-primary/90 border-primary/50")}>
           <span className="font-bold text-primary">Step {event.step}</span>
           <h3 className="text-lg font-semibold mb-1">{event.title}</h3>
           <p className="text-muted-foreground">{event.description}</p>
@@ -221,7 +202,7 @@ function TimelineEvent({
           >
             <p className="mt-2 text-sm text-muted-foreground">{event.details}</p>
           </motion.div>
-        </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   )
