@@ -78,7 +78,7 @@ export function HowItWorksContent() {
         <h2 className="text-3xl font-semibold mb-4">Community Trust & Vault Selection</h2>
         <p className="text-lg text-muted-foreground mb-6">
           Your freedom to choose which vaults to participate in creates a natural ecosystem where integrity and
-          reputation matter. This approach empowers you while protecting the community.
+          reputation matter.
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <FeatureCard
@@ -142,7 +142,7 @@ export function HowItWorksContent() {
       <section className="border-b border-border/50 pb-24">
         <h2 className="text-3xl font-semibold mb-4">Role of Vault Administrators</h2>
         <p className="text-lg text-muted-foreground mb-6">
-          Vault administrators serve as stewards of their prediction communities. Their flexibility in management
+          Vault administrators serve as stewards of their prediction communities. This flexibility
           allows for innovation and specialization in different markets.
         </p>
         <div className="grid md:grid-cols-2 gap-6">
@@ -174,7 +174,7 @@ export function HowItWorksContent() {
 
       <section className="">
         <h2 className="text-3xl font-semibold mb-6">Frequently Asked Questions</h2>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full space-y-4">
           <AccordionItem value="item-1">
             <AccordionTrigger>How does the platform prevent manipulation or foul play?</AccordionTrigger>
             <AccordionContent>
@@ -189,7 +189,6 @@ export function HowItWorksContent() {
                 <li>
                   Blockchain technology ensures all transactions and resolutions are transparent and immutable.
                 </li>
-                <li>The decentralized structure makes large-scale manipulation both difficult and costly.</li>
                 <li>
                   Administrators stake their reputation on fair market resolution, creating powerful incentives for honest behavior.
                 </li>
