@@ -60,7 +60,7 @@ export function AppSidebar() {
 
 function SidebarItem({ href, icon: Icon, text, isExpanded }: any) {
   return (
-    <Button variant="ghost" className="w-full justify-start" asChild>
+    <Button variant="ghost" className="w-full justify-start">
       <Link href={href}>
         <Icon className="mr-2 h-4 w-4" />
         <span className={isExpanded ? "" : "hidden"}>{text}</span>

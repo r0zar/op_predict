@@ -12,9 +12,10 @@ interface MarketCardProps {
   yesPercentage: number
   category: string
   endDate: string
+  disabled?: boolean
 }
 
-export function MarketCard({ title, participants, poolAmount, yesPercentage, category, endDate }: MarketCardProps) {
+export function MarketCard({ title, participants, poolAmount, yesPercentage, category, endDate, disabled }: MarketCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <CardHeader className="pb-2">
@@ -50,8 +51,10 @@ export function MarketCard({ title, participants, poolAmount, yesPercentage, cat
         </div>
       </CardContent>
       <CardFooter className="pt-2">
-        <Button className="w-full" variant="outline" asChild>
-          <Link href={`/market/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`}>View Market</Link>
+        <Button className="w-full" variant="outline" disabled={disabled}>
+          <Link href={`/market/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`}>
+            View Market
+          </Link>
         </Button>
       </CardFooter>
     </Card>

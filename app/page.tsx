@@ -16,13 +16,12 @@ export default function Home() {
           <div className="container justify-self-center px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
+                <div className="space-y-2 mb-4">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    Predict the Future. Win Real Rewards.
+                    Predict the Future. <div className="text-primary">Earn Bitcoin.</div>
                   </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    OP_PREDICT is a decentralized predictions market where you can bet on real-world events and earn
-                    rewards.
+                  <p className="max-w-[600px] text-muted-foreground md:text-lg">
+                    Explore and participate in markets for politics, sports, and more.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -67,7 +66,7 @@ export default function Home() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button className="w-full">Place Prediction</Button>
+                    <Button disabled className="w-full">Place Prediction</Button>
                   </CardFooter>
                 </Card>
               </div>
@@ -96,6 +95,7 @@ export default function Home() {
                 yesPercentage={72}
                 category="Crypto"
                 endDate="June 30, 2025"
+                disabled={true}
               />
               <MarketCard
                 title="Will the US Federal Reserve cut rates in Q2 2025?"
@@ -104,6 +104,7 @@ export default function Home() {
                 yesPercentage={48}
                 category="Finance"
                 endDate="June 15, 2025"
+                disabled={true}
               />
               <MarketCard
                 title="Will Apple release a foldable device in 2025?"
@@ -112,6 +113,7 @@ export default function Home() {
                 yesPercentage={31}
                 category="Technology"
                 endDate="Dec 31, 2025"
+                disabled={true}
               />
               <MarketCard
                 title="Will global average temperature set a new record in 2025?"
@@ -120,6 +122,7 @@ export default function Home() {
                 yesPercentage={83}
                 category="Climate"
                 endDate="Dec 31, 2025"
+                disabled={true}
               />
               <MarketCard
                 title="Will SpaceX complete a successful Starship orbital flight?"
@@ -128,6 +131,7 @@ export default function Home() {
                 yesPercentage={91}
                 category="Space"
                 endDate="Aug 15, 2025"
+                disabled={true}
               />
               <MarketCard
                 title="Will the S&P 500 finish 2025 above 5,500?"
@@ -136,13 +140,16 @@ export default function Home() {
                 yesPercentage={62}
                 category="Finance"
                 endDate="Dec 31, 2025"
+                disabled={true}
               />
             </div>
             <div className="flex justify-center">
-              <Button variant="outline" size="lg">
-                View All Markets
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link href="/explore">
+                <Button variant="outline" size="lg" className="gap-1.5 items-center">
+                  View All Markets
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -156,7 +163,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto max-w-4xl py-12">
+            <div className="mx-auto max-w-6xl py-12">
               <TopMarkets />
             </div>
           </div>

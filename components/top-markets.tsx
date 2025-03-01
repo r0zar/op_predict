@@ -182,7 +182,7 @@ export function TopMarkets() {
               <TableCell>{market.participants.toLocaleString()}</TableCell>
               <TableCell>{market.poolAmount}</TableCell>
               <TableCell>
-                <div className="flex justify-items-center gap-2">
+                <div className="flex justify-items-center gap-2 items-center">
                   <div className="h-2 w-12 overflow-hidden rounded-full bg-muted">
                     <div className="h-full bg-primary" style={{ width: `${market.yesPercentage}%` }}></div>
                   </div>
@@ -197,7 +197,7 @@ export function TopMarkets() {
                 </span>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 items-center" disabled>
                   <Link href={`/market/${market.id}`}>Trade</Link>
                 </Button>
               </TableCell>
