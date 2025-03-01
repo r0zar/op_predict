@@ -4,8 +4,6 @@ import { Inter } from "next/font/google"
 import Link from "next/link"
 import { TrendingUp } from "lucide-react"
 import "./globals.css"
-import { SignInDialog } from "@/components/auth/sign-in-dialog"
-import { SignUpDialog } from "@/components/auth/sign-up-dialog"
 import {
   ClerkProvider,
   SignInButton,
@@ -32,7 +30,7 @@ export default function RootLayout({
       <ClerkProvider>
         <body className={inter.className}>
           <div className="flex min-h-screen flex-col bg-background">
-            <header className="sticky justify-items-center top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <header className="px-4 sticky justify-items-center top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="container flex h-16 items-center justify-between py-4">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-6 w-6 text-primary" />

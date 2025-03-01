@@ -1,14 +1,19 @@
 import Link from "next/link"
 import { ChevronRight, TrendingUp, Users, Zap } from "lucide-react"
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MarketCard } from "@/components/market-card"
 import { TopMarkets } from "@/components/top-markets"
-import { SignInDialog } from "@/components/auth/sign-in-dialog"
-import { SignUpDialog } from "@/components/auth/sign-up-dialog"
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+  const user = await currentUser();
+
+  // Use user data...
+  console.log(userId, user);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <main className="flex-1">
@@ -93,7 +98,10 @@ export default function Home() {
                 title="Will Ethereum 2.0 launch before July 2025?"
                 participants={1245}
                 poolAmount="$78,900"
-                yesPercentage={72}
+                options={[
+                  { name: "Yes", percentage: 72, color: "text-primary" },
+                  { name: "No", percentage: 28, color: "text-destructive" }
+                ]}
                 category="Crypto"
                 endDate="June 30, 2025"
                 disabled={true}
@@ -102,7 +110,10 @@ export default function Home() {
                 title="Will the US Federal Reserve cut rates in Q2 2025?"
                 participants={3567}
                 poolAmount="$156,700"
-                yesPercentage={48}
+                options={[
+                  { name: "Yes", percentage: 48, color: "text-primary" },
+                  { name: "No", percentage: 52, color: "text-destructive" }
+                ]}
                 category="Finance"
                 endDate="June 15, 2025"
                 disabled={true}
@@ -111,7 +122,10 @@ export default function Home() {
                 title="Will Apple release a foldable device in 2025?"
                 participants={2189}
                 poolAmount="$94,300"
-                yesPercentage={31}
+                options={[
+                  { name: "Yes", percentage: 31, color: "text-primary" },
+                  { name: "No", percentage: 69, color: "text-destructive" }
+                ]}
                 category="Technology"
                 endDate="Dec 31, 2025"
                 disabled={true}
@@ -120,7 +134,10 @@ export default function Home() {
                 title="Will global average temperature set a new record in 2025?"
                 participants={1876}
                 poolAmount="$67,200"
-                yesPercentage={83}
+                options={[
+                  { name: "Yes", percentage: 83, color: "text-primary" },
+                  { name: "No", percentage: 17, color: "text-destructive" }
+                ]}
                 category="Climate"
                 endDate="Dec 31, 2025"
                 disabled={true}
@@ -129,7 +146,10 @@ export default function Home() {
                 title="Will SpaceX complete a successful Starship orbital flight?"
                 participants={4231}
                 poolAmount="$187,500"
-                yesPercentage={91}
+                options={[
+                  { name: "Yes", percentage: 91, color: "text-primary" },
+                  { name: "No", percentage: 9, color: "text-destructive" }
+                ]}
                 category="Space"
                 endDate="Aug 15, 2025"
                 disabled={true}
@@ -138,7 +158,10 @@ export default function Home() {
                 title="Will the S&P 500 finish 2025 above 5,500?"
                 participants={3012}
                 poolAmount="$142,800"
-                yesPercentage={62}
+                options={[
+                  { name: "Yes", percentage: 62, color: "text-primary" },
+                  { name: "No", percentage: 38, color: "text-destructive" }
+                ]}
                 category="Finance"
                 endDate="Dec 31, 2025"
                 disabled={true}
