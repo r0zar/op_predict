@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion"
-import { TrendingUp } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { motion, useInView, useScroll, useSpring, useTransform } from "framer-motion"
 
 const timelineEvents = [
   {
@@ -48,40 +47,95 @@ const timelineEvents = [
   },
 ]
 
-const PredictionIcon = ({ progress }: { progress: number }) => (
-  <TrendingUp className="w-6 h-6" style={{ transform: `scale(${progress})` }} />
-)
-
 export function PredictionProcessTimeline() {
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Simple scroll tracking
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start end", "end start"],
+    offset: ["start 90%", "end 90%"],
   })
 
-  const scaleX = useSpring(scrollYProgress, {
+  // Add spring physics to make the animation smoother
+  const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001,
   })
+
+  // Create pulsing effect with yellow tones
+  const pulseOpacity = useTransform(
+    smoothProgress,
+    (value) => 0.7 + Math.sin(value * 10) * 0.15
+  )
+
+  // Create color transform for yellow highlight
+  const lineColor = useTransform(
+    smoothProgress,
+    (value) => {
+      const pulseValue = Math.sin(value * 12) * 0.5 + 0.5;
+      return `rgba(255, 165, 0, ${pulseValue * 0.5})`;
+    }
+  )
+
+  // Create a shared pulsing animation value for boxes
+  const pulseAnimation = useTransform(
+    smoothProgress,
+    (value) => {
+      // Use a different frequency to make it visually distinct but related
+      const pulseValue = Math.sin(value * 8 + performance.now() / 1000) * 0.5 + 0.5;
+      return `rgba(255, 165, 0, ${pulseValue * 0.7})`;
+    }
+  )
+
+  // Set visibility when timeline comes into view
+  useEffect(() => {
+    // Implementation of useEffect
+  }, [smoothProgress])
 
   return (
     <div ref={containerRef} className="py-10 overflow-hidden">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative">
           {/* Vertical line */}
-          <motion.div
-            className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-primary/20"
-            style={{ scaleY: scaleX }}
-          />
-
-          {/* Prediction icon */}
-          <motion.div
-            className="sticky top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 text-primary"
-            style={{ y: useTransform(scrollYProgress, [0, 1], [0, 100]) }}
+          <motion.div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 bg-primary/20"
+            style={{
+              height: expandedEvent === timelineEvents.length - 1
+                ? "calc(100% - 235px)" // Shorter when last item is expanded
+                : "calc(100% - 140px)",
+              top: "30px",
+              transition: "height 0.3s ease" // Add smooth transition for height changes
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 5 }}
           >
-            <PredictionIcon progress={useTransform(scrollYProgress, [0, 1], [0.5, 1]) as any} />
+            <motion.div
+              className="w-full bg-primary animate-pulse"
+              style={{
+                height: "100%",
+                scaleY: smoothProgress,
+                opacity: smoothProgress,
+                transformOrigin: "top",
+                boxShadow: `0 0 8px ${lineColor}`
+              }}
+              initial={{ opacity: 0, scaleY: 0 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+            >
+              {/* Pulsing glow overlay */}
+              <motion.div
+                className="absolute top-0 left-0 w-full"
+                style={{
+                  height: "100%",
+                  scaleY: smoothProgress,
+                  opacity: pulseOpacity,
+                  background: "linear-gradient(to bottom, rgba(255,165,0,0.2), rgba(255,140,0,0.1))",
+                  transformOrigin: "top",
+                  borderRadius: "4px"
+                }}
+              />
+            </motion.div>
           </motion.div>
 
           {timelineEvents.map((event, index) => (
@@ -91,6 +145,7 @@ export function PredictionProcessTimeline() {
               index={index}
               isExpanded={expandedEvent === index}
               onToggle={() => setExpandedEvent(expandedEvent === index ? null : index)}
+              pulseColor={pulseAnimation}
             />
           ))}
         </div>
@@ -104,11 +159,13 @@ function TimelineEvent({
   index,
   isExpanded,
   onToggle,
+  pulseColor,
 }: {
   event: (typeof timelineEvents)[0]
   index: number
   isExpanded: boolean
   onToggle: () => void
+  pulseColor: any
 }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, amount: 0.5 })
@@ -121,31 +178,50 @@ function TimelineEvent({
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
       transition={{ duration: 0.8, delay: index * 0.1 }}
     >
-      <div className="w-5/12" />
+      <div className="w-4/12 md:w-5/12" />
       <div className="z-20">
-        <div className="flex justify-items-center justify-center w-8 h-8 bg-primary rounded-full">
-          <div className="w-3 h-3 bg-background rounded-full" />
+        <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
+          <div className="w-3 h-3 bg-background rounded-full flex-shrink-0" />
         </div>
       </div>
       <motion.div
-        className="w-5/12 cursor-pointer"
+        className="w-5/12 cursor-pointer transition-all"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onToggle}
+        role="button"
+        aria-expanded={isExpanded}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            onToggle();
+            e.preventDefault();
+          }
+        }}
       >
-        <div className="p-4 bg-card rounded-lg shadow-md border border-primary/10">
+        <motion.div
+          className="p-4 bg-card rounded-lg shadow-md border border-primary/10"
+          style={{
+            boxShadow: isExpanded ? `0 0 8px ${pulseColor}, 0 0 12px ${pulseColor}` : "",
+            borderColor: isExpanded ? pulseColor : "",
+            transition: "border-color 0.3s ease"
+          }}
+        >
           <span className="font-bold text-primary">Step {event.step}</span>
           <h3 className="text-lg font-semibold mb-1">{event.title}</h3>
           <p className="text-muted-foreground">{event.description}</p>
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: isExpanded ? "auto" : 0, opacity: isExpanded ? 1 : 0 }}
+            animate={{
+              height: isExpanded ? "auto" : 0,
+              opacity: isExpanded ? 1 : 0
+            }}
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
             <p className="mt-2 text-sm text-muted-foreground">{event.details}</p>
           </motion.div>
-        </div>
+        </motion.div>
       </motion.div>
     </motion.div>
   )
