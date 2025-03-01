@@ -83,7 +83,7 @@ export default function Home() {
                   Active Markets
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">Trending Prediction Markets</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed justify-self-center lg:text-base/relaxed xl:text-xl/relaxed">
                   Browse and participate in the most active prediction markets on the platform.
                 </p>
               </div>
