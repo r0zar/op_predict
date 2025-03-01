@@ -198,7 +198,7 @@ export function HowItWorksContent() {
           <AccordionItem value="item-2">
             <AccordionTrigger>What happens if there&apos;s a dispute about the market outcome?</AccordionTrigger>
             <AccordionContent>
-              <p>Dispute resolution is tailored to each vault's unique needs:</p>
+              <p>Dispute resolution is tailored to each vault&apos;s unique needs:</p>
               <ul className="list-disc list-inside mt-2 space-y-2">
                 <li>Administrators design arbitration processes that best serve their specific communities.</li>
                 <li>
@@ -212,7 +212,7 @@ export function HowItWorksContent() {
                   <li>Integration with trusted external data sources</li>
                 </ul>
                 <li>
-                  Before participating, take time to understand a vault's dispute resolution approach to ensure it aligns with your expectations.
+                  Before participating, take time to understand a vault&apos;s dispute resolution approach to ensure it aligns with your expectations.
                 </li>
               </ul>
             </AccordionContent>
@@ -233,7 +233,7 @@ export function HowItWorksContent() {
                   </ul>
                 </li>
                 <li>
-                  An administrator's reputation—their most valuable asset—depends on fair and accurate resolutions.
+                  An administrator&apos;s reputation—their most valuable asset—depends on fair and accurate resolutions.
                 </li>
                 <li>
                   You can choose to participate with administrators who have demonstrated consistent fairness.
