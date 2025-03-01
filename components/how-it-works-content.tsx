@@ -70,7 +70,7 @@ export function HowItWorksContent() {
         <h2 className="text-3xl font-semibold mb-4">The Prediction Process</h2>
         <p className="text-lg text-muted-foreground mb-6">
           Understanding the step-by-step process of how predictions work on OP_PREDICT is crucial for participants.
-          Here's a detailed look at each stage of the prediction journey:
+          Here&apos;s a detailed look at each stage of the prediction journey:
         </p>
         <PredictionProcessTimeline />
       </section>
@@ -190,7 +190,7 @@ export function HowItWorksContent() {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="item-2">
-            <AccordionTrigger>What happens if there's a dispute about the market outcome?</AccordionTrigger>
+            <AccordionTrigger>What happens if there&apos;s a dispute about the market outcome?</AccordionTrigger>
             <AccordionContent>
               <p>Dispute resolution in OP_PREDICT is flexible and tailored to each vault:</p>
               <ul className="list-disc list-inside mt-2 space-y-2">
@@ -210,7 +210,7 @@ export function HowItWorksContent() {
                   </ul>
                 </li>
                 <li>
-                  Users should review and understand a vault's dispute resolution process before participating in its
+                  Users should review and understand a vault&apos;s dispute resolution process before participating in its
                   markets.
                 </li>
               </ul>
