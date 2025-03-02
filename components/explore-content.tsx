@@ -30,13 +30,13 @@ export async function ExploreContent() {
       <h1 className="text-2xl font-bold mb-6">Explore Markets</h1>
 
       {/* Top Vaults Section */}
-      <VaultsSection />
+      {/* <VaultsSection /> */}
 
       {/* Featured Creators and Platform Stats in New Layout */}
       <FeaturedAndStatsSection />
 
       {/* Categories */}
-      <CategoriesSection />
+      {/* <CategoriesSection /> */}
 
       {/* Market sections */}
       <MarketsSection

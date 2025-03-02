@@ -24,7 +24,7 @@ export async function FeaturedAndStatsSection() {
     return (
         <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Featured Creators - Spans 2 columns on larger screens */}
-            <div className="lg:col-span-2">
+            {/* <div className="lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <CircleUser className="h-5 w-5" />
@@ -62,7 +62,7 @@ export async function FeaturedAndStatsSection() {
                         </Card>
                     ))}
                 </div>
-            </div>
+            </div> */}
 
             {/* Platform Stats - Takes 1 column on larger screens */}
             <div className="h-full">

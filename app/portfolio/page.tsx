@@ -178,8 +178,6 @@ export default async function PortfolioPage() {
             <Tabs defaultValue="prediction-receipts" className="w-full">
                 <TabsList className="mb-4">
                     <TabsTrigger value="prediction-receipts">Prediction Receipts</TabsTrigger>
-                    <TabsTrigger value="active-markets">Active Markets</TabsTrigger>
-                    <TabsTrigger value="transactions">Transactions</TabsTrigger>
                     {isUserAdmin && (
                         <TabsTrigger value="admin-management">Admin</TabsTrigger>
                     )}
@@ -215,101 +213,6 @@ export default async function PortfolioPage() {
                                     </Link>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="active-markets">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Active Predictions</CardTitle>
-                            <CardDescription>Your current positions in prediction markets</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Market</TableHead>
-                                        <TableHead>Prediction</TableHead>
-                                        <TableHead className="text-right">Invested</TableHead>
-                                        <TableHead className="text-right">Current Value</TableHead>
-                                        <TableHead className="text-right">Profit/Loss</TableHead>
-                                        <TableHead>End Date</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {mockPortfolioData.activeMarkets.map((market) => {
-                                        const profitLoss = market.currentValue - market.invested;
-                                        const profitLossPercentage = (profitLoss / market.invested) * 100;
-
-                                        return (
-                                            <TableRow key={market.id}>
-                                                <TableCell className="font-medium">{market.title}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={market.prediction === "Yes" ? "default" : "outline"}>
-                                                        {market.prediction}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">${market.invested.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right">${market.currentValue.toFixed(2)}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <span className={profitLoss >= 0 ? "text-green-600" : "text-red-600"}>
-                                                        {profitLoss >= 0 ? "+" : ""}${profitLoss.toFixed(2)} ({profitLossPercentage.toFixed(2)}%)
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>{new Date(market.endDate).toLocaleDateString()}</TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="transactions">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Transaction History</CardTitle>
-                            <CardDescription>Recent activity in your account</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Details</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
-                                        <TableHead>Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {mockPortfolioData.recentTransactions.map((transaction) => (
-                                        <TableRow key={transaction.id}>
-                                            <TableCell className="capitalize">{transaction.type}</TableCell>
-                                            <TableCell>
-                                                {transaction.type === "prediction" ? transaction.market : transaction.type}
-                                            </TableCell>
-                                            <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                                            <TableCell className={`text-right ${transaction.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
-                                                {transaction.amount >= 0 ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant={
-                                                        transaction.status === "completed" ? "outline" :
-                                                            transaction.status === "active" ? "default" :
-                                                                "secondary"
-                                                    }
-                                                >
-                                                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -351,7 +254,6 @@ export default async function PortfolioPage() {
                         </Card>
                     </TabsContent>
                 )}
-
             </Tabs>
         </div>
     );
