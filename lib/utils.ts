@@ -6,7 +6,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Admin user IDs
-const ADMIN_USER_IDS = ['user_2tjVcbojjJk2bkQd856eNE1Ax0S'];
+export const ADMIN_USER_IDS = [
+  'user_2tjVcbojjJk2bkQd856eNE1Ax0S',
+  'user_2tkBcBEVGanm3LHkg6XK7j91DRj'
+];
 
 // Check if a user is an admin
 export function isAdmin(userId?: string | null): boolean {
