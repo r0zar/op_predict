@@ -81,16 +81,6 @@ export default async function MarketPage({ params }: { params: { id: string } })
                 </Link>
 
                 <div className="flex items-center space-x-2">
-                    {/* Only show the resolve button to admins and if the market is not already resolved/cancelled */}
-                    {isUserAdmin && !isMarketClosed && (
-                        <ResolveMarketButton
-                            marketId={market.id}
-                            marketName={market.name}
-                            outcomes={market.outcomes}
-                            isAdmin={isUserAdmin}
-                        />
-                    )}
-
                     <Badge
                         variant={
                             market.status === 'active'
@@ -362,6 +352,22 @@ export default async function MarketPage({ params }: { params: { id: string } })
                             </p>
                         </CardFooter>
                     </Card>
+
+                    {/* Add ResolveMarketButton here for admin users */}
+                    {isUserAdmin && !isMarketClosed && (
+                        <div className="mt-4">
+                            <ResolveMarketButton
+                                marketId={market.id}
+                                marketName={market.name}
+                                outcomes={market.outcomes}
+                                isAdmin={isUserAdmin}
+                                className="w-full h-12 text-base font-medium"
+                            />
+                            <p className="text-xs text-muted-foreground mt-2 text-center">
+                                Admin only: Resolve this market when the outcome is known
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 

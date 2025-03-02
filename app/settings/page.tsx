@@ -167,7 +167,7 @@ export default async function SettingsPage() {
                                         <TableCell>{email.emailAddress}</TableCell>
                                         <TableCell>
                                             {email.verification?.status === "verified" ? (
-                                                <Badge variant="success">Verified</Badge>
+                                                <Badge>Verified</Badge>
                                             ) : (
                                                 <Badge variant="outline">Unverified</Badge>
                                             )}
