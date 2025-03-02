@@ -112,8 +112,8 @@ export const marketStore = {
             // Store market by ID
             await kv.set(`${MARKETS_KEY}:${id}`, JSON.stringify(market));
 
-            // Add to markets set
-            await kv.sadd(MARKETS_KEY, id);
+            // Add to market_ids set (corrected from markets set)
+            await kv.sadd(MARKET_IDS_KEY, id);
 
             // Add to user's markets set
             if (data.createdBy) {

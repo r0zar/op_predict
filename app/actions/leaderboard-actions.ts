@@ -131,7 +131,7 @@ export async function getCurrentUserStats(): Promise<{
                 success: true,
                 stats: {
                     userId: user.id,
-                    username: user.username || `${user.firstName} ${user.lastName}`,
+                    username: user.username || `User-${user.id.substring(0, 5)}...${user.id.substring(user.id.length - 5)}`,
                     totalPredictions: 0,
                     correctPredictions: 0,
                     accuracy: 0,

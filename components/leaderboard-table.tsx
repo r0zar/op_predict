@@ -110,17 +110,28 @@ export function LeaderboardTable() {
 
   // Helper to get username display
   const getUserDisplay = (user: LeaderboardEntry) => {
-    if (!user.username) return formatUserIdentifier(user.userId);
+    // If no username, use the formatted userId
+    if (!user.username) {
+      return <span className="font-mono text-sm">{formatUserIdentifier(user.userId)}</span>;
+    }
 
+    // If it's a .btc name, show it with emphasis
     if (user.username.endsWith('.btc')) {
       return <span className="font-semibold text-primary">{user.username}</span>;
     }
 
+    // If it's a Stacks address, format it nicely
     if (isStacksAddress(user.username)) {
       return <span className="font-mono text-sm">{formatUserIdentifier(user.username)}</span>;
     }
 
-    return user.username;
+    // If it starts with "User-", it's an anonymized id
+    if (user.username.startsWith('User-')) {
+      return <span className="font-mono text-sm">{user.username}</span>;
+    }
+
+    // For any other username (custom usernames, not real names)
+    return <span>{user.username}</span>;
   };
 
   return (
@@ -133,6 +144,9 @@ export function LeaderboardTable() {
         <CardDescription>
           Top predictors ranked by performance
         </CardDescription>
+        <p className="text-xs text-muted-foreground mt-1">
+          For privacy, users without custom usernames are displayed with anonymized IDs.
+        </p>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="overall" className="w-full" onValueChange={handleTabChange}>

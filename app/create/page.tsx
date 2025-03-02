@@ -146,7 +146,7 @@ export default function CreateMarketPage() {
 
                 // Redirect to the markets page instead of a specific market
                 setTimeout(() => {
-                    router.push(`/markets/${result.market?.id}`);
+                    router.push('/markets');
                 }, 1500);
             } else {
                 toast.error("Failed to create market", {

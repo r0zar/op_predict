@@ -14,6 +14,7 @@ import {
   PlusCircle,
   Wallet,
   Settings,
+  BarChart
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -35,6 +36,7 @@ export function AppSidebar() {
           <div className="px-3 py-2">
             <div className="space-y-1">
               <SidebarItem href="/" icon={Home} text="Home" isExpanded={isExpanded} />
+              <SidebarItem href="/markets" icon={BarChart} text="Markets" isExpanded={isExpanded} />
               <SidebarItem href="/explore" icon={TrendingUp} text="Explore" isExpanded={isExpanded} />
               <SidebarItem href="/leaderboard" icon={Users} text="Leaderboard" isExpanded={isExpanded} />
               <SidebarItem href="/how-it-works" icon={HelpCircle} text="How It Works" isExpanded={isExpanded} />
