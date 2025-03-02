@@ -71,6 +71,7 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
                 return {
                     ...o,
                     votes: (o.votes || 0) + 1,
+                    amount: (o.amount || 0) + validatedData.amount,
                 };
             }
             return o;

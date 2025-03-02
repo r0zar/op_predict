@@ -6,13 +6,28 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { MarketCard } from "@/components/market-card"
 import { TopMarkets } from "@/components/top-markets"
+import { getAllMarkets } from "@/app/actions/market-actions"
+import { calculateOutcomePercentages } from "@/lib/utils"
 
 export default async function Home() {
   const { userId } = await auth();
   const user = await currentUser();
 
-  // Use user data...
-  console.log(userId, user);
+  // Fetch real markets from the database
+  const markets = await getAllMarkets();
+
+  // Get the most active market by participants count (or pool amount)
+  const featuredMarket = markets.length > 0
+    ? [...markets].sort((a, b) => (b.participants || 0) - (a.participants || 0))[0]
+    : null;
+
+  // Get trending markets (excluding the featured one)
+  const trendingMarkets = markets.length > 1
+    ? [...markets]
+      .filter(m => m.id !== featuredMarket?.id)
+      .sort((a, b) => (b.participants || 0) - (a.participants || 0))
+      .slice(0, 6)
+    : [];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -30,11 +45,12 @@ export default async function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button size="lg" className="gap-1.5 items-center" disabled>
-                    Explore Markets
-                    <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  <Link href="/markets">
+                    <Button size="lg" className="gap-1.5 items-center">
+                      Explore Markets
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
                   <Link href="/how-it-works">
                     <Button size="lg" variant="outline" className="items-center">
                       Learn More
@@ -43,38 +59,76 @@ export default async function Home() {
                 </div>
               </div>
               <div className="flex justify-items-center justify-center">
-                <Card className="w-full max-w-md border-primary/10 bg-background/60 backdrop-blur">
-                  <CardHeader>
-                    <CardTitle>Featured Market</CardTitle>
-                    <CardDescription>Most active prediction market right now</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold">Will Bitcoin reach $100k by end of 2025?</h3>
-                      <div className="flex justify-items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>2,456 participants</span>
-                        <span className="text-primary font-medium">$124,500 pool</span>
-                      </div>
-                      <div className="mt-4 flex justify-items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium">Yes</div>
-                          <div className="text-2xl font-bold text-primary">64%</div>
+                {featuredMarket ? (
+                  <Card className="w-full max-w-md border-primary/10 bg-background/60 backdrop-blur">
+                    <CardHeader>
+                      <CardTitle>Featured Market</CardTitle>
+                      <CardDescription>Most active prediction market right now</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold">{featuredMarket.name}</h3>
+                        <div className="flex justify-items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{(featuredMarket.participants || 0).toLocaleString()} participants</span>
+                          <span className="text-primary font-medium">${(featuredMarket.poolAmount || 0).toLocaleString()} pool</span>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium">No</div>
-                          <div className="text-2xl font-bold text-destructive">36%</div>
-                        </div>
+                        {featuredMarket.outcomes?.length > 0 && (
+                          <>
+                            <div className="mt-4 flex justify-items-center justify-between">
+                              {calculateOutcomePercentages(featuredMarket.outcomes.map(outcome => ({
+                                id: String(outcome.id),
+                                name: outcome.name,
+                                votes: outcome.votes,
+                                amount: outcome.amount
+                              }))).outcomesWithPercentages.slice(0, 2).map((outcome, index) => (
+                                <div key={outcome.id}>
+                                  <div className="text-sm font-medium">{outcome.name}</div>
+                                  <div className={`text-2xl font-bold ${index === 0 ? "text-primary" : "text-destructive"}`}>
+                                    {outcome.percentage}%
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+                              <div className="h-full bg-primary" style={{
+                                width: `${calculateOutcomePercentages(featuredMarket.outcomes.map(outcome => ({
+                                  id: String(outcome.id),
+                                  name: outcome.name,
+                                  votes: outcome.votes,
+                                  amount: outcome.amount
+                                }))).outcomesWithPercentages[0]?.percentage || 0}%`
+                              }}></div>
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div className="h-full bg-primary" style={{ width: "64%" }}></div>
+                    </CardContent>
+                    <CardFooter>
+                      <Link href={`/markets/${featuredMarket.id}`} className="w-full">
+                        <Button className="w-full">View Market</Button>
+                      </Link>
+                    </CardFooter>
+                  </Card>
+                ) : (
+                  <Card className="w-full max-w-md border-primary/10 bg-background/60 backdrop-blur">
+                    <CardHeader>
+                      <CardTitle>Featured Market</CardTitle>
+                      <CardDescription>Most active prediction market right now</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold">No markets available yet</h3>
+                        <p className="text-muted-foreground">Be the first to create a prediction market!</p>
                       </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button disabled className="w-full">Place Prediction</Button>
-                  </CardFooter>
-                </Card>
+                    </CardContent>
+                    <CardFooter>
+                      <Link href="/create">
+                        <Button className="w-full items-center justify-center">Create Market</Button>
+                      </Link>
+                    </CardFooter>
+                  </Card>
+                )}
               </div>
             </div>
           </div>
@@ -94,85 +148,46 @@ export default async function Home() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              <MarketCard
-                title="Will Ethereum 2.0 launch before July 2025?"
-                participants={1245}
-                poolAmount="$78,900"
-                options={[
-                  { name: "Yes", percentage: 72, color: "text-primary" },
-                  { name: "No", percentage: 28, color: "text-destructive" }
-                ]}
-                category="Crypto"
-                endDate="June 30, 2025"
-                disabled={true}
-              />
-              <MarketCard
-                title="Will the US Federal Reserve cut rates in Q2 2025?"
-                participants={3567}
-                poolAmount="$156,700"
-                options={[
-                  { name: "Yes", percentage: 48, color: "text-primary" },
-                  { name: "No", percentage: 52, color: "text-destructive" }
-                ]}
-                category="Finance"
-                endDate="June 15, 2025"
-                disabled={true}
-              />
-              <MarketCard
-                title="Will Apple release a foldable device in 2025?"
-                participants={2189}
-                poolAmount="$94,300"
-                options={[
-                  { name: "Yes", percentage: 31, color: "text-primary" },
-                  { name: "No", percentage: 69, color: "text-destructive" }
-                ]}
-                category="Technology"
-                endDate="Dec 31, 2025"
-                disabled={true}
-              />
-              <MarketCard
-                title="Will global average temperature set a new record in 2025?"
-                participants={1876}
-                poolAmount="$67,200"
-                options={[
-                  { name: "Yes", percentage: 83, color: "text-primary" },
-                  { name: "No", percentage: 17, color: "text-destructive" }
-                ]}
-                category="Climate"
-                endDate="Dec 31, 2025"
-                disabled={true}
-              />
-              <MarketCard
-                title="Will SpaceX complete a successful Starship orbital flight?"
-                participants={4231}
-                poolAmount="$187,500"
-                options={[
-                  { name: "Yes", percentage: 91, color: "text-primary" },
-                  { name: "No", percentage: 9, color: "text-destructive" }
-                ]}
-                category="Space"
-                endDate="Aug 15, 2025"
-                disabled={true}
-              />
-              <MarketCard
-                title="Will the S&P 500 finish 2025 above 5,500?"
-                participants={3012}
-                poolAmount="$142,800"
-                options={[
-                  { name: "Yes", percentage: 62, color: "text-primary" },
-                  { name: "No", percentage: 38, color: "text-destructive" }
-                ]}
-                category="Finance"
-                endDate="Dec 31, 2025"
-                disabled={true}
-              />
+              {trendingMarkets.length > 0 ? (
+                trendingMarkets.map(market => (
+                  <Link href={`/markets/${market.id}`} key={market.id}>
+                    <MarketCard
+                      market={{
+                        id: market.id,
+                        name: market.name,
+                        participants: market.participants || 0,
+                        poolAmount: market.poolAmount || 0,
+                        outcomes: (market.outcomes || []).map(outcome => ({
+                          id: String(outcome.id),
+                          name: outcome.name,
+                          votes: outcome.votes,
+                          amount: outcome.amount
+                        })),
+                        category: market.category || 'General',
+                        endDate: market.endDate || new Date(market.createdAt).toLocaleDateString(),
+                        status: market.status || 'inactive'
+                      }}
+                      disabled={market.status !== 'active'}
+                    />
+                  </Link>
+                ))
+              ) : (
+                <div className="text-center col-span-3 py-12">
+                  <h3 className="text-xl font-semibold mb-2">No markets available yet</h3>
+                  <p className="text-muted-foreground mb-6">Be the first to create a prediction market!</p>
+                  <Link href="/create">
+                    <Button size="lg" className="items-center justify-center" >Create Market</Button>
+                  </Link>
+                </div>
+              )}
             </div>
             <div className="flex justify-center">
-              <Button variant="outline" size="lg" className="gap-1.5 items-center" disabled>
-                View All Markets
-                <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              <Link href="/markets">
+                <Button variant="outline" size="lg" className="gap-1.5 items-center">
+                  View All Markets
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

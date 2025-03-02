@@ -1,40 +1,49 @@
 "use client"
 
 import Link from "next/link"
-import { Clock, Users } from "lucide-react"
+import { Clock, Users, DollarSign } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  SignIn
-} from '@clerk/nextjs'
+import { SignIn } from '@clerk/nextjs'
+import { calculateOutcomePercentages } from "@/lib/utils"
 
 interface MarketCardProps {
-  title: string
-  participants: number
-  poolAmount: string
-  options: Array<{
-    name: string,
-    percentage: number,
-    color?: string
-  }>
-  category: string
-  endDate: string
+  market: {
+    id: string
+    name: string
+    participants: number
+    poolAmount: number
+    outcomes: Array<{
+      id: string
+      name: string
+      votes?: number
+      amount?: number
+      color?: string
+    }>
+    category: string
+    endDate: string
+    status: string
+  }
   disabled?: boolean
 }
 
-export function MarketCard({ title, participants, poolAmount, options, category, endDate, disabled }: MarketCardProps) {
+export function MarketCard({ market, disabled }: MarketCardProps) {
   const { isSignedIn } = useAuth()
   const [showSignInDialog, setShowSignInDialog] = useState(false)
 
-  // Default to Yes/No if no options provided
-  const marketOptions = options.length ? options : [
-    { name: "Yes", percentage: 60, color: "text-primary" },
-    { name: "No", percentage: 40, color: "text-destructive" }
-  ]
+  const { name, participants, poolAmount, outcomes, category, endDate, id } = market
+
+  // Calculate outcome percentages using the utility function
+  const { outcomesWithPercentages } = calculateOutcomePercentages(outcomes || [])
+
+  // Format pool amount as currency
+  const formattedPoolAmount = typeof poolAmount === 'number'
+    ? `$${poolAmount.toLocaleString()}`
+    : poolAmount
 
   // Handle prediction attempt when not signed in
   const handlePredictionClick = () => {
@@ -61,32 +70,34 @@ export function MarketCard({ title, participants, poolAmount, options, category,
               <span>Ends: {endDate}</span>
             </div>
           </div>
-          <CardTitle className="line-clamp-2 text-lg">{title}</CardTitle>
+          <CardTitle className="line-clamp-2 text-lg">{name}</CardTitle>
         </CardHeader>
         <CardContent className="pb-2">
           <div className="flex justify-items-center gap-2 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
             <span>{participants.toLocaleString()} participants</span>
-            <span className="text-primary font-medium">{poolAmount} pool</span>
+            <span className="text-primary font-medium">{formattedPoolAmount} pool</span>
           </div>
           <div className="mt-4 flex justify-items-center justify-between">
-            {marketOptions.map((option, index) => (
-              <div key={index}>
-                <div className="text-sm font-medium">{option.name}</div>
-                <div className={`text-xl font-bold ${option.color || "text-primary"}`}>
-                  {option.percentage}%
+            {outcomesWithPercentages.map((outcome, index) => (
+              <div key={outcome.id || index}>
+                <div className="text-sm font-medium">{outcome.name}</div>
+                <div className={`text-xl font-bold ${outcome.color ||
+                  (index === 0 ? "text-primary" :
+                    index === 1 ? "text-destructive" : "text-primary")}`}>
+                  {outcome.percentage}%
                 </div>
               </div>
             ))}
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
             <div className="flex h-full">
-              {marketOptions.map((option, index) => (
+              {outcomesWithPercentages.map((outcome, index) => (
                 <div
-                  key={index}
+                  key={outcome.id || index}
                   className="h-full"
                   style={{
-                    width: `${option.percentage}%`,
+                    width: `${outcome.percentage}%`,
                     backgroundColor: index === 0 ? "var(--primary)" :
                       index === 1 ? "var(--destructive)" :
                         `hsl(${index * 60}, 70%, 50%)`
@@ -99,15 +110,15 @@ export function MarketCard({ title, participants, poolAmount, options, category,
         <CardFooter className="pt-2">
           {isSignedIn ? (
             <div className="w-full grid grid-cols-2 gap-2">
-              {marketOptions.map((option, index) => (
+              {outcomesWithPercentages.slice(0, 2).map((outcome, index) => (
                 <Button
-                  key={index}
+                  key={outcome.id || index}
                   className="w-full"
                   variant={index === 0 ? "default" : index === 1 ? "outline" : "secondary"}
-                  disabled={disabled}
+                  disabled={disabled || market.status !== 'active'}
                   onClick={handlePredictionClick}
                 >
-                  {option.name}
+                  {outcome.name}
                 </Button>
               ))}
             </div>
@@ -115,7 +126,7 @@ export function MarketCard({ title, participants, poolAmount, options, category,
             <Button
               className="w-full"
               variant="outline"
-              disabled={disabled}
+              disabled={disabled || market.status !== 'active'}
               onClick={() => setShowSignInDialog(true)}
             >
               Sign in to Predict

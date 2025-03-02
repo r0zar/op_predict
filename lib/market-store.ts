@@ -6,6 +6,7 @@ export type MarketOutcome = {
     id: number;
     name: string;
     votes?: number;
+    amount?: number; // Total amount staked on this outcome
     isWinner?: boolean;
 };
 

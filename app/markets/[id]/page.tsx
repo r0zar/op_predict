@@ -23,7 +23,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { PredictionForm } from "@/components/prediction-form";
-import { cn, isAdmin } from "@/lib/utils";
+import { cn, isAdmin, calculateOutcomePercentages } from "@/lib/utils";
 import { PredictionCard } from "@/components/prediction-card";
 import { ResolveMarketButton } from "@/components/resolve-market-button";
 
@@ -47,14 +47,8 @@ export default async function MarketPage({ params }: { params: { id: string } })
     // Get market predictions
     const marketPredictions = marketPredictionsResult.success ? marketPredictionsResult.predictions || [] : [];
 
-    // Calculate total votes for percentage
-    const totalVotes = market.outcomes.reduce((sum, outcome) => sum + (outcome.votes || 0), 0);
-
-    // Update percentages
-    const outcomesWithPercentages = market.outcomes.map(outcome => ({
-        ...outcome,
-        percentage: totalVotes > 0 ? Math.round(((outcome.votes || 0) / totalVotes) * 100) : 0
-    }));
+    // Calculate percentages using the utility function
+    const { outcomesWithPercentages, useFallbackVotes } = calculateOutcomePercentages(market.outcomes);
 
     // Create a map of outcome IDs to percentages for the PredictionCard component
     const outcomeOddsMap = outcomesWithPercentages.reduce((map, outcome) => {

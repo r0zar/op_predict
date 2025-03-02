@@ -2,20 +2,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Users, DollarSign } from "lucide-react"
 import { DeleteMarketButton } from "@/components/delete-market-button"
+import { calculateOutcomePercentages } from "@/lib/utils"
 
 // Market card component with progress bar for leading outcome
 export function MarketCard({ market, isUserAdmin }: { market: any; isUserAdmin: boolean }) {
     const { id, name, type, outcomes, participants, poolAmount, createdAt } = market
 
-    // Calculate total votes and leading outcome
-    const totalVotes = outcomes?.reduce((sum: number, outcome: any) => sum + (outcome.votes || 0), 0) || 0
-    const leadingOutcome = outcomes && outcomes.length > 0
-        ? [...outcomes].sort((a, b) => (b.votes || 0) - (a.votes || 0))[0]
-        : null
+    // Calculate outcome percentages using the utility function
+    const { outcomesWithPercentages, useFallbackVotes } = calculateOutcomePercentages(outcomes || []);
 
-    const percentage = leadingOutcome && totalVotes > 0
-        ? Math.round(((leadingOutcome.votes || 0) / totalVotes) * 100)
-        : 0
+    // Find the leading outcome based on amount or votes
+    const leadingOutcome = outcomesWithPercentages && outcomesWithPercentages.length > 0
+        ? [...outcomesWithPercentages].sort((a, b) =>
+            useFallbackVotes
+                ? (b.votes || 0) - (a.votes || 0)
+                : (b.amount || 0) - (a.amount || 0)
+        )[0]
+        : null;
+
+    const percentage = leadingOutcome ? leadingOutcome.percentage : 0;
 
     // Derive category from name for demo purposes
     const category = name.includes("Bitcoin") ? "Crypto" :
