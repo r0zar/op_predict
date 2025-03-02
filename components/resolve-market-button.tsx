@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from "@/components/ui/label";
+import { cn } from '@/lib/utils';
 
 type ResolveMarketButtonProps = {
     marketId: string;
@@ -27,13 +28,15 @@ type ResolveMarketButtonProps = {
         name: string;
     }[];
     isAdmin: boolean;
+    className?: string;
 };
 
 export function ResolveMarketButton({
     marketId,
     marketName,
     outcomes,
-    isAdmin
+    isAdmin,
+    className
 }: ResolveMarketButtonProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -78,11 +81,12 @@ export function ResolveMarketButton({
         <>
             <Button
                 onClick={() => setOpen(true)}
-                className="flex items-center"
+                className={cn("flex items-center justify-center gap-2", className)}
                 variant="default"
+                size="lg"
             >
-                <Trophy className="h-4 w-4 mr-2" />
-                Resolve Market
+                <Trophy className="h-5 w-5" />
+                <span>Resolve This Market</span>
             </Button>
 
             <AlertDialog open={open} onOpenChange={setOpen}>

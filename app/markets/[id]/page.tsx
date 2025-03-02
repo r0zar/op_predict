@@ -354,18 +354,24 @@ export default async function MarketPage({ params }: { params: { id: string } })
                     </Card>
 
                     {/* Add ResolveMarketButton here for admin users */}
-                    {isUserAdmin && !isMarketClosed && (
-                        <div className="mt-4">
-                            <ResolveMarketButton
-                                marketId={market.id}
-                                marketName={market.name}
-                                outcomes={market.outcomes}
-                                isAdmin={isUserAdmin}
-                                className="w-full h-12 text-base font-medium"
-                            />
-                            <p className="text-xs text-muted-foreground mt-2 text-center">
-                                Admin only: Resolve this market when the outcome is known
-                            </p>
+                    {!isMarketClosed && (
+                        <div className="mt-6">
+                            <Card className="border border-primary/30 shadow-sm bg-primary/5">
+                                <CardContent className="pt-6 pb-4">
+                                    <h3 className="text-center font-semibold mb-4 text-primary">Vault Admin Controls</h3>
+                                    <ResolveMarketButton
+                                        marketId={market.id}
+                                        marketName={market.name}
+                                        outcomes={market.outcomes}
+                                        isAdmin={isUserAdmin}
+                                        className="w-full py-6 text-base font-medium"
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                                        As an admin, you can resolve this market when the outcome is determined.
+                                        You will receive a 5% admin fee from the total pool.
+                                    </p>
+                                </CardContent>
+                            </Card>
                         </div>
                     )}
                 </div>
