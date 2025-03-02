@@ -378,8 +378,8 @@ export default function CreateMarketPage() {
                                                             </TooltipTrigger>
                                                             <TooltipContent className="p-3 max-w-xs">
                                                                 <p>
-                                                                    Good examples: "Will Bitcoin reach $100k by Dec 31, 2025?" or
-                                                                    "Which country will win the 2026 World Cup?"
+                                                                    Good examples: &quot;Will Bitcoin reach $100k by Dec 31, 2025?&quot; or
+                                                                    &quot;Which country will win the 2026 World Cup?&quot;
                                                                 </p>
                                                             </TooltipContent>
                                                         </Tooltip>
