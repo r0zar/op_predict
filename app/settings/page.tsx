@@ -85,7 +85,7 @@ export default async function SettingsPage() {
                                         ) : user.locked ? (
                                             <Badge variant="destructive">Locked</Badge>
                                         ) : (
-                                            <Badge variant="success">Active</Badge>
+                                            <Badge>Active</Badge>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -105,7 +105,7 @@ export default async function SettingsPage() {
                                     <TableCell className="font-medium">Two-Factor Authentication</TableCell>
                                     <TableCell>
                                         {user.twoFactorEnabled ? (
-                                            <Badge variant="success">Enabled</Badge>
+                                            <Badge>Enabled</Badge>
                                         ) : (
                                             <Badge variant="outline">Disabled</Badge>
                                         )}
@@ -115,7 +115,7 @@ export default async function SettingsPage() {
                                     <TableCell className="font-medium">Password Authentication</TableCell>
                                     <TableCell>
                                         {user.passwordEnabled ? (
-                                            <Badge variant="success">Enabled</Badge>
+                                            <Badge>Enabled</Badge>
                                         ) : (
                                             <Badge variant="outline">Disabled</Badge>
                                         )}
@@ -125,7 +125,7 @@ export default async function SettingsPage() {
                                     <TableCell className="font-medium">Create Organization</TableCell>
                                     <TableCell>
                                         {user.createOrganizationEnabled ? (
-                                            <Badge variant="success">Enabled</Badge>
+                                            <Badge>Enabled</Badge>
                                         ) : (
                                             <Badge variant="outline">Disabled</Badge>
                                         )}
@@ -135,7 +135,7 @@ export default async function SettingsPage() {
                                     <TableCell className="font-medium">Account Deletion</TableCell>
                                     <TableCell>
                                         {user.deleteSelfEnabled ? (
-                                            <Badge variant="success">Enabled</Badge>
+                                            <Badge>Enabled</Badge>
                                         ) : (
                                             <Badge variant="outline">Disabled</Badge>
                                         )}
