@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Copy, Share2, Wallet } from "lucide-react";
+import { CheckCircle2, Copy, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import PredictionShare from "@/components/prediction-share";
 
 interface PredictionReceiptProps {
     open: boolean;
@@ -132,10 +133,15 @@ export function PredictionReceipt({
                         View in Portfolio
                     </Button>
 
-                    <Button variant="outline" className="flex-1">
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Share Prediction
-                    </Button>
+                    <div className="flex-1">
+                        <PredictionShare
+                            predictionId={receipt.tokenId}
+                            marketName={receipt.marketName}
+                            isResolved={false}
+                            outcomeSelected={receipt.outcomeName}
+                            amount={receipt.amount}
+                        />
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
