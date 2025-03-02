@@ -6,13 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, ListFilter, Users, DollarSign, Calendar, ArrowLeft, Clock, Info } from "lucide-react";
+import {
+    CheckCircle2,
+    ListFilter,
+    Users,
+    DollarSign,
+    Calendar,
+    ArrowLeft,
+    Clock,
+    Info,
+    Trophy,
+    Check,
+    AlertTriangle
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { PredictionForm } from "@/components/prediction-form";
 import { cn, isAdmin } from "@/lib/utils";
 import { PredictionCard } from "@/components/prediction-card";
+import { ResolveMarketButton } from "@/components/resolve-market-button";
 
 export default async function MarketPage({ params }: { params: { id: string } }) {
     console.log("Market ID from params:", params.id);
@@ -60,6 +73,11 @@ export default async function MarketPage({ params }: { params: { id: string } })
         ? marketPredictions.filter(p => p.userId === user.id)
         : [];
 
+    // Check if market is already resolved or cancelled
+    const isMarketResolved = market.status === 'resolved';
+    const isMarketCancelled = market.status === 'cancelled';
+    const isMarketClosed = isMarketResolved || isMarketCancelled;
+
     return (
         <div className="container max-w-5xl py-10">
             <div className="flex items-center justify-between mb-8">
@@ -68,10 +86,81 @@ export default async function MarketPage({ params }: { params: { id: string } })
                     Back to Markets
                 </Link>
 
-                <Badge variant={market.status === 'active' ? 'outline' : 'secondary'} className="px-3 py-1">
-                    {market.status === 'active' ? 'Active' : market.status}
-                </Badge>
+                <div className="flex items-center space-x-2">
+                    {/* Only show the resolve button to admins and if the market is not already resolved/cancelled */}
+                    {isUserAdmin && !isMarketClosed && (
+                        <ResolveMarketButton
+                            marketId={market.id}
+                            marketName={market.name}
+                            outcomes={market.outcomes}
+                            isAdmin={isUserAdmin}
+                        />
+                    )}
+
+                    <Badge
+                        variant={
+                            market.status === 'active'
+                                ? 'outline'
+                                : market.status === 'resolved'
+                                    ? 'secondary'
+                                    : 'destructive'
+                        }
+                        className="px-3 py-1"
+                    >
+                        {market.status.charAt(0).toUpperCase() + market.status.slice(1)}
+                    </Badge>
+                </div>
             </div>
+
+            {/* If market is resolved, show winning outcome */}
+            {isMarketResolved && market.resolvedOutcomeId && (
+                <div className="mb-6 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-4">
+                    <div className="flex items-start">
+                        <Trophy className="h-5 w-5 text-green-600 dark:text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                        <div>
+                            <h3 className="font-medium text-green-800 dark:text-green-300 mb-1">Market Resolved</h3>
+                            <p className="text-sm text-green-700 dark:text-green-400">
+                                This market was resolved on {new Date(market.resolvedAt || '').toLocaleDateString()}.
+                                The winning outcome was <strong>{market.outcomes.find(o => o.id === market.resolvedOutcomeId)?.name}</strong>.
+                            </p>
+                            {user && userPredictions.length > 0 && (
+                                <p className="text-sm mt-2 text-green-700 dark:text-green-400">
+                                    Check your prediction receipts below to see if you won!
+                                </p>
+                            )}
+
+                            {/* Admin-only details */}
+                            {isUserAdmin && (
+                                <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                                    <h4 className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Admin Resolution Details</h4>
+                                    <ul className="text-xs text-green-700 dark:text-green-400 space-y-1">
+                                        <li>Resolved by: {market.resolvedBy || 'Unknown admin'}</li>
+                                        <li>Admin fee (5%): ${market.adminFee?.toFixed(2) || '0.00'}</li>
+                                        <li>Total pot size: ${(market.poolAmount || 0).toFixed(2)}</li>
+                                        <li>Remaining pot for winners: ${market.remainingPot?.toFixed(2) || '0.00'}</li>
+                                        <li>Total winning amount: ${market.totalWinningAmount?.toFixed(2) || '0.00'}</li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* If market is cancelled, show cancellation notice */}
+            {isMarketCancelled && (
+                <div className="mb-6 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4">
+                    <div className="flex items-start">
+                        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-3 mt-0.5 flex-shrink-0" />
+                        <div>
+                            <h3 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1">Market Cancelled</h3>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                                This market has been cancelled. Any funds committed to predictions have been returned to users.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main content grid with market details and prediction form */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -114,23 +203,32 @@ export default async function MarketPage({ params }: { params: { id: string } })
                             {outcomesWithPercentages.map((outcome) => (
                                 <div key={outcome.id} className="space-y-1">
                                     <div className="flex justify-between items-center">
-                                        <span className="font-medium">{outcome.name}</span>
+                                        <span className={`font-medium ${isMarketResolved && market.resolvedOutcomeId === outcome.id ? 'text-green-600 dark:text-green-400 flex items-center' : ''}`}>
+                                            {outcome.name}
+                                            {isMarketResolved && market.resolvedOutcomeId === outcome.id && (
+                                                <Trophy className="h-4 w-4 ml-2 text-green-600 dark:text-green-400" />
+                                            )}
+                                        </span>
                                         <span className="text-sm font-semibold">{outcome.percentage}%</span>
                                     </div>
                                     <Progress
                                         value={outcome.percentage}
-                                        className={`h-2 ${market.type === 'binary'
-                                            ? outcome.name === 'Yes'
-                                                ? 'bg-primary/20'
-                                                : 'bg-destructive/20'
-                                            : 'bg-secondary/50'
+                                        className={`h-2 ${isMarketResolved && market.resolvedOutcomeId === outcome.id
+                                            ? 'bg-green-200 dark:bg-green-900'
+                                            : market.type === 'binary'
+                                                ? outcome.name === 'Yes'
+                                                    ? 'bg-primary/20'
+                                                    : 'bg-destructive/20'
+                                                : 'bg-secondary/50'
                                             }`}
                                         indicatorClassName={
-                                            market.type === 'binary'
-                                                ? outcome.name === 'Yes'
-                                                    ? 'bg-primary'
-                                                    : 'bg-destructive'
-                                                : ''
+                                            isMarketResolved && market.resolvedOutcomeId === outcome.id
+                                                ? 'bg-green-600 dark:bg-green-400'
+                                                : market.type === 'binary'
+                                                    ? outcome.name === 'Yes'
+                                                        ? 'bg-primary'
+                                                        : 'bg-destructive'
+                                                    : ''
                                         }
                                     />
                                     <div className="flex justify-between text-xs text-muted-foreground">
@@ -158,16 +256,60 @@ export default async function MarketPage({ params }: { params: { id: string } })
                 <div>
                     <Card className="border shadow-sm sticky top-4">
                         <CardHeader className="pb-3">
-                            <CardTitle className="text-lg">Make a Prediction</CardTitle>
+                            <CardTitle className="text-lg">
+                                {isMarketResolved ? 'Market Resolved' : isMarketCancelled ? 'Market Cancelled' : 'Make a Prediction'}
+                            </CardTitle>
                             <CardDescription>
-                                {isAuthenticated
-                                    ? "Select an outcome and amount to predict"
-                                    : "Sign in to participate in this market"}
+                                {isMarketResolved
+                                    ? "This market has been resolved and no longer accepts predictions"
+                                    : isMarketCancelled
+                                        ? "This market has been cancelled and is no longer active"
+                                        : isAuthenticated
+                                            ? "Select an outcome and amount to predict"
+                                            : "Sign in to participate in this market"}
                             </CardDescription>
                         </CardHeader>
 
                         <CardContent className="space-y-4 pb-3">
-                            {isAuthenticated ? (
+                            {isMarketClosed ? (
+                                <div className="py-2">
+                                    {isMarketResolved && (
+                                        <div className="bg-muted/30 rounded-lg p-4 mb-4">
+                                            <h3 className="font-medium mb-2">Final Results:</h3>
+                                            {outcomesWithPercentages.map((outcome) => (
+                                                <div key={outcome.id} className="flex justify-between items-center mb-2">
+                                                    <span className={`${market.resolvedOutcomeId === outcome.id ? 'font-semibold text-green-600 dark:text-green-400 flex items-center' : ''}`}>
+                                                        {outcome.name}
+                                                        {market.resolvedOutcomeId === outcome.id && (
+                                                            <Trophy className="h-4 w-4 ml-2" />
+                                                        )}
+                                                    </span>
+                                                    <Badge variant={market.resolvedOutcomeId === outcome.id ? "default" : "outline"}>
+                                                        {outcome.percentage}%
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {isMarketCancelled && (
+                                        <div className="bg-muted/30 rounded-lg p-4 mb-4">
+                                            <h3 className="font-medium mb-2">Market Information:</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                This market was cancelled and all predictions have been refunded.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {!isAuthenticated && (
+                                        <Link href={`/sign-in?redirect_url=/markets/${market.id}`}>
+                                            <Button className="w-full items-center justify-center" size="lg">
+                                                Sign In to View Receipts
+                                            </Button>
+                                        </Link>
+                                    )}
+                                </div>
+                            ) : isAuthenticated ? (
                                 <PredictionForm market={market} outcomes={outcomesWithPercentages} userId={user.id} />
                             ) : (
                                 <>
@@ -207,8 +349,22 @@ export default async function MarketPage({ params }: { params: { id: string } })
 
                         <CardFooter className="pt-0 pb-4">
                             <p className="text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3 inline mr-1" />
-                                Resolves when outcome is determined
+                                {isMarketResolved ? (
+                                    <>
+                                        <Check className="h-3 w-3 inline mr-1" />
+                                        Resolved on {new Date(market.resolvedAt || '').toLocaleDateString()}
+                                    </>
+                                ) : isMarketCancelled ? (
+                                    <>
+                                        <AlertTriangle className="h-3 w-3 inline mr-1" />
+                                        Cancelled
+                                    </>
+                                ) : (
+                                    <>
+                                        <Clock className="h-3 w-3 inline mr-1" />
+                                        Resolves when outcome is determined
+                                    </>
+                                )}
                             </p>
                         </CardFooter>
                     </Card>
@@ -220,8 +376,38 @@ export default async function MarketPage({ params }: { params: { id: string } })
                 <Card className="border shadow-sm mb-8">
                     <CardHeader>
                         <CardTitle className="text-lg">Your Prediction Receipts</CardTitle>
-                        <CardDescription>Your active predictions for this market</CardDescription>
+                        <CardDescription>
+                            {isMarketResolved
+                                ? "Your predictions for this resolved market"
+                                : "Your active predictions for this market"}
+                        </CardDescription>
                     </CardHeader>
+
+                    {/* Add information about winnings distribution for resolved markets */}
+                    {isMarketResolved && (
+                        <div className="px-6 -mt-2 mb-4">
+                            <div className="p-3 rounded-md bg-muted/30 text-sm">
+                                <h4 className="font-medium mb-1">Market Resolution Information</h4>
+                                <p className="text-xs text-muted-foreground">
+                                    In resolved markets, 5% of the total prediction pool is collected as an admin fee.
+                                    The remaining 95% is distributed to winners proportionally to their stake.
+                                </p>
+
+                                {/* Show personalized winning information if the user won */}
+                                {userPredictions.some(p => p.status === 'won' || p.status === 'redeemed' && p.outcomeId === market.resolvedOutcomeId) && (
+                                    <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-100 dark:border-green-900">
+                                        <p className="text-xs text-green-700 dark:text-green-400">
+                                            <span className="font-medium">Congratulations!</span> You made a winning prediction in this market.
+                                            {userPredictions.some(p => p.status === 'won') && (
+                                                <> Redeem your prediction receipt to claim your winnings.</>
+                                            )}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <CardContent>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             {userPredictions.map(prediction => (

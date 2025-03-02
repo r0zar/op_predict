@@ -11,7 +11,10 @@ export type Prediction = {
     amount: number;
     createdAt: string;
     nftReceipt: PredictionNFTReceipt;
-    status: 'active' | 'won' | 'lost' | 'cancelled';
+    status: 'active' | 'won' | 'lost' | 'redeemed' | 'cancelled';
+    potentialPayout?: number;
+    resolvedAt?: string;
+    redeemedAt?: string;
 };
 
 export type PredictionNFTReceipt = {
@@ -169,7 +172,7 @@ export const predictionStore = {
     // Update prediction status
     async updatePredictionStatus(
         id: string,
-        status: 'active' | 'won' | 'lost' | 'cancelled'
+        status: 'active' | 'won' | 'lost' | 'redeemed' | 'cancelled'
     ): Promise<Prediction | undefined> {
         try {
             const prediction = await this.getPrediction(id);
@@ -239,6 +242,89 @@ export const predictionStore = {
         } catch (error) {
             console.error(`Error deleting prediction ${predictionId}:`, error);
             return false;
+        }
+    },
+
+    /**
+     * Update a prediction with new data
+     */
+    async updatePrediction(predictionId: string, data: Partial<Prediction>): Promise<Prediction | null> {
+        try {
+            // Get existing prediction
+            const prediction = await this.getPrediction(predictionId);
+            if (!prediction) {
+                return null;
+            }
+
+            // Update prediction data
+            const updatedPrediction: Prediction = {
+                ...prediction,
+                ...data,
+            };
+
+            // Store updated prediction
+            await kv.set(`${PREDICTIONS_KEY}:${predictionId}`, JSON.stringify(updatedPrediction));
+
+            return updatedPrediction;
+        } catch (error) {
+            console.error(`Error updating prediction ${predictionId}:`, error);
+            return null;
+        }
+    },
+
+    /**
+     * Redeem a prediction after market resolution
+     */
+    async redeemPrediction(predictionId: string): Promise<{
+        prediction: Prediction | null;
+        payout: number;
+    }> {
+        try {
+            // Get prediction
+            const prediction = await this.getPrediction(predictionId);
+            if (!prediction) {
+                return { prediction: null, payout: 0 };
+            }
+
+            // Check if prediction is already redeemed
+            if (prediction.status === 'redeemed') {
+                return { prediction: prediction, payout: 0 };
+            }
+
+            // Check if prediction is eligible for redemption (must be won or lost)
+            if (prediction.status !== 'won' && prediction.status !== 'lost') {
+                return { prediction: prediction, payout: 0 };
+            }
+
+            // Calculate payout (winners get their calculated payout, losers get 0)
+            const payout = prediction.status === 'won' ? prediction.potentialPayout || 0 : 0;
+
+            // Update prediction as redeemed
+            const updatedPrediction = await this.updatePrediction(predictionId, {
+                status: 'redeemed',
+                redeemedAt: new Date().toISOString()
+            });
+
+            return {
+                prediction: updatedPrediction,
+                payout: payout
+            };
+        } catch (error) {
+            console.error(`Error redeeming prediction ${predictionId}:`, error);
+            return { prediction: null, payout: 0 };
+        }
+    },
+
+    /**
+     * Get all predictions for a specific market with a specific status
+     */
+    async getMarketPredictionsByStatus(marketId: string, status: string): Promise<Prediction[]> {
+        try {
+            const predictions = await this.getMarketPredictions(marketId);
+            return predictions.filter(p => p.status === status);
+        } catch (error) {
+            console.error(`Error getting market predictions by status for market ${marketId}:`, error);
+            return [];
         }
     }
 }; 

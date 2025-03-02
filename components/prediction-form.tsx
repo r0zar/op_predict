@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Market, MarketOption } from "@/lib/market-store";
+import { Market, MarketOutcome } from "@/lib/market-store";
 import { createPrediction } from "@/app/actions/prediction-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { PredictionNFTReceipt } from "@/lib/prediction-store";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 interface PredictionFormProps {
     market: Market;
-    outcomes: (MarketOption & { percentage: number })[];
+    outcomes: (MarketOutcome & { percentage: number })[];
     userId: string;
 }
 

@@ -1,8 +1,14 @@
 'use server'
 
 import { z } from 'zod';
-import { marketStore, Market, MarketOption } from '@/lib/market-store';
+import { marketStore, Market, MarketOutcome } from '@/lib/market-store';
 import { revalidatePath } from 'next/cache';
+import { userStatsStore } from '@/lib/user-stats-store';
+import { predictionStore } from '@/lib/prediction-store';
+import { currentUser } from '@clerk/nextjs/server';
+import { isAdmin } from '@/lib/utils';
+import { getMarketPredictions } from './prediction-actions';
+import { userBalanceStore } from '@/lib/user-balance-store';
 
 // Define the validation schema for market creation
 const marketFormSchema = z.object({
@@ -42,6 +48,10 @@ export async function createMarket(formData: CreateMarketFormData): Promise<{ su
             name: validatedData.name,
             description: validatedData.description,
             outcomes: validatedData.outcomes,
+            createdBy: (await currentUser())?.id || '',
+            category: 'general',
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            imageUrl: '',
         });
 
         // Revalidate the markets page to show the new market
@@ -104,6 +114,135 @@ export async function deleteMarket(marketId: string): Promise<{
         return {
             success: false,
             error: 'Failed to delete market. Please try again.'
+        };
+    }
+}
+
+// Define the validation schema for market resolution
+const marketResolutionSchema = z.object({
+    marketId: z.string().min(1, { message: "Market ID is required" }),
+    winningOutcomeId: z.number({ required_error: "Winning outcome ID is required" }),
+});
+
+export type MarketResolutionData = z.infer<typeof marketResolutionSchema>;
+
+/**
+ * Resolve a market (admin only)
+ * Sets the winning outcome, calculates payouts, and collects admin fee (5%)
+ */
+export async function resolveMarket(formData: MarketResolutionData): Promise<{
+    success: boolean;
+    adminFee?: number;
+    error?: string;
+}> {
+    try {
+        // Validate input data
+        const validatedData = marketResolutionSchema.parse(formData);
+
+        // Check if user is admin
+        const user = await currentUser();
+        if (!user || !isAdmin(user.id)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Only admins can resolve markets'
+            };
+        }
+
+        // Get the market
+        const market = await marketStore.getMarket(validatedData.marketId);
+        if (!market) {
+            return { success: false, error: 'Market not found' };
+        }
+
+        // Check if market is already resolved
+        if (market.resolvedOutcomeId !== undefined) {
+            return { success: false, error: 'Market is already resolved' };
+        }
+
+        // Find the winning outcome
+        const winningOutcome = market.outcomes.find(o => o.id === validatedData.winningOutcomeId);
+        if (!winningOutcome) {
+            return { success: false, error: 'Winning outcome not found' };
+        }
+
+        // Get all predictions for this market
+        const marketPredictions = await predictionStore.getMarketPredictions(market.id);
+
+        if (marketPredictions.length === 0) {
+            return { success: false, error: 'No predictions found for this market' };
+        }
+
+        // Calculate total pot and admin fee (5%)
+        const totalPot = marketPredictions.reduce((sum, prediction) => sum + prediction.amount, 0);
+        const adminFee = totalPot * 0.05; // 5% of the total pot
+        const remainingPot = totalPot - adminFee;
+
+        // Find winning predictions
+        const winningPredictions = marketPredictions.filter(
+            p => p.outcomeId === validatedData.winningOutcomeId
+        );
+
+        // Calculate total winning amount
+        const totalWinningAmount = winningPredictions.reduce(
+            (sum, prediction) => sum + prediction.amount,
+            0
+        );
+
+        // Update market as resolved
+        await marketStore.updateMarket(market.id, {
+            resolvedOutcomeId: validatedData.winningOutcomeId,
+            resolvedAt: new Date().toISOString(),
+            status: 'resolved',
+            resolvedBy: user.id,
+            adminFee: adminFee,
+            remainingPot: remainingPot,
+            totalWinningAmount: totalWinningAmount || 0
+        });
+
+        // Add admin fee to admin's balance
+        await userBalanceStore.addFunds(user.id, adminFee);
+
+        // Mark all predictions for this market as won or lost
+        for (const prediction of marketPredictions) {
+            const isWinner = prediction.outcomeId === validatedData.winningOutcomeId;
+
+            // Calculate payout for winners (proportional to their stake in winning pool)
+            // If no winners, winnerShare will be 0
+            const winnerShare = isWinner && totalWinningAmount > 0
+                ? (prediction.amount / totalWinningAmount) * remainingPot
+                : 0;
+
+            // Update prediction status
+            await predictionStore.updatePrediction(prediction.id, {
+                status: isWinner ? 'won' : 'lost',
+                potentialPayout: isWinner ? winnerShare : 0,
+                resolvedAt: new Date().toISOString()
+            });
+        }
+
+        // Revalidate relevant paths
+        revalidatePath(`/markets/${market.id}`);
+        revalidatePath('/markets');
+        revalidatePath('/portfolio');
+        revalidatePath('/explore');
+
+        return {
+            success: true,
+            adminFee: adminFee
+        };
+    } catch (error) {
+        console.error('Error resolving market:', error);
+
+        if (error instanceof z.ZodError) {
+            return {
+                success: false,
+                error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ')
+            };
+        }
+
+        return {
+            success: false,
+            error: 'Failed to resolve market. Please try again.'
         };
     }
 } 

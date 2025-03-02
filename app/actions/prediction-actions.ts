@@ -4,8 +4,10 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { predictionStore, Prediction } from '@/lib/prediction-store';
 import { marketStore } from '@/lib/market-store';
+import { userBalanceStore } from '@/lib/user-balance-store';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from '@/lib/utils';
+import { userStatsStore } from '@/lib/user-stats-store';
 
 // Define the validation schema for prediction creation
 const predictionFormSchema = z.object({
@@ -43,6 +45,16 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
             return { success: false, error: 'Outcome not found' };
         }
 
+        // Deduct the amount from user's balance
+        const balanceResult = await userBalanceStore.updateBalanceForPrediction(
+            validatedData.userId,
+            validatedData.amount
+        );
+
+        if (!balanceResult) {
+            return { success: false, error: 'Failed to update user balance' };
+        }
+
         // Create the prediction with NFT receipt
         const prediction = await predictionStore.createPrediction({
             marketId: market.id,
@@ -71,10 +83,14 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
             poolAmount: (market.poolAmount || 0) + validatedData.amount,
         });
 
+        // Update user stats for leaderboard tracking
+        await userStatsStore.updateStatsForNewPrediction(validatedData.userId, prediction);
+
         // Revalidate relevant paths
         revalidatePath(`/markets/${market.id}`);
         revalidatePath('/markets');
         revalidatePath('/portfolio');
+        revalidatePath('/leaderboard'); // Revalidate leaderboard
 
         return {
             success: true,
@@ -89,6 +105,13 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
             return {
                 success: false,
                 error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ')
+            };
+        }
+
+        if (error instanceof Error && error.message === 'Insufficient balance') {
+            return {
+                success: false,
+                error: 'Insufficient balance. Please add more funds to your account.'
             };
         }
 
@@ -315,6 +338,84 @@ export async function getAllPredictions(): Promise<{
         return {
             success: false,
             error: 'Failed to get predictions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Redeem a prediction receipt
+ * Winners will receive their share of the pot, losers just mark their receipt as redeemed
+ */
+export async function redeemPredictionReceipt(predictionId: string): Promise<{
+    success: boolean;
+    payout?: number;
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Get the prediction
+        const predictionResult = await getPrediction(predictionId);
+        if (!predictionResult.success || !predictionResult.prediction) {
+            return { success: false, error: 'Prediction not found' };
+        }
+
+        const prediction = predictionResult.prediction;
+
+        // Verify the prediction belongs to the user
+        if (prediction.userId !== user.id && !isAdmin(user.id)) {
+            return { success: false, error: 'Unauthorized: This prediction does not belong to you' };
+        }
+
+        // Check if prediction is already redeemed
+        if (prediction.status === 'redeemed') {
+            return { success: false, error: 'Prediction has already been redeemed' };
+        }
+
+        // Check if prediction is eligible for redemption (must be won or lost)
+        if (prediction.status !== 'won' && prediction.status !== 'lost') {
+            return { success: false, error: 'Prediction is not eligible for redemption yet' };
+        }
+
+        // Redeem the prediction
+        const redemptionResult = await predictionStore.redeemPrediction(predictionId);
+
+        if (!redemptionResult.prediction) {
+            return { success: false, error: 'Failed to redeem prediction' };
+        }
+
+        // If there's a payout, add it to the user's balance
+        if (redemptionResult.payout > 0) {
+            await userBalanceStore.updateBalanceForResolvedPrediction(
+                user.id,
+                prediction.amount,
+                redemptionResult.payout
+            );
+        } else {
+            // For losers, just update to decrease the inPredictions amount
+            await userBalanceStore.updateBalanceForResolvedPrediction(
+                user.id,
+                prediction.amount,
+                0
+            );
+        }
+
+        // Revalidate relevant paths
+        revalidatePath('/portfolio');
+        revalidatePath(`/markets/${prediction.marketId}`);
+
+        return {
+            success: true,
+            payout: redemptionResult.payout
+        };
+    } catch (error) {
+        console.error('Error redeeming prediction:', error);
+        return {
+            success: false,
+            error: 'Failed to redeem prediction. Please try again.'
         };
     }
 }

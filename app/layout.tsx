@@ -53,12 +53,12 @@ export default function RootLayout({
                   </Link>
                 </div>
                 <nav className="hidden md:flex items-center gap-6">
-                  <span className="text-sm font-medium text-muted-foreground/60 cursor-not-allowed flex items-center">
-                    Markets <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
-                  </span>
-                  <span className="text-sm font-medium text-muted-foreground/60 cursor-not-allowed flex items-center">
-                    Leaderboard <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
-                  </span>
+                  <Link href="/markets" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+                    Markets
+                  </Link>
+                  <Link href="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+                    Leaderboard
+                  </Link>
                   <Link href="/how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground">
                     How it Works
                   </Link>

@@ -1,11 +1,12 @@
 import { kv } from '@vercel/kv';
+import crypto from 'crypto';
 
-// Define the market data types
-export type MarketOption = {
+// Define market types
+export type MarketOutcome = {
     id: number;
     name: string;
     votes?: number;
-    percentage?: number;
+    isWinner?: boolean;
 };
 
 export type Market = {
@@ -13,17 +14,28 @@ export type Market = {
     type: 'binary' | 'multiple';
     name: string;
     description: string;
-    outcomes: MarketOption[];
+    createdBy: string;
+    outcomes: MarketOutcome[];
+    category: string;
+    endDate: string;
     createdAt: string;
-    createdBy?: string;
-    status: 'active' | 'resolved' | 'cancelled';
+    updatedAt?: string;
+    imageUrl?: string;
     participants?: number;
     poolAmount?: number;
+    status: 'draft' | 'active' | 'resolved' | 'cancelled';
+    resolvedOutcomeId?: number; // The ID of the winning outcome
+    resolvedAt?: string; // When the market was resolved
+    resolvedBy?: string; // Admin who resolved the market
+    adminFee?: number; // 5% fee taken by admin on resolution
+    remainingPot?: number; // Pot after admin fee
+    totalWinningAmount?: number; // Total amount staked on winning outcome
 };
 
 // KV store keys
 const MARKETS_KEY = 'markets';
 const MARKET_IDS_KEY = 'market_ids';
+const USER_MARKETS_KEY = 'user_markets';
 
 // Market store with Vercel KV
 export const marketStore = {
@@ -64,31 +76,50 @@ export const marketStore = {
     },
 
     // Create a new market
-    async createMarket(marketData: Omit<Market, 'id' | 'createdAt' | 'status'>): Promise<Market> {
+    async createMarket(
+        data: {
+            type: 'binary' | 'multiple';
+            name: string;
+            description: string;
+            outcomes: { id: number; name: string; }[];
+            createdBy: string;
+            category: string;
+            endDate: string;
+            imageUrl?: string;
+        }
+    ): Promise<Market> {
         try {
             const id = crypto.randomUUID();
-            const newMarket: Market = {
+            const now = new Date().toISOString();
+
+            const market: Market = {
                 id,
-                ...marketData,
-                createdAt: new Date().toISOString(),
-                status: 'active',
-                participants: Math.floor(Math.random() * 50), // Random participants for demo
-                poolAmount: Math.floor(Math.random() * 1000), // Random pool amount for demo
+                type: data.type,
+                name: data.name,
+                description: data.description,
+                outcomes: data.outcomes,
+                createdBy: data.createdBy,
+                category: data.category,
+                endDate: data.endDate,
+                imageUrl: data.imageUrl,
+                createdAt: now,
+                participants: 0,
+                poolAmount: 0,
+                status: 'active'
             };
 
-            // Add random votes for demo purposes
-            newMarket.outcomes = newMarket.outcomes.map(outcome => ({
-                ...outcome,
-                votes: Math.floor(Math.random() * 100),
-            }));
+            // Store market by ID
+            await kv.set(`${MARKETS_KEY}:${id}`, JSON.stringify(market));
 
-            // Store the market
-            await kv.set(`${MARKETS_KEY}:${id}`, JSON.stringify(newMarket));
+            // Add to markets set
+            await kv.sadd(MARKETS_KEY, id);
 
-            // Add the market ID to the set of all market IDs
-            await kv.sadd(MARKET_IDS_KEY, id);
+            // Add to user's markets set
+            if (data.createdBy) {
+                await kv.sadd(`${USER_MARKETS_KEY}:${data.createdBy}`, id);
+            }
 
-            return newMarket;
+            return market;
         } catch (error) {
             console.error('Error creating market:', error);
             throw error;
@@ -167,7 +198,12 @@ export const marketStore = {
 
             // Create each sample market
             for (const marketData of sampleMarkets) {
-                await this.createMarket(marketData);
+                await this.createMarket({
+                    ...marketData,
+                    createdBy: 'admin',
+                    category: 'general',
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                });
             }
         } catch (error) {
             console.error('Error creating sample markets:', error);

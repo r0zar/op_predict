@@ -26,12 +26,10 @@ import { Badge } from "@/components/ui/badge";
 import { getUserPredictions, getAllPredictions } from "../actions/prediction-actions";
 import { PredictionCard } from "@/components/prediction-card";
 import { isAdmin } from "@/lib/utils";
+import { userBalanceStore } from "@/lib/user-balance-store";
 
-// Mock data - would be replaced with actual API calls
+// Mock data - used only for transactions and active markets until we implement those fully
 const mockPortfolioData = {
-    totalBalance: 2450.75,
-    availableBalance: 1275.50,
-    inMarkets: 1175.25,
     recentTransactions: [
         { id: 1, type: "deposit", amount: 500, date: "2023-07-15", status: "completed" },
         { id: 2, type: "prediction", amount: -200, date: "2023-07-16", market: "Will Bitcoin reach $100k by end of 2025?", status: "active" },
@@ -70,13 +68,19 @@ export default async function PortfolioPage() {
         ? allPredictionsResult.predictions || []
         : [];
 
+    // Get user balance data
+    const userBalance = await userBalanceStore.getCurrentUserBalance();
+
+    // Set default values if balance doesn't exist (should never happen since we initialize on get)
+    const availableBalance = userBalance?.availableBalance || 1000;
+    const inPredictions = userBalance?.inPredictions || 0;
+    const totalBalance = availableBalance + inPredictions;
+
     // Calculate portfolio metrics
     const totalPredictionAmount = userPredictions.reduce(
         (sum, prediction) => sum + prediction.amount,
         0
     );
-
-    const totalBalance = mockPortfolioData.availableBalance + totalPredictionAmount;
 
     // Use mock data for profit/loss calculation until we have real data
     const totalProfitLoss = mockPortfolioData.activeMarkets.reduce(
@@ -84,7 +88,9 @@ export default async function PortfolioPage() {
         0
     );
 
-    const profitLossPercentage = (totalProfitLoss / totalPredictionAmount) * 100;
+    const profitLossPercentage = totalPredictionAmount > 0
+        ? (totalProfitLoss / totalPredictionAmount) * 100
+        : 0;
 
     return (
         <div className="container max-w-6xl py-10">
@@ -126,13 +132,28 @@ export default async function PortfolioPage() {
                         <CardDescription>Available Balance</CardDescription>
                         <CardTitle className="text-2xl font-bold flex items-center">
                             <Wallet className="mr-2 h-5 w-5 text-muted-foreground" />
-                            ${mockPortfolioData.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex space-x-2">
-                            <Button size="sm" className='items-center'>Deposit</Button>
-                            <Button size="sm" variant="outline" className='items-center'>Withdraw</Button>
+                            <Button
+                                size="sm"
+                                className='items-center'
+                                disabled
+                                title="Deposit functionality coming soon"
+                            >
+                                Deposit
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className='items-center'
+                                disabled
+                                title="Withdraw functionality coming soon"
+                            >
+                                Withdraw
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -143,7 +164,7 @@ export default async function PortfolioPage() {
                         <CardDescription>In Prediction Markets</CardDescription>
                         <CardTitle className="text-2xl font-bold flex items-center">
                             <PieChart className="mr-2 h-5 w-5 text-muted-foreground" />
-                            ${totalPredictionAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${inPredictions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>

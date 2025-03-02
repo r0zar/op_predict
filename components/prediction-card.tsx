@@ -21,10 +21,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronRight, Trash2, Trophy, Ticket, PercentIcon } from "lucide-react";
+import { ChevronRight, Trash2, Trophy, Ticket, PercentIcon, CoinsIcon } from "lucide-react";
 import { Prediction } from "@/lib/prediction-store";
 import { deletePrediction } from "@/app/actions/prediction-actions";
 import { useRouter } from "next/navigation";
+import { RedeemPredictionButton } from "./redeem-prediction-button";
 
 interface PredictionCardProps {
     prediction: Prediction;
@@ -53,11 +54,21 @@ export function PredictionCard({
         });
     };
 
-    // Calculate potential profit (simplified calculation - in a real app, would be based on market odds)
+    // Calculate potential profit based on status
+    const isResolved = prediction.status === 'won' || prediction.status === 'lost';
+    const isRedeemed = prediction.status === 'redeemed';
+    const isWinner = prediction.status === 'won';
+
+    // Use calculated potential payout for resolved predictions, otherwise estimate
+    const potentialPayout = isResolved && prediction.potentialPayout !== undefined
+        ? prediction.potentialPayout
+        : 0;
+
+    // For active predictions, show estimated potential profit based on odds
     const oddsPercentage = marketOdds?.[prediction.outcomeId] ||
         (prediction.outcomeName === 'Yes' ? 60 : prediction.outcomeName === 'No' ? 40 : 50); // Fallback
 
-    const potentialProfit = (prediction.amount / (oddsPercentage / 100)) - prediction.amount;
+    const estimatedProfit = (prediction.amount / (oddsPercentage / 100)) - prediction.amount;
 
     // Get status badge styling
     const getStatusBadgeClass = (status: string) => {
@@ -68,6 +79,8 @@ export function PredictionCard({
                 return 'bg-green-500/10 text-green-500 border-green-500/20';
             case 'lost':
                 return 'bg-red-500/10 text-red-500 border-red-500/20';
+            case 'redeemed':
+                return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
             default:
                 return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
         }
@@ -104,10 +117,24 @@ export function PredictionCard({
         setDeleteDialogOpen(true);
     };
 
+    // Disable link if prediction is resolved
+    const cardWrapper = (children: React.ReactNode) => {
+        if (isResolved && !isRedeemed) {
+            return (
+                <div>{children}</div>
+            );
+        }
+        return (
+            <Link href={`/markets/${prediction.marketId}`}>
+                {children}
+            </Link>
+        );
+    };
+
     return (
         <>
-            <Link href={`/markets/${prediction.marketId}`}>
-                <Card className={`h-full hover:border-primary/50 transition-colors cursor-pointer overflow-hidden ${compact ? 'shadow-sm' : 'shadow-md'} border-dashed relative`}>
+            {cardWrapper(
+                <Card className={`h-full hover:border-primary/50 transition-colors ${isResolved && !isRedeemed ? 'cursor-default' : 'cursor-pointer'} overflow-hidden ${compact ? 'shadow-sm' : 'shadow-md'} border-dashed relative`}>
                     {/* Ticket-style header */}
                     <div className="bg-muted/60 border-b px-3 pt-2 pb-1 flex justify-between items-center">
                         <div className="flex items-center gap-1">
@@ -145,12 +172,41 @@ export function PredictionCard({
 
                             <div className="flex flex-col items-end">
                                 <span className="text-sm font-bold">${prediction.amount.toFixed(2)}</span>
-                                <span className="text-xs text-green-600 flex items-center mt-0.5">
-                                    <Trophy className="h-3 w-3 mr-0.5" />
-                                    +${potentialProfit.toFixed(2)}
-                                </span>
+                                {isResolved ? (
+                                    <span className={`text-xs ${isWinner ? 'text-green-600' : 'text-red-500'} flex items-center mt-0.5`}>
+                                        {isWinner ? (
+                                            <>
+                                                <Trophy className="h-3 w-3 mr-0.5" />
+                                                +${potentialPayout.toFixed(2)}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trophy className="h-3 w-3 mr-0.5" />
+                                                +$0.00
+                                            </>
+                                        )}
+                                    </span>
+                                ) : (
+                                    <span className="text-xs text-green-600 flex items-center mt-0.5">
+                                        <Trophy className="h-3 w-3 mr-0.5" />
+                                        Est: +${estimatedProfit.toFixed(2)}
+                                    </span>
+                                )}
                             </div>
                         </div>
+
+                        {/* Redeem button for resolved predictions */}
+                        {isResolved && !isRedeemed && (
+                            <div className="pt-1">
+                                <RedeemPredictionButton
+                                    predictionId={prediction.id}
+                                    predictionStatus={prediction.status}
+                                    marketName={prediction.nftReceipt.marketName}
+                                    outcomeName={prediction.outcomeName}
+                                    potentialPayout={potentialPayout}
+                                />
+                            </div>
+                        )}
 
                         {/* Faux ticket stub perforation */}
                         <div className="absolute -left-1 top-1/2 w-2 h-4 bg-background rounded-r-full border-t border-r border-b"></div>
@@ -179,7 +235,7 @@ export function PredictionCard({
                         )}
                     </CardFooter>
                 </Card>
-            </Link>
+            )}
 
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -205,3 +261,4 @@ export function PredictionCard({
         </>
     );
 }
+

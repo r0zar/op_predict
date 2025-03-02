@@ -1,8 +1,8 @@
 'use server';
 
 import { userStatsStore, LeaderboardEntry } from '@/lib/user-stats-store';
+import { getUserNameById } from '@/lib/clerk-user';
 import { currentUser } from '@clerk/nextjs/server';
-import { getUserNameById } from '@/lib/user-utils';
 
 // Types for responses from actions
 export type LeaderboardResponse = {

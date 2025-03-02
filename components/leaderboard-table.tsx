@@ -1,55 +1,220 @@
 "use client"
 
-import { useState } from "react"
-import { ArrowUpDown, Trophy } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ArrowUpDown, Trophy, Medal, ChevronsUp, UserIcon, Wallet, Target } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-
-// Helper function to truncate Stacks addresses
-const truncateAddress = (address: string) => {
-  return `${address.slice(0, 5)}...${address.slice(-5)}`
-}
-
-// Simulated user data
-const users = [
-  { id: 1, name: "satoshi.btc", accuracy: 92.5, earnings: 15000 },
-  { id: 2, name: "vitalik.btc", accuracy: 89.3, earnings: 12500 },
-  { id: 3, name: "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7", accuracy: 88.1, earnings: 11000 },
-  { id: 4, name: "op_predictor.btc", accuracy: 87.6, earnings: 10500 },
-  { id: 5, name: "crypto_oracle.btc", accuracy: 86.9, earnings: 9800 },
-  { id: 6, name: "SP1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE", accuracy: 85.4, earnings: 9200 },
-  { id: 7, name: "future_seer.btc", accuracy: 84.7, earnings: 8900 },
-  { id: 8, name: "SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE", accuracy: 83.9, earnings: 8500 },
-  { id: 9, name: "market_wizard.btc", accuracy: 83.2, earnings: 8100 },
-  { id: 10, name: "SP2JXKMSH007NPYAQHKJPQMAQYAD90NQGTVJVQ02B", accuracy: 82.5, earnings: 7800 },
-]
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatUserIdentifier, isStacksAddress } from "@/lib/user-utils"
+import { getLeaderboard, getTopEarners, getTopAccuracy } from "@/app/actions/leaderboard-actions"
+import { LeaderboardEntry } from "@/lib/user-stats-store"
 
 type SortKey = "rank" | "accuracy" | "earnings"
+type LeaderboardType = "overall" | "earnings" | "accuracy"
 
 export function LeaderboardTable() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>("overall")
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([])
   const [sortKey, setSortKey] = useState<SortKey>("rank")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
 
-  const sortedUsers = [...users].sort((a, b) => {
+  // Fetch leaderboard data
+  useEffect(() => {
+    async function fetchLeaderboardData() {
+      setIsLoading(true)
+      try {
+        let response;
+
+        switch (leaderboardType) {
+          case "earnings":
+            response = await getTopEarners(10);
+            break;
+          case "accuracy":
+            response = await getTopAccuracy(10);
+            break;
+          default:
+            response = await getLeaderboard(10);
+            break;
+        }
+
+        if (response.success && response.entries) {
+          setLeaderboardData(response.entries);
+        } else {
+          console.error("Failed to fetch leaderboard data:", response.error);
+          // Use empty array if no data
+          setLeaderboardData([]);
+        }
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        setLeaderboardData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchLeaderboardData();
+  }, [leaderboardType]);
+
+  // Manual sorting after data is fetched (if needed)
+  const sortedUsers = [...leaderboardData].sort((a, b) => {
     if (sortKey === "rank") {
-      return sortOrder === "asc" ? a.id - b.id : b.id - a.id
+      return sortOrder === "asc" ?
+        (a.rank || 0) - (b.rank || 0) :
+        (b.rank || 0) - (a.rank || 0);
     }
     if (sortKey === "accuracy") {
-      return sortOrder === "asc" ? a.accuracy - b.accuracy : b.accuracy - a.accuracy
+      return sortOrder === "asc" ?
+        a.accuracy - b.accuracy :
+        b.accuracy - a.accuracy;
     }
     if (sortKey === "earnings") {
-      return sortOrder === "asc" ? a.earnings - b.earnings : b.earnings - a.earnings
+      return sortOrder === "asc" ?
+        a.totalEarnings - b.totalEarnings :
+        b.totalEarnings - a.totalEarnings;
     }
-    return 0
-  })
+    return 0;
+  });
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      setSortKey(key)
-      setSortOrder("desc")
+      setSortKey(key);
+      setSortOrder("desc");
     }
+  };
+
+  const handleTabChange = (value: string) => {
+    setLeaderboardType(value as LeaderboardType);
+  };
+
+  // Helper to render trophy icon based on rank
+  const getRankIcon = (rank: number) => {
+    if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
+    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
+    if (rank === 3) return <Medal className="h-5 w-5 text-amber-700" />;
+    return <span className="font-mono text-sm text-muted-foreground">{rank}</span>;
+  };
+
+  // Helper to get username display
+  const getUserDisplay = (user: LeaderboardEntry) => {
+    if (!user.username) return formatUserIdentifier(user.userId);
+
+    if (user.username.endsWith('.btc')) {
+      return <span className="font-semibold text-primary">{user.username}</span>;
+    }
+
+    if (isStacksAddress(user.username)) {
+      return <span className="font-mono text-sm">{formatUserIdentifier(user.username)}</span>;
+    }
+
+    return user.username;
+  };
+
+  return (
+    <Card className="w-full shadow-sm border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl flex items-center">
+          <Trophy className="mr-2 h-6 w-6 text-primary/70" />
+          Leaderboard
+        </CardTitle>
+        <CardDescription>
+          Top predictors ranked by performance
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="overall" className="w-full" onValueChange={handleTabChange}>
+          <TabsList className="grid grid-cols-3 mb-6">
+            <TabsTrigger value="overall" className="flex items-center gap-1">
+              <ChevronsUp className="h-4 w-4" />
+              <span>Overall</span>
+            </TabsTrigger>
+            <TabsTrigger value="earnings" className="flex items-center gap-1">
+              <Wallet className="h-4 w-4" />
+              <span>Earnings</span>
+            </TabsTrigger>
+            <TabsTrigger value="accuracy" className="flex items-center gap-1">
+              <Target className="h-4 w-4" />
+              <span>Accuracy</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overall" className="pt-2">
+            <LeaderboardTableContent
+              isLoading={isLoading}
+              users={sortedUsers}
+              sortKey={sortKey}
+              sortOrder={sortOrder}
+              toggleSort={toggleSort}
+              getRankIcon={getRankIcon}
+              getUserDisplay={getUserDisplay}
+            />
+          </TabsContent>
+
+          <TabsContent value="earnings" className="pt-2">
+            <LeaderboardTableContent
+              isLoading={isLoading}
+              users={sortedUsers}
+              sortKey={sortKey}
+              sortOrder={sortOrder}
+              toggleSort={toggleSort}
+              getRankIcon={getRankIcon}
+              getUserDisplay={getUserDisplay}
+            />
+          </TabsContent>
+
+          <TabsContent value="accuracy" className="pt-2">
+            <LeaderboardTableContent
+              isLoading={isLoading}
+              users={sortedUsers}
+              sortKey={sortKey}
+              sortOrder={sortOrder}
+              toggleSort={toggleSort}
+              getRankIcon={getRankIcon}
+              getUserDisplay={getUserDisplay}
+            />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Extracted table component for reuse between tabs
+interface LeaderboardTableContentProps {
+  isLoading: boolean
+  users: LeaderboardEntry[]
+  sortKey: SortKey
+  sortOrder: "asc" | "desc"
+  toggleSort: (key: SortKey) => void
+  getRankIcon: (rank: number) => React.ReactNode
+  getUserDisplay: (user: LeaderboardEntry) => React.ReactNode
+}
+
+function LeaderboardTableContent({
+  isLoading,
+  users,
+  sortKey,
+  sortOrder,
+  toggleSort,
+  getRankIcon,
+  getUserDisplay
+}: LeaderboardTableContentProps) {
+
+  if (isLoading) {
+    return <LeaderboardSkeleton />;
   }
 
   return (
@@ -57,7 +222,7 @@ export function LeaderboardTable() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">
+            <TableHead className="w-[80px]">
               <Button variant="ghost" onClick={() => toggleSort("rank")} className="font-bold">
                 Rank
                 <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -76,31 +241,99 @@ export function LeaderboardTable() {
                 <ArrowUpDown className="ml-2 h-4 w-4" />
               </Button>
             </TableHead>
+            <TableHead className="text-right">Predictions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedUsers.map((user, index) => (
-            <TableRow key={user.id}>
-              <TableCell className="font-medium">
-                {index === 0 && <Trophy className="inline-block mr-2 text-yellow-500" />}
-                {index === 1 && <Trophy className="inline-block mr-2 text-gray-400" />}
-                {index === 2 && <Trophy className="inline-block mr-2 text-amber-600" />}
-                {index + 1}
+          {users.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="h-32 text-center">
+                No leaderboard data available yet
+              </TableCell>
+            </TableRow>
+          ) : (
+            users.map((user, index) => (
+              <TableRow key={user.userId} className={index < 3 ? "bg-muted/30" : ""}>
+                <TableCell className="font-medium flex items-center justify-center">
+                  {getRankIcon(user.rank || index + 1)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>
+                        <UserIcon className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span>{getUserDisplay(user)}</span>
+                      {index < 3 && (
+                        <Badge variant="outline" className="w-fit text-[10px] py-0">
+                          {index === 0 ? "Top Predictor" :
+                            index === 1 ? "Expert" :
+                              "Veteran"}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right font-semibold">
+                  {user.accuracy.toFixed(1)}%
+                </TableCell>
+                <TableCell className="text-right font-semibold text-green-600">
+                  ${user.totalEarnings.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {user.totalPredictions}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// Loading skeleton for the leaderboard
+function LeaderboardSkeleton() {
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[80px]">Rank</TableHead>
+            <TableHead>Predictor</TableHead>
+            <TableHead className="text-right">Accuracy</TableHead>
+            <TableHead className="text-right">Earnings</TableHead>
+            <TableHead className="text-right">Predictions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <Skeleton className="h-6 w-6 rounded-full" />
               </TableCell>
               <TableCell>
-                {user.name.endsWith(".btc") ? (
-                  <span className="font-semibold text-primary">{user.name}</span>
-                ) : (
-                  <span className="font-mono">{truncateAddress(user.name)}</span>
-                )}
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
               </TableCell>
-              <TableCell className="text-right">{user.accuracy.toFixed(1)}%</TableCell>
-              <TableCell className="text-right">${user.earnings.toLocaleString()}</TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-12 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-16 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-8 ml-auto" />
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
 
