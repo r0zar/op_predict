@@ -354,11 +354,11 @@ export default async function MarketPage({ params }: { params: { id: string } })
                     </Card>
 
                     {/* Add ResolveMarketButton here for admin users */}
-                    {!isMarketClosed && (
+                    {isUserAdmin && !isMarketClosed && (
                         <div className="mt-6">
                             <Card className="border border-primary/30 shadow-sm bg-primary/5">
                                 <CardContent className="pt-6 pb-4">
-                                    <h3 className="text-center font-semibold mb-4 text-primary">Vault Admin Controls</h3>
+                                    <h3 className="text-center font-semibold mb-4 text-primary">Admin Controls</h3>
                                     <ResolveMarketButton
                                         marketId={market.id}
                                         marketName={market.name}
