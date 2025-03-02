@@ -1,9 +1,8 @@
-
-import { AppSidebar } from '@/components/app-sidebar';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { AppSidebar } from "@/components/app-sidebar";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-export default async function SettingsLayout({
+export default async function PortfolioLayout({
     children,
 }: {
     children: React.ReactNode;

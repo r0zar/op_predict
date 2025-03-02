@@ -1,0 +1,320 @@
+'use server'
+
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+import { predictionStore, Prediction } from '@/lib/prediction-store';
+import { marketStore } from '@/lib/market-store';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { isAdmin } from '@/lib/utils';
+
+// Define the validation schema for prediction creation
+const predictionFormSchema = z.object({
+    marketId: z.string().min(1, { message: "Market ID is required" }),
+    outcomeId: z.number({ required_error: "Outcome ID is required" }),
+    amount: z.number().positive({ message: "Amount must be positive" }),
+    userId: z.string().min(1, { message: "User ID is required" }),
+});
+
+export type CreatePredictionFormData = z.infer<typeof predictionFormSchema>;
+
+/**
+ * Create a new prediction and generate an NFT receipt
+ */
+export async function createPrediction(formData: CreatePredictionFormData): Promise<{
+    success: boolean;
+    prediction?: Prediction;
+    nftReceipt?: any;
+    outcomeName?: string;
+    error?: string;
+}> {
+    try {
+        // Validate input data
+        const validatedData = predictionFormSchema.parse(formData);
+
+        // Get the market to verify it exists and get outcome name
+        const market = await marketStore.getMarket(validatedData.marketId);
+        if (!market) {
+            return { success: false, error: 'Market not found' };
+        }
+
+        // Find the outcome
+        const outcome = market.outcomes.find(o => o.id === validatedData.outcomeId);
+        if (!outcome) {
+            return { success: false, error: 'Outcome not found' };
+        }
+
+        // Create the prediction with NFT receipt
+        const prediction = await predictionStore.createPrediction({
+            marketId: market.id,
+            marketName: market.name,
+            outcomeId: validatedData.outcomeId,
+            outcomeName: outcome.name,
+            userId: validatedData.userId,
+            amount: validatedData.amount
+        });
+
+        // Update the market outcome votes and pool amount
+        const updatedOutcomes = market.outcomes.map(o => {
+            if (o.id === validatedData.outcomeId) {
+                return {
+                    ...o,
+                    votes: (o.votes || 0) + 1,
+                };
+            }
+            return o;
+        });
+
+        // Update the market
+        await marketStore.updateMarket(market.id, {
+            outcomes: updatedOutcomes,
+            participants: (market.participants || 0) + 1,
+            poolAmount: (market.poolAmount || 0) + validatedData.amount,
+        });
+
+        // Revalidate relevant paths
+        revalidatePath(`/markets/${market.id}`);
+        revalidatePath('/markets');
+        revalidatePath('/portfolio');
+
+        return {
+            success: true,
+            prediction,
+            nftReceipt: prediction.nftReceipt,
+            outcomeName: outcome.name
+        };
+    } catch (error) {
+        console.error('Error creating prediction:', error);
+
+        if (error instanceof z.ZodError) {
+            return {
+                success: false,
+                error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ')
+            };
+        }
+
+        return {
+            success: false,
+            error: 'Failed to create prediction. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get all predictions for the current authenticated user
+ */
+export async function getUserPredictions(): Promise<{
+    success: boolean;
+    predictions?: Prediction[];
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Get all predictions for the user
+        const predictions = await predictionStore.getUserPredictions(user.id);
+
+        return {
+            success: true,
+            predictions
+        };
+    } catch (error) {
+        console.error('Error getting user predictions:', error);
+        return {
+            success: false,
+            error: 'Failed to get predictions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get all predictions for a specific market
+ */
+export async function getMarketPredictions(marketId: string): Promise<{
+    success: boolean;
+    predictions?: Prediction[];
+    error?: string;
+}> {
+    try {
+        if (!marketId) {
+            return { success: false, error: 'Market ID is required' };
+        }
+
+        // Get all predictions for the market
+        const predictions = await predictionStore.getMarketPredictions(marketId);
+
+        return {
+            success: true,
+            predictions
+        };
+    } catch (error) {
+        console.error('Error getting market predictions:', error);
+        return {
+            success: false,
+            error: 'Failed to get predictions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get a specific prediction by ID
+ */
+export async function getPrediction(id: string): Promise<{
+    success: boolean;
+    prediction?: Prediction;
+    error?: string;
+}> {
+    try {
+        if (!id) {
+            return { success: false, error: 'Prediction ID is required' };
+        }
+
+        // Get the prediction
+        const prediction = await predictionStore.getPrediction(id);
+
+        if (!prediction) {
+            return { success: false, error: 'Prediction not found' };
+        }
+
+        return {
+            success: true,
+            prediction
+        };
+    } catch (error) {
+        console.error('Error getting prediction:', error);
+        return {
+            success: false,
+            error: 'Failed to get prediction. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get a specific NFT receipt
+ */
+export async function getNFTReceipt(id: string): Promise<{
+    success: boolean;
+    receipt?: any;
+    error?: string;
+}> {
+    try {
+        if (!id) {
+            return { success: false, error: 'NFT Receipt ID is required' };
+        }
+
+        // Get the NFT receipt
+        const receipt = await predictionStore.getNFTReceipt(id);
+
+        if (!receipt) {
+            return { success: false, error: 'NFT Receipt not found' };
+        }
+
+        return {
+            success: true,
+            receipt
+        };
+    } catch (error) {
+        console.error('Error getting NFT receipt:', error);
+        return {
+            success: false,
+            error: 'Failed to get NFT receipt. Please try again.'
+        };
+    }
+}
+
+/**
+ * Delete a prediction (admin only)
+ */
+export async function deletePrediction(predictionId: string): Promise<{
+    success: boolean;
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        const userId = user?.id;
+
+        // Check if user is an admin
+        if (!userId || !isAdmin(userId)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        if (!predictionId) {
+            return { success: false, error: 'Prediction ID is required' };
+        }
+
+        // Delete the prediction
+        const result = await predictionStore.deletePrediction(predictionId);
+
+        if (!result) {
+            return { success: false, error: 'Failed to delete prediction' };
+        }
+
+        // Revalidate relevant paths
+        revalidatePath('/portfolio');
+        revalidatePath('/markets');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting prediction:', error);
+        return {
+            success: false,
+            error: 'Failed to delete prediction. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get all predictions (admin only)
+ */
+export async function getAllPredictions(): Promise<{
+    success: boolean;
+    predictions?: Prediction[];
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        const userId = user?.id;
+
+        // Check if user is an admin
+        if (!userId || !isAdmin(userId)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        // Get all market predictions to get all prediction IDs
+        const markets = await marketStore.getMarkets();
+        const allPredictions: Prediction[] = [];
+
+        // Gather all predictions from all markets
+        for (const market of markets) {
+            const marketPredictions = await predictionStore.getMarketPredictions(market.id);
+            if (marketPredictions.length > 0) {
+                allPredictions.push(...marketPredictions);
+            }
+        }
+
+        // Sort by created date (newest first)
+        allPredictions.sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        return {
+            success: true,
+            predictions: allPredictions
+        };
+    } catch (error) {
+        console.error('Error getting all predictions:', error);
+        return {
+            success: false,
+            error: 'Failed to get predictions. Please try again.'
+        };
+    }
+}

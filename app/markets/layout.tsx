@@ -1,19 +1,13 @@
+import { AppSidebar } from "@/components/app-sidebar";
+import { currentUser } from "@clerk/nextjs/server";
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { redirect } from "next/navigation";
-
-export default async function SettingsLayout({
+export default async function MarketsLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    // Get the current user, but don't redirect if not signed in
     const user = await currentUser();
-
-    // Redirect if not signed in
-    if (!user) {
-        redirect("/");
-    }
 
     return (
         <div className="flex min-h-screen">

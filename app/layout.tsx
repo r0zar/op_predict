@@ -12,12 +12,26 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs'
+import { Toaster } from "sonner"
+import { cn } from "@/lib/utils"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "OP_PREDICT | Predict the future. Earn Bitcoin",
   description: "Explore and participate in markets for politics, sports, and more.",
+  icons: {
+    icon: '/favicon.ico',
+  },
+  openGraph: {
+    title: "OP_PREDICT | Predict the future. Earn Bitcoin",
+    description: "Explore and participate in markets for politics, sports, and more.",
+    images: [
+      {
+        url: '/og-image.png',
+      },
+    ],
+  },
 }
 
 export default function RootLayout({
@@ -40,7 +54,7 @@ export default function RootLayout({
                 </div>
                 <nav className="hidden md:flex items-center gap-6">
                   <span className="text-sm font-medium text-muted-foreground/60 cursor-not-allowed flex items-center">
-                    Explore <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
+                    Markets <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
                   </span>
                   <span className="text-sm font-medium text-muted-foreground/60 cursor-not-allowed flex items-center">
                     Leaderboard <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Coming Soon</span>
@@ -84,6 +98,47 @@ export default function RootLayout({
               </div>
             </footer>
           </div>
+          <Toaster
+            position="top-right"
+            theme="light"
+            toastOptions={{
+              classNames: {
+                toast: 'toast',
+                title: 'title',
+                description: 'description',
+                actionButton: 'action-button',
+                cancelButton: 'cancel-button',
+                closeButton: 'close-button',
+                success: 'success-toast',
+                error: 'error-toast',
+                warning: 'warning-toast',
+                info: 'info-toast',
+              },
+              style: {
+                background: 'hsl(var(--background))',
+                color: 'hsl(var(--foreground))',
+                border: '1px solid hsl(var(--border))',
+              },
+            }}
+            icons={{
+              success: (
+                <div className="h-16 w-4 rounded-full bg-primary flex items-center justify-center p-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="hsl(var(--primary-foreground))"
+                    className="h-3 w-3"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              ),
+            }}
+          />
         </body>
       </ClerkProvider>
     </html>

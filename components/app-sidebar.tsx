@@ -33,9 +33,6 @@ export function AppSidebar() {
       <ScrollArea className="h-screen py-4">
         <div className="space-y-4 py-4">
           <div className="px-3 py-2">
-            <h2 className={`mb-2 px-4 text-lg font-semibold tracking-tight ${isExpanded ? "" : "hidden"}`}>
-              OP_PREDICT
-            </h2>
             <div className="space-y-1">
               <SidebarItem href="/" icon={Home} text="Home" isExpanded={isExpanded} />
               <SidebarItem href="/explore" icon={TrendingUp} text="Explore" isExpanded={isExpanded} />
@@ -49,7 +46,7 @@ export function AppSidebar() {
             </h2>
             <div className="space-y-1">
               <SidebarItem href="/create" icon={PlusCircle} text="Create Market" isExpanded={isExpanded} />
-              <SidebarItem href="/wallet" icon={Wallet} text="Wallet" isExpanded={isExpanded} />
+              <SidebarItem href="/portfolio" icon={Wallet} text="Portfolio" isExpanded={isExpanded} />
               <SidebarItem href="/settings" icon={Settings} text="Settings" isExpanded={isExpanded} />
             </div>
           </div>
