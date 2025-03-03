@@ -78,10 +78,10 @@ export function ResolveMarketButton({
     };
 
     return (
-        <>
+        <div className='flex justify-center w-full'>
             <Button
                 onClick={() => setOpen(true)}
-                className={cn("flex items-center justify-center gap-2", className)}
+                className={cn("flex items-center justify-center gap-2 w-full", className)}
                 variant="default"
                 size="lg"
             >
@@ -130,6 +130,6 @@ export function ResolveMarketButton({
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </>
+        </div>
     );
 } 

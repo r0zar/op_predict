@@ -125,8 +125,8 @@ export function LeaderboardTable() {
       return <span className="font-mono text-sm">{formatUserIdentifier(user.username)}</span>;
     }
 
-    // If it starts with "User-", it's an anonymized id
-    if (user.username.startsWith('User-')) {
+    // If it starts with "user-", it's an anonymized id
+    if (user.username.startsWith('user-')) {
       return <span className="font-mono text-sm">{user.username}</span>;
     }
 

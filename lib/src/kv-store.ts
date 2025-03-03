@@ -12,6 +12,7 @@ export const KV_PREFIXES = {
     MARKET: 'market',
     MARKET_IDS: 'market_ids',
     USER_MARKETS: 'user_markets',
+    MARKET_PARTICIPANTS: 'market_participants',
     PREDICTION: 'prediction',
     USER_PREDICTIONS: 'user_predictions',
     MARKET_PREDICTIONS: 'market_predictions',
@@ -177,6 +178,20 @@ export async function getSetMembers(setType: EntityType, id: string): Promise<st
     } catch (error) {
         console.error(`Error getting members from set ${setType} with ID ${id}:`, error);
         return [];
+    }
+}
+
+/**
+ * Check if a member is in a set
+ */
+export async function isSetMember(setType: EntityType, id: string, memberId: string): Promise<boolean> {
+    try {
+        const key = getKey(setType, id);
+        const result = await kv.sismember(key, memberId);
+        return !!result;
+    } catch (error) {
+        console.error(`Error checking set membership for ${setType} with ID ${id}:`, error);
+        return false;
     }
 }
 

@@ -84,10 +84,10 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
             return o;
         });
 
-        // Update the market
+        // Note: We no longer update the participants count here
+        // It's now handled properly in the marketStore.updateMarketStats method
         await marketStore.updateMarket(market.id, {
             outcomes: updatedOutcomes,
-            participants: (market.participants || 0) + 1,
             poolAmount: (market.poolAmount || 0) + validatedData.amount,
         });
 

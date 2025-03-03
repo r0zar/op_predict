@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -21,28 +21,43 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronRight, Trash2, Trophy, Ticket, PercentIcon, CoinsIcon } from "lucide-react";
+import { ChevronRight, Trash2, Trophy, Ticket, PercentIcon, CoinsIcon, ShieldAlert, User } from "lucide-react";
 import { Prediction } from "@op-predict/lib";
 import { deletePrediction } from "@/app/actions/prediction-actions";
 import { useRouter } from "next/navigation";
 import { RedeemPredictionButton } from "./redeem-prediction-button";
+import { truncateUserId } from "@/lib/user-utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PredictionCardProps {
     prediction: Prediction;
     compact?: boolean;
     isAdmin?: boolean;
     marketOdds?: { [key: number]: number }; // Map of outcomeId to percentage
+    creatorName?: string;
 }
 
 export function PredictionCard({
     prediction,
     compact = false,
     isAdmin = false,
-    marketOdds
+    marketOdds,
+    creatorName
 }: PredictionCardProps) {
     const router = useRouter();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [displayCreator, setDisplayCreator] = useState<string>("");
+
+    useEffect(() => {
+        // If creatorName is provided as prop, use it
+        // Otherwise use a truncated version of the userId
+        if (creatorName) {
+            setDisplayCreator(creatorName);
+        } else {
+            setDisplayCreator(truncateUserId(prediction.userId));
+        }
+    }, [creatorName, prediction.userId]);
 
     // Format date to display
     const formatDate = (dateString: string) => {
@@ -125,7 +140,7 @@ export function PredictionCard({
             );
         }
         return (
-            <Link href={`/markets/${prediction.marketId}`}>
+            <Link href={`/prediction/${prediction.id}`}>
                 {children}
             </Link>
         );
@@ -139,57 +154,57 @@ export function PredictionCard({
                     <div className="bg-muted/60 border-b px-3 pt-2 pb-1 flex justify-between items-center">
                         <div className="flex items-center gap-1">
                             <Ticket className="h-3.5 w-3.5 opacity-70" />
-                            <span className="text-xs font-medium truncate max-w-[150px]">
-                                Receipt #{prediction.nftReceipt.id.substring(0, 4)}
+                            <span className="text-xs font-medium truncate max-w-[80px]">
+                                #{prediction.nftReceipt.id.substring(0, 4)}
                             </span>
                         </div>
+
+                        {/* Creator info in header */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Badge variant="secondary" className="text-xs px-2 py-0 h-5 items-center">
+                                        <User className="h-3 w-3 mr-1 opacity-80" />
+                                        {displayCreator}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="bg-background border">
+                                    <div className="px-1 py-1">
+                                        <p className="font-medium">Prediction Owner</p>
+                                        <p className="text-xs text-muted-foreground">ID: {prediction.userId}</p>
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
                         <span className="text-xs opacity-70">{formatDate(prediction.createdAt)}</span>
                     </div>
 
                     <CardContent className={`${compact ? 'pt-3 pb-2 px-3' : 'p-3'} space-y-2`}>
                         {/* Market name - secondary info */}
-                        <h3 className={`text-xs text-muted-foreground line-clamp-1 mb-1`}>
+                        <h3 className={`text-md text-foreground line-clamp-1 mb-1`}>
                             {prediction.nftReceipt.marketName}
                         </h3>
 
-                        {/* Primary info - bold section with cost, outcome and odds */}
-                        <div className="bg-muted/30 rounded-md p-2 flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="text-sm font-semibold flex items-center">
-                                    <Badge
-                                        variant={prediction.outcomeName === 'Yes' ? 'default' :
-                                            prediction.outcomeName === 'No' ? 'destructive' : 'secondary'}
-                                        className="text-[10px] py-0 h-4 items-center"
-                                    >
-                                        {prediction.outcomeName}
-                                    </Badge>
-                                </span>
-                                <div className="flex items-center mt-1">
-                                    <PercentIcon className="h-3 w-3 mr-1 opacity-70" />
-                                    <span className="text-xs">{oddsPercentage}% chance</span>
-                                </div>
+
+                        {/* Primary info - bold section with outcome and amount */}
+                        <div className="rounded-md p-0 flex items-center justify-between">
+                            <div className="flex items-center text-xl">
+                                <Badge
+                                    variant={prediction.outcomeName === 'Yes' ? 'default' :
+                                        prediction.outcomeName === 'No' ? 'destructive' : 'secondary'}
+                                    className="text-sm py-1 px-3 h-6 items-center"
+                                >
+                                    {prediction.outcomeName}
+                                </Badge>
                             </div>
 
-                            <div className="flex flex-col items-end">
-                                <span className="text-sm font-bold">${prediction.amount.toFixed(2)}</span>
-                                {isResolved ? (
-                                    <span className={`text-xs ${isWinner ? 'text-green-600' : 'text-red-500'} flex items-center mt-0.5`}>
-                                        {isWinner ? (
-                                            <>
-                                                <Trophy className="h-3 w-3 mr-0.5" />
-                                                +${potentialPayout.toFixed(2)}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Trophy className="h-3 w-3 mr-0.5" />
-                                                +$0.00
-                                            </>
-                                        )}
-                                    </span>
-                                ) : (
-                                    <span className="text-xs text-green-600 flex items-center mt-0.5">
-                                        <Trophy className="h-3 w-3 mr-0.5" />
-                                        Est: +${estimatedProfit.toFixed(2)}
+                            <div className="text-right">
+                                <span className="text-2xl font-extralight">${prediction.amount.toFixed(2)}</span>
+                                {isResolved && isWinner && (
+                                    <span className="text-xs text-green-600 block mt-1">
+                                        <Trophy className="h-3 w-3 inline mr-0.5" />
+                                        +${potentialPayout.toFixed(2)}
                                     </span>
                                 )}
                             </div>

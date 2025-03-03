@@ -21,6 +21,9 @@ const marketFormSchema = z.object({
     }).max(500, {
         message: "Description must not exceed 500 characters."
     }),
+    endDate: z.string().min(1, {
+        message: "Voting deadline is required"
+    }),
     outcomes: z.array(
         z.object({
             id: z.number(),
@@ -48,7 +51,7 @@ export async function createMarket(formData: CreateMarketFormData): Promise<{ su
             outcomes: validatedData.outcomes,
             createdBy: (await currentUser())?.id || '',
             category: 'general',
-            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            endDate: new Date(validatedData.endDate).toISOString(),
             imageUrl: '',
         });
 

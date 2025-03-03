@@ -83,12 +83,31 @@ async function MarketPredictions({ marketId }: { marketId: string }) {
     if (!predictions.success) {
         throw new Error("Failed to load predictions");
     }
+
+    // Import the function to get usernames
+    const { getUserNameById } = await import("@/lib/clerk-user");
+
+    // Use Promise.all to fetch all usernames in parallel for better performance
+    const predictionsWithCreatorNames = await Promise.all(
+        predictions.predictions?.map(async (prediction) => {
+            const creatorName = await getUserNameById(prediction.userId);
+            return {
+                ...prediction,
+                creatorName
+            };
+        }) || []
+    );
+
     return (
         <div className="space-y-4">
             <h2 className="text-xl font-semibold">Recent Predictions</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {predictions?.predictions?.map((prediction) => (
-                    <PredictionCard key={prediction.id} prediction={prediction} />
+                {predictionsWithCreatorNames.map((prediction) => (
+                    <PredictionCard
+                        key={prediction.id}
+                        prediction={prediction}
+                        creatorName={prediction.creatorName}
+                    />
                 ))}
             </div>
         </div>
@@ -332,31 +351,23 @@ export default async function MarketPage({ params }: { params: { id: string } })
                             )}
                         </div>
 
-                        <div className="flex items-center text-sm text-muted-foreground mb-6">
-                            <Clock className="h-4 w-4 mr-1" />
-                            <span>
-                                Market {isMarketClosed ? 'ended' : 'ends'} on{' '}
-                                {new Date(market.endDate).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    timeZoneName: 'short'
-                                })}
-                            </span>
-                        </div>
-
-                        {isUserAdmin && !isMarketClosed && (
-                            <div className="mt-6">
-                                <ResolveMarketButton
-                                    marketName={market.name}
-                                    marketId={market.id}
-                                    outcomes={market.outcomes}
-                                    isAdmin={isUserAdmin}
-                                />
+                        <div className="flex items-center text-sm bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-6">
+                            <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
+                            <div>
+                                <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-1">Voting Deadline</h3>
+                                <p className="text-blue-700 dark:text-blue-400">
+                                    Predictions for this market {isMarketClosed ? 'ended' : 'will end'} on{' '}
+                                    {new Date(market.endDate).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        timeZoneName: 'short'
+                                    })}
+                                </p>
                             </div>
-                        )}
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -377,6 +388,17 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                 />
                             </CardContent>
                         </Card>
+                    )}
+
+                    {isUserAdmin && !isMarketClosed && (
+                        <div className="mt-6">
+                            <ResolveMarketButton
+                                marketName={market.name}
+                                marketId={market.id}
+                                outcomes={market.outcomes}
+                                isAdmin={isUserAdmin}
+                            />
+                        </div>
                     )}
                 </div>
             </div>

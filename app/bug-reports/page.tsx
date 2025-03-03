@@ -6,7 +6,8 @@ import { getBugReports } from "@/app/actions/bug-report-actions";
 import { BugReportForm } from "@/components/bug-report-form";
 import { BugReportTable } from "@/components/bug-report-table";
 import { DollarSign, AlertTriangle } from "lucide-react";
-import { BugReport } from "@op-predict/lib";
+import { BugReport, userBalanceStore } from "@op-predict/lib";
+import { isAdmin } from "@/lib/src/utils";
 
 export default async function BugReportPage() {
     const user = await currentUser();
@@ -15,11 +16,14 @@ export default async function BugReportPage() {
         redirect("/sign-in");
     }
 
-    // Check if user is admin
-    const isAdmin = user.publicMetadata.role === "admin";
+    // Check if user is admin using the utility function
+    const isUserAdmin = isAdmin(user.id);
 
-    // Fetch bug reports
-    const reportsResult = await getBugReports();
+    // Fetch bug reports and user balance in parallel
+    const [reportsResult, userBalance] = await Promise.all([
+        getBugReports(),
+        userBalanceStore.getUserBalance(user.id)
+    ]);
 
     if (!reportsResult.success) {
         return (
@@ -41,15 +45,18 @@ export default async function BugReportPage() {
     // Filter reports for the current user (if not admin)
     const userReports = allReports.filter((report: BugReport) => report.createdBy === user.id);
 
-    // Calculate earnings
+    // Calculate reported earnings from bug reports for display purposes
     const totalInitialRewards = userReports.filter(report => report.initialRewardPaid).length * 10;
     const totalConfirmationRewards = userReports.filter(report => report.confirmationRewardPaid).length * 90;
-    const totalEarnings = totalInitialRewards + totalConfirmationRewards;
+    const totalReportedEarnings = totalInitialRewards + totalConfirmationRewards;
+    
+    // Get actual user balance for the most accurate information
+    const actualUserBalance = userBalance?.availableBalance || 0;
 
     return (
         <div className="container mx-auto py-10">
             <div className="mb-8">
-                <Card className="bg-gradient-to-r from-slate-900 to-blue-900 border-blue-800">
+                <Card className="bg-secondary-gradient">
                     <CardHeader>
                         <CardTitle className="flex items-center text-xl text-blue-400">
                             <DollarSign className="h-5 w-5 mr-2 text-blue-400" />
@@ -81,8 +88,12 @@ export default async function BugReportPage() {
                                         <span className="font-medium text-blue-400">${totalConfirmationRewards}</span>
                                     </div>
                                     <div className="flex justify-between text-base pt-2 border-t border-slate-700">
-                                        <span className="font-bold">Total earned:</span>
-                                        <span className="font-bold text-blue-400">${totalEarnings}</span>
+                                        <span className="font-bold">Bug bounty earnings:</span>
+                                        <span className="font-bold text-blue-400">${totalReportedEarnings}</span>
+                                    </div>
+                                    <div className="flex justify-between text-base pt-2 border-t border-slate-700">
+                                        <span className="font-bold text-green-400">Current balance:</span>
+                                        <span className="font-bold text-green-400">${actualUserBalance.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -102,19 +113,19 @@ export default async function BugReportPage() {
                 </Card>
             </div>
 
-            <h1 className="text-3xl font-bold mb-6 text-slate-200">Bug Reports</h1>
+            <h1 className="text-3xl font-bold mb-6">Bug Reports</h1>
 
-            <Tabs defaultValue="submit" className="text-slate-200">
-                <TabsList className="mb-4 bg-slate-800">
-                    <TabsTrigger value="submit" className="data-[state=active]:bg-slate-900 data-[state=active]:text-blue-400">Submit a Report</TabsTrigger>
-                    <TabsTrigger value="user-reports" className="data-[state=active]:bg-slate-900 data-[state=active]:text-blue-400">My Reports</TabsTrigger>
-                    {isAdmin && <TabsTrigger value="all-reports" className="data-[state=active]:bg-slate-900 data-[state=active]:text-blue-400">All Reports</TabsTrigger>}
+            <Tabs defaultValue="submit">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="submit">Submit a Report</TabsTrigger>
+                    <TabsTrigger value="user-reports">My Reports</TabsTrigger>
+                    {isUserAdmin && <TabsTrigger value="all-reports">All Reports</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="submit">
-                    <Card className="bg-slate-800 border-slate-700">
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="text-slate-200">Submit a Bug Report</CardTitle>
+                            <CardTitle>Submit a Bug Report</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <BugReportForm />
@@ -123,31 +134,31 @@ export default async function BugReportPage() {
                 </TabsContent>
 
                 <TabsContent value="user-reports">
-                    <Card className="bg-slate-800 border-slate-700">
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="text-slate-200">My Bug Reports</CardTitle>
+                            <CardTitle>My Bug Reports</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {userReports.length > 0 ? (
-                                <BugReportTable reports={userReports} isAdmin={isAdmin} />
+                                <BugReportTable reports={userReports} isAdmin={isUserAdmin} />
                             ) : (
-                                <p className="text-slate-400">You haven't submitted any bug reports yet.</p>
+                                <p className="text-muted-foreground">You haven't submitted any bug reports yet.</p>
                             )}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {isAdmin && (
+                {isUserAdmin && (
                     <TabsContent value="all-reports">
-                        <Card className="bg-slate-800 border-slate-700">
+                        <Card>
                             <CardHeader>
-                                <CardTitle className="text-slate-200">All Bug Reports</CardTitle>
+                                <CardTitle>All Bug Reports</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 {allReports.length > 0 ? (
-                                    <BugReportTable reports={allReports} isAdmin={isAdmin} />
+                                    <BugReportTable reports={allReports} isAdmin={isUserAdmin} />
                                 ) : (
-                                    <p className="text-slate-400">No bug reports have been submitted yet.</p>
+                                    <p className="text-muted-foreground">No bug reports have been submitted yet.</p>
                                 )}
                             </CardContent>
                         </Card>

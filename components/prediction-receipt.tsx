@@ -108,6 +108,7 @@ export function PredictionReceipt({
                             <p>{formatDate(receipt.createdAt)}</p>
                         </div>
 
+
                         <div className="space-y-1">
                             <h3 className="font-medium text-sm text-muted-foreground">RECEIPT ID</h3>
                             <div className="flex items-center justify-between bg-muted/50 rounded p-2">

@@ -75,8 +75,8 @@ export const predictionStore = {
                 kvStore.storeEntity('PREDICTION_NFT', nftReceipt.id, nftReceipt),
                 kvStore.addToSet('USER_PREDICTIONS', data.userId, id),
                 kvStore.addToSet('MARKET_PREDICTIONS', data.marketId, id),
-                // Update market stats
-                marketStore.updateMarketStats(data.marketId, data.outcomeId, data.amount)
+                // Update market stats - passing userId to track unique participants
+                marketStore.updateMarketStats(data.marketId, data.outcomeId, data.amount, data.userId)
             ]);
 
             return prediction;

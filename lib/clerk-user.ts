@@ -15,12 +15,12 @@ export async function getUserNameById(userId: string): Promise<string | undefine
             }
 
             // Last resort: truncated user ID with prefix
-            return `User-${truncateUserId(userId)}`;
+            return `${truncateUserId(userId)}`;
         }
 
         return undefined;
     } catch (error) {
         console.error(`Error fetching user ${userId}:`, error);
-        return `User-${truncateUserId(userId)}`;
+        return `${truncateUserId(userId)}`;
     }
 }

@@ -179,6 +179,7 @@ export function PredictionForm({ market, outcomes, userId }: PredictionFormProps
                     })}
                 </div>
 
+
                 <div className="pt-2">
                     <Button
                         className={cn(

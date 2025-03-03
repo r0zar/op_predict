@@ -37,6 +37,16 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
   const [showSignInDialog, setShowSignInDialog] = useState(false)
   const [showAllOutcomes, setShowAllOutcomes] = useState(false)
   const { name, participants, poolAmount, outcomes, category, endDate, type } = market
+  
+  // Format the end date
+  const formatEndDate = (dateString: string): string => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
 
   // Calculate outcome percentages using the utility function
   const { outcomesWithPercentages } = calculateOutcomePercentages(outcomes || [])
@@ -132,11 +142,12 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
       <Card className="overflow-hidden transition-all hover:shadow-md flex flex-col">
         <CardHeader className="flex flex-col flex-1">
           <div className="flex items-center justify-between">
-            <Badge variant="outline" className="bg-primary/10 text-primary">
+            <Badge className="bg-secondary/10  bg-secondary-gradient">
               {category}
             </Badge>
-            <div className="text-sm text-muted-foreground">
-              <span>Ends: {endDate}</span>
+            <div className="text-sm text-muted-foreground flex items-center">
+              <Clock className="h-3 w-3 mr-1" />
+              <span>Deadline: {formatEndDate(endDate)}</span>
             </div>
           </div>
           <CardTitle className="line-clamp-2 text-xl mt-4 flex-1">{name}</CardTitle>

@@ -157,12 +157,20 @@ export const marketStore = {
     },
 
     // Update market stats when a prediction is made
-    async updateMarketStats(marketId: string, outcomeId: number, amount: number): Promise<Market | undefined> {
+    async updateMarketStats(marketId: string, outcomeId: number, amount: number, userId: string): Promise<Market | undefined> {
         const market = await this.getMarket(marketId);
         if (!market) return undefined;
 
-        // Update the market stats
-        market.participants = (market.participants || 0) + 1;
+        // Check if this user has already participated in this market
+        const userParticipated = await kvStore.isSetMember(`MARKET_PARTICIPANTS`, marketId, userId);
+        
+        // Update the market stats - only increment participants if it's a new user
+        if (!userParticipated) {
+            market.participants = (market.participants || 0) + 1;
+            // Add user to the set of participants for this market
+            await kvStore.addToSet(`MARKET_PARTICIPANTS`, marketId, userId);
+        }
+        
         market.poolAmount = (market.poolAmount || 0) + amount;
 
         // Update the outcome stats

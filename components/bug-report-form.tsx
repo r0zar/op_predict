@@ -100,7 +100,7 @@ export function BugReportForm() {
 
     return (
         <div className="space-y-6">
-            {/* Reward Info Card */}
+            {/* Reward Info Card - Keep this styling as requested */}
             <Card className="bg-slate-800 border-blue-900">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-lg flex items-center text-blue-400">
@@ -120,9 +120,9 @@ export function BugReportForm() {
             </Card>
 
             {rewardPaid && (
-                <Card className="bg-slate-900 border-green-800">
+                <Card>
                     <CardContent className="pt-4 pb-4">
-                        <div className="flex items-center text-green-400">
+                        <div className="flex items-center text-green-500">
                             <CheckCircle className="h-5 w-5 mr-2" />
                             <span className="font-medium">$10 reward issued for this bug report!</span>
                         </div>
@@ -214,7 +214,7 @@ export function BugReportForm() {
                         )}
                     />
 
-                    <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+                    <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? "Submitting..." : "Submit Bug Report"}
                     </Button>
                 </form>

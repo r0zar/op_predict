@@ -20,6 +20,7 @@ import {
     marketStore,
     predictionStore,
     bugReportStore,
+    userBalanceStore
 } from "@op-predict/lib";
 import { z } from "zod";
 
@@ -41,6 +42,49 @@ const GetPredictionSchema = z.object({
 
 const GetBugReportSchema = z.object({
     reportId: z.string().describe("The ID of the bug report to retrieve")
+});
+
+const ListBugReportsSchema = z.object({
+    status: z.enum(['open', 'in-progress', 'resolved', 'closed', 'all']).optional().default('all').describe("Filter bug reports by status")
+});
+
+const UpdateMarketSchema = z.object({
+    marketId: z.string().describe("The ID of the market to update"),
+    data: z.object({
+        name: z.string().optional().describe("The name of the market"),
+        description: z.string().optional().describe("Description of the market"),
+        category: z.string().optional().describe("Category of the market"),
+        endDate: z.string().optional().describe("End date for the market (ISO string)"),
+        imageUrl: z.string().optional().describe("URL for a market image"),
+        status: z.enum(['draft', 'active', 'resolved', 'cancelled']).optional().describe("Status of the market")
+    }).describe("Data to update on the market")
+});
+
+const UpdateBugReportSchema = z.object({
+    reportId: z.string().describe("The ID of the bug report to update"),
+    data: z.object({
+        title: z.string().optional().describe("Title of the bug report"),
+        description: z.string().optional().describe("Detailed description of the bug"),
+        severity: z.string().optional().describe("Severity of the bug (low, medium, high, critical)"),
+        status: z.enum(['open', 'in-progress', 'resolved', 'closed']).optional().describe("Status of the bug report"),
+        resolution: z.string().optional().describe("Resolution details for the bug report"),
+        url: z.string().optional().describe("URL where the bug was found")
+    }).describe("Data to update on the bug report")
+});
+
+const AddUserBalanceSchema = z.object({
+    userId: z.string().describe("The ID of the user to credit"),
+    amount: z.number().min(0).describe("The amount to add to the user's balance"),
+    reason: z.string().describe("Reason for adding funds (e.g., 'Bug bounty reward', 'Contest prize')")
+});
+
+const ProcessBugReportRewardSchema = z.object({
+    reportId: z.string().describe("The ID of the bug report to process reward for"),
+    adminId: z.string().optional().describe("The ID of the admin processing the reward (for confirmation rewards)"),
+    rewardType: z.enum(['initial', 'confirmation']).describe("Type of reward to process"),
+    customAmount: z.number().optional().describe("Custom reward amount (overrides default amounts)"),
+    reason: z.string().optional().describe("Custom reason for the reward"),
+    updateStatus: z.boolean().optional().default(true).describe("Whether to update the bug report status")
 });
 
 const CreatePredictionSchema = z.object({
@@ -120,7 +164,12 @@ enum ToolName {
     LIST_MARKETS_WITH_PREDICTIONS = "list_markets_with_predictions",
     LIST_MARKETS_WITHOUT_PREDICTIONS = "list_markets_without_predictions",
     CREATE_BATCH_PREDICTIONS = "create_batch_predictions",
-    CREATE_BATCH_MARKETS = "create_batch_markets"
+    CREATE_BATCH_MARKETS = "create_batch_markets",
+    LIST_BUG_REPORTS = "list_bug_reports",
+    UPDATE_MARKET = "update_market",
+    UPDATE_BUG_REPORT = "update_bug_report",
+    ADD_USER_BALANCE = "add_user_balance",
+    PROCESS_BUG_REPORT_REWARD = "process_bug_report_reward"
 }
 
 // Prompt names enum
@@ -665,6 +714,169 @@ export const createServer = () => {
                     },
                     required: ["markets"]
                 }
+            },
+            {
+                name: ToolName.LIST_BUG_REPORTS,
+                description: "List all bug reports",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        status: {
+                            type: "string",
+                            enum: ["open", "in-progress", "resolved", "closed", "all"],
+                            default: "all",
+                            description: "Filter bug reports by status"
+                        }
+                    }
+                }
+            },
+            {
+                name: ToolName.UPDATE_MARKET,
+                description: "Update a prediction market",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        marketId: {
+                            type: "string",
+                            description: "The ID of the market to update"
+                        },
+                        data: {
+                            type: "object",
+                            properties: {
+                                name: {
+                                    type: "string",
+                                    description: "The name of the market"
+                                },
+                                description: {
+                                    type: "string",
+                                    description: "Description of the market"
+                                },
+                                category: {
+                                    type: "string",
+                                    description: "Category of the market"
+                                },
+                                endDate: {
+                                    type: "string",
+                                    description: "End date for the market (ISO string)"
+                                },
+                                imageUrl: {
+                                    type: "string",
+                                    description: "URL for a market image"
+                                },
+                                status: {
+                                    type: "string",
+                                    enum: ["draft", "active", "resolved", "cancelled"],
+                                    description: "Status of the market"
+                                }
+                            },
+                            description: "Data to update on the market"
+                        }
+                    },
+                    required: ["marketId", "data"]
+                }
+            },
+            {
+                name: ToolName.UPDATE_BUG_REPORT,
+                description: "Update a bug report",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        reportId: {
+                            type: "string",
+                            description: "The ID of the bug report to update"
+                        },
+                        data: {
+                            type: "object",
+                            properties: {
+                                title: {
+                                    type: "string",
+                                    description: "Title of the bug report"
+                                },
+                                description: {
+                                    type: "string",
+                                    description: "Detailed description of the bug"
+                                },
+                                severity: {
+                                    type: "string",
+                                    description: "Severity of the bug (low, medium, high, critical)"
+                                },
+                                status: {
+                                    type: "string",
+                                    enum: ["open", "in-progress", "resolved", "closed"],
+                                    description: "Status of the bug report"
+                                },
+                                resolution: {
+                                    type: "string",
+                                    description: "Resolution details for the bug report"
+                                },
+                                url: {
+                                    type: "string",
+                                    description: "URL where the bug was found"
+                                }
+                            },
+                            description: "Data to update on the bug report"
+                        }
+                    },
+                    required: ["reportId", "data"]
+                }
+            },
+            {
+                name: ToolName.ADD_USER_BALANCE,
+                description: "Add funds to a user's balance for rewards like bug bounties or contest prizes",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        userId: {
+                            type: "string",
+                            description: "The ID of the user to credit"
+                        },
+                        amount: {
+                            type: "number",
+                            description: "The amount to add to the user's balance (must be positive)"
+                        },
+                        reason: {
+                            type: "string",
+                            description: "Reason for adding funds (e.g., 'Bug bounty reward', 'Contest prize')"
+                        }
+                    },
+                    required: ["userId", "amount", "reason"]
+                }
+            },
+            {
+                name: ToolName.PROCESS_BUG_REPORT_REWARD,
+                description: "Process a reward payment for a bug report and update the report status",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        reportId: {
+                            type: "string",
+                            description: "The ID of the bug report to process reward for"
+                        },
+                        adminId: {
+                            type: "string",
+                            description: "The ID of the admin processing the reward (for confirmation rewards)"
+                        },
+                        rewardType: {
+                            type: "string",
+                            enum: ["initial", "confirmation"],
+                            description: "Type of reward to process"
+                        },
+                        customAmount: {
+                            type: "number",
+                            description: "Custom reward amount (overrides default amounts: $10 for initial, $90 for confirmation)"
+                        },
+                        reason: {
+                            type: "string",
+                            description: "Custom reason for the reward"
+                        },
+                        updateStatus: {
+                            type: "boolean",
+                            default: true,
+                            description: "Whether to update the bug report status to 'resolved' for confirmation rewards"
+                        }
+                    },
+                    required: ["reportId", "rewardType"]
+                }
             }
         ];
 
@@ -931,6 +1143,207 @@ export const createServer = () => {
                     text: `Markets created successfully: ${JSON.stringify(createdMarkets, null, 2)}`
                 }],
             };
+        }
+
+        if (name === ToolName.LIST_BUG_REPORTS) {
+            const { status } = ListBugReportsSchema.parse(args);
+
+            // Get all bug reports
+            const allReports = await bugReportStore.getBugReports();
+
+            // Filter by status if not 'all'
+            let reports = allReports;
+            if (status !== 'all') {
+                reports = allReports.filter(report => report.status === status);
+            }
+
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify(reports, null, 2)
+                }],
+            };
+        }
+
+        if (name === ToolName.UPDATE_MARKET) {
+            const { marketId, data } = UpdateMarketSchema.parse(args);
+
+            // Get the existing market
+            const existingMarket = await marketStore.getMarket(marketId);
+            if (!existingMarket) {
+                throw new Error(`Market ${marketId} not found`);
+            }
+
+            // Update the market data
+            const updatedMarket = await marketStore.updateMarket(marketId, {
+                ...data,
+                updatedAt: new Date().toISOString()
+            });
+
+            if (!updatedMarket) {
+                throw new Error(`Failed to update market ${marketId}`);
+            }
+
+            return {
+                content: [{
+                    type: "text",
+                    text: `Market updated successfully: ${JSON.stringify(updatedMarket, null, 2)}`
+                }],
+            };
+        }
+
+        if (name === ToolName.UPDATE_BUG_REPORT) {
+            const { reportId, data } = UpdateBugReportSchema.parse(args);
+
+            try {
+                // Update the bug report
+                const updatedReport = await bugReportStore.updateBugReport(reportId, {
+                    ...data,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: 'system'
+                });
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Bug report updated successfully: ${JSON.stringify(updatedReport, null, 2)}`
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to update bug report ${reportId}: ${errorMessage}`);
+            }
+        }
+
+        if (name === ToolName.ADD_USER_BALANCE) {
+            const { userId, amount, reason } = AddUserBalanceSchema.parse(args);
+
+            try {
+                // Check if the user exists by attempting to get their balance
+                const userBalance = await userBalanceStore.getUserBalance(userId);
+                if (!userBalance) {
+                    throw new Error(`User ${userId} not found`);
+                }
+
+                // Add funds to the user's balance
+                const updatedBalance = await userBalanceStore.addFunds(userId, amount);
+
+                if (!updatedBalance) {
+                    throw new Error(`Failed to update balance for user ${userId}`);
+                }
+
+                // Log the transaction
+                console.log(`Added $${amount} to user ${userId}'s balance. Reason: ${reason}`);
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Successfully added $${amount} to user ${userId}'s balance.\nNew balance: $${updatedBalance.availableBalance.toFixed(2)}\nReason: ${reason}`
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to add balance for user ${userId}: ${errorMessage}`);
+            }
+        }
+
+        if (name === ToolName.PROCESS_BUG_REPORT_REWARD) {
+            try {
+                const {
+                    reportId,
+                    adminId,
+                    rewardType,
+                    customAmount,
+                    reason,
+                    updateStatus = true
+                } = ProcessBugReportRewardSchema.parse(args);
+
+                // Get the existing report
+                const existingReport = await bugReportStore.getBugReport(reportId);
+                if (!existingReport) {
+                    throw new Error(`Bug report ${reportId} not found`);
+                }
+
+                // Set default reward amounts based on type
+                const INITIAL_REWARD_AMOUNT = 10;
+                const CONFIRMATION_REWARD_AMOUNT = 90;
+
+                let rewardAmount = rewardType === 'initial' ? INITIAL_REWARD_AMOUNT : CONFIRMATION_REWARD_AMOUNT;
+                if (customAmount !== undefined && customAmount > 0) {
+                    rewardAmount = customAmount;
+                }
+
+                // Set default reward reason based on type and severity
+                const defaultReason = rewardType === 'initial'
+                    ? `Initial bug report reward for ${existingReport.severity} severity bug`
+                    : `Confirmation reward for verified ${existingReport.severity} severity bug`;
+
+                const rewardReason = reason || defaultReason;
+
+                // Check if the reward has already been paid to avoid duplicates
+                if (rewardType === 'initial' && existingReport.initialRewardPaid) {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Initial reward for bug report ${reportId} has already been paid.`
+                        }],
+                    };
+                }
+
+                if (rewardType === 'confirmation' && existingReport.confirmationRewardPaid) {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Confirmation reward for bug report ${reportId} has already been paid.`
+                        }],
+                    };
+                }
+
+                // Update user balance
+                const userId = existingReport.createdBy;
+                const updatedBalance = await userBalanceStore.addFunds(userId, rewardAmount);
+
+                if (!updatedBalance) {
+                    throw new Error(`Failed to update balance for user ${userId}`);
+                }
+
+                // Prepare bug report update data
+                const updateData: any = {
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: adminId || 'system'
+                };
+
+                // Update reward flags based on reward type
+                if (rewardType === 'initial') {
+                    updateData.initialRewardPaid = true;
+                } else {
+                    updateData.confirmationRewardPaid = true;
+
+                    // For confirmation rewards, also update confirmation details
+                    if (adminId) {
+                        updateData.confirmedBy = adminId;
+                        updateData.confirmedAt = new Date().toISOString();
+                    }
+
+                    // Update status to resolved if requested
+                    if (updateStatus && existingReport.status !== 'resolved') {
+                        updateData.status = 'resolved';
+                    }
+                }
+
+                // Update the bug report
+                const updatedReport = await bugReportStore.updateBugReport(reportId, updateData);
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Successfully processed ${rewardType} reward of $${rewardAmount} for bug report ${reportId}.\nPaid to user: ${userId}\nNew balance: $${updatedBalance.availableBalance.toFixed(2)}\nReason: ${rewardReason}\nBug report updated: ${JSON.stringify(updatedReport, null, 2)}`
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to process bug report reward: ${errorMessage}`);
+            }
         }
 
         throw new Error(`Unknown tool: ${name}`);

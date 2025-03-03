@@ -67,6 +67,27 @@ export default async function PortfolioPage() {
     const allPredictions = allPredictionsResult.success
         ? allPredictionsResult.predictions || []
         : [];
+        
+    // Import function to get user names
+    const { getUserNameById } = await import("@/lib/clerk-user");
+    
+    // Get creator names for the user's predictions
+    const userPredictionsWithCreatorNames = await Promise.all(
+        userPredictions.map(async (prediction) => {
+            const creatorName = await getUserNameById(prediction.userId);
+            return { ...prediction, creatorName };
+        })
+    );
+    
+    // Get creator names for all predictions (admin view)
+    const allPredictionsWithCreatorNames = isUserAdmin 
+        ? await Promise.all(
+            allPredictions.map(async (prediction) => {
+                const creatorName = await getUserNameById(prediction.userId);
+                return { ...prediction, creatorName };
+            })
+        ) 
+        : [];
 
     // Get user balance data
     const userBalance = await userBalanceStore.getUserBalance(user.id);
@@ -191,9 +212,9 @@ export default async function PortfolioPage() {
                             <CardDescription>Your collection of prediction receipt NFTs</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {userPredictions.length > 0 ? (
+                            {userPredictionsWithCreatorNames.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {userPredictions.map((prediction) => (
+                                    {userPredictionsWithCreatorNames.map((prediction) => (
                                         <PredictionCard
                                             key={prediction.id}
                                             prediction={prediction}
@@ -202,6 +223,7 @@ export default async function PortfolioPage() {
                                                 [prediction.outcomeId]: prediction.outcomeName === 'Yes' ? 65 :
                                                     prediction.outcomeName === 'No' ? 35 : 50
                                             }}
+                                            creatorName={prediction.creatorName}
                                         />
                                     ))}
                                 </div>
@@ -232,7 +254,7 @@ export default async function PortfolioPage() {
                                             Showing {allPredictions.length} prediction receipts from all users
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {allPredictions.map((prediction) => (
+                                            {allPredictionsWithCreatorNames.map((prediction) => (
                                                 <PredictionCard
                                                     key={prediction.id}
                                                     prediction={prediction}
@@ -241,6 +263,7 @@ export default async function PortfolioPage() {
                                                         [prediction.outcomeId]: prediction.outcomeName === 'Yes' ? 65 :
                                                             prediction.outcomeName === 'No' ? 35 : 50
                                                     }}
+                                                    creatorName={prediction.creatorName}
                                                 />
                                             ))}
                                         </div>

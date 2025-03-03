@@ -1,7 +1,8 @@
 'use server';
 
 import { currentUser } from "@clerk/nextjs/server";
-import { bugReportStore, BugReport } from "@op-predict/lib";
+import { bugReportStore, BugReport, userBalanceStore } from "@op-predict/lib";
+import { isAdmin } from "@/lib/src/utils";
 
 export interface BugReportFormData {
     title: string;
@@ -13,15 +14,36 @@ export interface BugReportFormData {
 // Valid bug report statuses
 export type BugReportStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
 
-// Mock function for processing payments in this example
-// In a real application, this would integrate with a payment provider
+// Process reward payment for bug reports using the userBalanceStore
 async function processRewardPayment(userId: string, amount: number, reportId: string): Promise<boolean> {
-    // This is a mock implementation - replace with actual payment processing
-    console.log(`Processing payment of $${amount} to user ${userId} for report ${reportId}`);
-
-    // Simulate successful payment
-    // In a real application, you would handle failure cases
-    return true;
+    try {
+        // Get the current user balance to verify the user exists
+        const userBalance = await userBalanceStore.getUserBalance(userId);
+        if (!userBalance) {
+            console.error(`User ${userId} not found for processing payment`);
+            return false;
+        }
+        
+        // Generate a reason based on the amount (initial vs confirmation)
+        const reason = amount === 10 
+            ? `Initial bug report reward for report ${reportId}` 
+            : `Confirmation reward for verified bug report ${reportId}`;
+            
+        // Update the user's balance with the reward amount
+        const updatedBalance = await userBalanceStore.addFunds(userId, amount);
+        
+        if (!updatedBalance) {
+            console.error(`Failed to update balance for user ${userId}`);
+            return false;
+        }
+        
+        console.log(`Processed payment of $${amount} to user ${userId} for report ${reportId}. New balance: $${updatedBalance.availableBalance}`);
+        return true;
+        
+    } catch (error) {
+        console.error(`Error processing reward payment for user ${userId}, report ${reportId}:`, error);
+        return false;
+    }
 }
 
 // Create a new bug report
@@ -135,7 +157,7 @@ export async function updateBugReportStatus(reportId: string, status: BugReportS
         }
 
         // Check if the user is an admin
-        const isAdmin = user.publicMetadata.role === 'admin';
+        const isUserAdmin = isAdmin(user.id);
 
         // Prepare update data
         const updateData: Partial<BugReport> = {
@@ -147,7 +169,7 @@ export async function updateBugReportStatus(reportId: string, status: BugReportS
         // If status is being set to 'resolved' by an admin and confirmation reward hasn't been paid yet
         let confirmationRewardPaid = false;
         if (
-            isAdmin &&
+            isUserAdmin &&
             status === 'resolved' &&
             !existingReport.confirmationRewardPaid &&
             existingReport.createdBy !== user.id // Don't pay if admin is confirming their own report

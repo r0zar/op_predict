@@ -92,8 +92,8 @@ export default function RootLayout({
                   <TrendingUp className="h-5 w-5 text-primary" />
                   <span className="text-lg font-bold">OP_PREDICT</span>
                 </div>
-                <p className="text-center text-sm text-muted-foreground md:text-left">
-                  © 2025 OP_PREDICT. All rights reserved.
+                <p className="text-center text-xs text-muted-foreground md:text-left max-w-md">
+                  TESTNET ONLY: All funds are for testing purposes with no actual USD value.
                 </p>
                 <div className="flex gap-4">
                   <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">

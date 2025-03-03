@@ -68,6 +68,9 @@ const marketFormSchema = z.object({
     }).max(500, {
         message: "Description must not exceed 500 characters."
     }),
+    endDate: z.string().min(1, {
+        message: "Voting deadline is required"
+    }),
     outcomes: z.array(
         z.object({
             id: z.number(),
@@ -95,6 +98,13 @@ export default function CreateMarketPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
+    // Calculate default end date (7 days from now)
+    const getDefaultEndDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 7);
+        return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    };
+
     // Initialize form with default values
     const form = useForm<MarketFormValues>({
         resolver: zodResolver(marketFormSchema),
@@ -102,6 +112,7 @@ export default function CreateMarketPage() {
             type: "binary",
             name: "",
             description: "",
+            endDate: getDefaultEndDate(),
             outcomes: [
                 { id: 1, name: "Yes" },
                 { id: 2, name: "No" },
@@ -203,7 +214,7 @@ export default function CreateMarketPage() {
         if (currentStep === 0) {
             isValid = await form.trigger("type");
         } else if (currentStep === 1) {
-            isValid = await form.trigger(["name", "description"]);
+            isValid = await form.trigger(["name", "description", "endDate"]);
         } else if (currentStep === 2) {
             isValid = await form.trigger("outcomes");
         }
@@ -410,6 +421,41 @@ export default function CreateMarketPage() {
                                             </FormItem>
                                         )}
                                     />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="endDate"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-base">Voting Deadline</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="date"
+                                                        className="h-12"
+                                                        min={new Date().toISOString().split('T')[0]}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription className="flex items-center text-sm">
+                                                    Set a deadline for when voting on this market will end
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent className="p-3 max-w-xs">
+                                                                <p>
+                                                                    After this date, no new predictions can be made on this market. 
+                                                                    Markets can still be resolved after this deadline.
+                                                                </p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </CardContent>
                             </>
                         )}
@@ -517,6 +563,15 @@ export default function CreateMarketPage() {
                                         <div className="p-4 rounded-lg border bg-muted/30">
                                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
                                             <p className="text-base whitespace-pre-wrap">{form.getValues("description")}</p>
+                                        </div>
+
+                                        <div className="p-4 rounded-lg border bg-muted/30">
+                                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Voting Deadline</h3>
+                                            <p className="text-base font-medium">{new Date(form.getValues("endDate")).toLocaleDateString('en-US', {
+                                                month: 'long', 
+                                                day: 'numeric', 
+                                                year: 'numeric'
+                                            })}</p>
                                         </div>
 
                                         <div className="p-4 rounded-lg border bg-muted/30">
