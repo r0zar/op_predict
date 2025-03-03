@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { formatUserIdentifier, isStacksAddress } from "@/lib/user-utils"
+import { formatUserIdentifier, isStacksAddress, truncateUserId } from "@/lib/user-utils"
 import { getLeaderboard, getTopEarners, getTopAccuracy, getCurrentUserStats } from "@/app/actions/leaderboard-actions"
 import { LeaderboardEntry } from "@op-predict/lib"
 import { useAuth } from "@clerk/nextjs"
@@ -204,21 +204,21 @@ export function LeaderboardTable() {
 
     // If it's a .btc name, show it with emphasis
     if (user.username.endsWith('.btc')) {
-      return <span className="font-semibold text-primary">{user.userId}</span>;
+      return <span className="font-semibold text-primary">{user.username}</span>;
     }
 
     // If it's a Stacks address, format it nicely
     if (isStacksAddress(user.username)) {
-      return <span className="font-mono text-sm">{formatUserIdentifier(user.userId)}</span>;
+      return <span className="font-mono text-sm">{truncateUserId(user.userId)}</span>;
     }
 
     // If it starts with "user-", it's an anonymized id
     if (user.userId.startsWith('user-')) {
-      return <span className="font-mono text-sm">{user.userId}</span>;
+      return <span className="font-mono text-sm">{truncateUserId(user.userId)}</span>;
     }
 
     // For any other username (custom usernames, not real names)
-    return <span>{user.userId}</span>;
+    return <span>{truncateUserId(user.userId)}</span>;
   };
 
   return (
@@ -451,12 +451,12 @@ function LeaderboardTableContent({
                         <UserIcon className="h-4 w-4" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
+                    <div className="flex flex-row items-center gap-2">
                       <span>{getUserDisplay(user)}</span>
                       {(((user.rank ?? 0) <= 3 && (user.rank ?? 0) > 0) || index < 3) && (
                         <Badge
                           variant={((user.rank ?? 0) === 1 || index === 0) ? "default" : "outline"}
-                          className={`w-fit text-[10px] py-0 ${((user.rank ?? 0) === 1 || index === 0) ? "bg-amber-500/90 hover:bg-amber-500/80" : ""}`}
+                          className={`w-fit whitespace-nowrap text-[10px] py-0 ${((user.rank ?? 0) === 1 || index === 0) ? "bg-amber-500/90 hover:bg-amber-500/80" : ""}`}
                         >
                           {((user.rank ?? 0) === 1 || index === 0) ? "🏆 Top Predictor" :
                             ((user.rank ?? 0) === 2 || index === 1) ? "🥈 Expert" :
