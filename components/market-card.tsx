@@ -209,7 +209,7 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
                 {isSignedIn ? (
                   <Button
                     className="w-full items-center"
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     disabled={disabled || market.status !== 'active'}
                   >
@@ -284,7 +284,7 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
                   {isSignedIn ? (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       disabled={disabled || market.status !== 'active'}
                       className="w-full items-center"
                     >
@@ -309,7 +309,7 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
                   {isSignedIn ? (
                     <Button
                       className="w-full items-center"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       disabled={disabled || market.status !== 'active'}
                     >
