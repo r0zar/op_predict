@@ -24,13 +24,24 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
   },
   openGraph: {
+    type: "website",
     title: "OP_PREDICT | Predict the future. Earn Bitcoin",
     description: "Explore and participate in markets for politics, sports, and more.",
-    images: [
-      {
-        url: '/og-image.png',
-      },
-    ],
+    siteName: "OP_PREDICT",
+    locale: "en_US",
+    images: [{
+      url: 'https://oppredict.com/og-image.png',
+      width: 1200,
+      height: 630,
+      alt: "OP_PREDICT - Prediction Markets Platform",
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OP_PREDICT | Predict the future. Earn Bitcoin",
+    description: "Explore and participate in markets for politics, sports, and more.",
+    images: ['https://oppredict.com/og-image.png'],
+    creator: "@lordrozar",
   },
 }
 
