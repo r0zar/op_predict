@@ -13,7 +13,6 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Toaster } from "sonner"
-import { cn } from "@/lib/src/utils"
 
 const inter = Inter({ subsets: ["latin"] })
 
