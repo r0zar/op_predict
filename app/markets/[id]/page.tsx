@@ -26,6 +26,7 @@ import { PredictionForm } from "@/components/prediction-form";
 import { cn, isAdmin, calculateOutcomePercentages } from "@/lib/src/utils";
 import { PredictionCard } from "@/components/prediction-card";
 import { ResolveMarketButton } from "@/components/resolve-market-button";
+import { MarketDeadlineSection } from "@/components/market-deadline-section";
 import { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -79,101 +80,162 @@ function ErrorState({ error }: { error: Error }) {
 
 // Market predictions component
 async function MarketPredictions({ marketId }: { marketId: string }) {
-    const predictions = await getMarketPredictions(marketId);
-    if (!predictions.success) {
-        throw new Error("Failed to load predictions");
-    }
+    try {
+        const predictions = await getMarketPredictions(marketId);
+        if (!predictions.success || !predictions.predictions) {
+            return (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold">Recent Predictions</h2>
+                    <p className="text-muted-foreground">No predictions yet. Be the first to predict!</p>
+                </div>
+            );
+        }
 
-    // Import the function to get usernames
-    const { getUserNameById } = await import("@/lib/clerk-user");
+        const { getUserNameById } = await import("@/lib/clerk-user");
 
-    // Use Promise.all to fetch all usernames in parallel for better performance
-    const predictionsWithCreatorNames = await Promise.all(
-        predictions.predictions?.map(async (prediction) => {
-            const creatorName = await getUserNameById(prediction.userId);
-            return {
-                ...prediction,
-                creatorName
-            };
-        }) || []
-    );
+        const predictionsWithCreatorNames = await Promise.all(
+            predictions.predictions.map(async (prediction) => {
+                try {
+                    const creatorName = prediction.userId ?
+                        await getUserNameById(prediction.userId).catch(() => 'Anonymous User') :
+                        'Anonymous User';
 
-    return (
-        <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Recent Predictions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {predictionsWithCreatorNames.map((prediction) => (
-                    <PredictionCard
-                        key={prediction.id}
-                        prediction={prediction}
-                        creatorName={prediction.creatorName}
-                    />
-                ))}
+                    return {
+                        ...prediction,
+                        creatorName
+                    };
+                } catch (error) {
+                    return {
+                        ...prediction,
+                        creatorName: 'Anonymous User'
+                    };
+                }
+            })
+        );
+
+        if (predictionsWithCreatorNames.length === 0) {
+            return (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold">Recent Predictions</h2>
+                    <p className="text-muted-foreground">No predictions available at the moment.</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Recent Predictions</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {predictionsWithCreatorNames.map((prediction) => (
+                        <PredictionCard
+                            key={prediction.id}
+                            prediction={prediction}
+                            creatorName={prediction.creatorName}
+                        />
+                    ))}
+                </div>
             </div>
-        </div>
-    );
+        );
+    } catch (error) {
+        console.error("Error in MarketPredictions component:", error);
+        return (
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Recent Predictions</h2>
+                <p className="text-muted-foreground">Unable to load predictions at this time.</p>
+            </div>
+        );
+    }
 }
 
 // Related markets component
 async function RelatedMarkets({ marketId }: { marketId: string }) {
-    const relatedMarkets = await getRelatedMarkets(marketId);
-    return (
-        <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Related Markets</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {relatedMarkets.map((market) => {
-                    const { outcomesWithPercentages } = calculateOutcomePercentages(market.outcomes);
-                    const topOutcome = outcomesWithPercentages.reduce((prev, current) =>
-                        current.percentage > prev.percentage ? current : prev
-                    );
+    try {
+        const relatedMarkets = await getRelatedMarkets(marketId);
 
-                    return (
-                        <Card key={market.id}>
-                            <CardHeader>
-                                <div className="flex justify-between items-start gap-2">
-                                    <CardTitle className="text-lg">{market.name}</CardTitle>
-                                    <Badge variant={market.status === 'active' ? 'outline' : 'secondary'}>
-                                        {market.status}
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <p className="text-sm text-muted-foreground line-clamp-2">{market.description}</p>
+        if (!relatedMarkets || relatedMarkets.length === 0) {
+            return (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold">Related Markets</h2>
+                    <p className="text-muted-foreground">No related markets found.</p>
+                </div>
+            );
+        }
 
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Top Outcome:</span>
-                                        <span className="font-medium">{topOutcome.name}</span>
-                                    </div>
-                                    <Progress value={topOutcome.percentage} className="h-2" />
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Odds:</span>
-                                        <span className="font-medium">{topOutcome.percentage.toFixed(1)}%</span>
-                                    </div>
-                                </div>
+        return (
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Related Markets</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {relatedMarkets.map((market) => {
+                        try {
+                            if (!market.outcomes || market.outcomes.length === 0) {
+                                return null; // Skip markets with no outcomes
+                            }
 
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-1">
-                                        <Users className="h-4 w-4" />
-                                        <span>{market.participants || 0}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <DollarSign className="h-4 w-4" />
-                                        <span>${market.poolAmount || 0}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button asChild variant="outline" className="w-full">
-                                    <Link href={`/markets/${market.id}`}>View Market</Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    );
-                })}
+                            const { outcomesWithPercentages } = calculateOutcomePercentages(market.outcomes);
+                            const topOutcome = outcomesWithPercentages.reduce((prev, current) =>
+                                current.percentage > prev.percentage ? current : prev
+                            );
+
+                            return (
+                                <Card key={market.id}>
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start gap-2">
+                                            <CardTitle className="text-lg">{market.name}</CardTitle>
+                                            <Badge variant={market.status === 'active' ? 'outline' : 'secondary'}>
+                                                {market.status}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        <p className="text-sm text-muted-foreground line-clamp-2">{market.description}</p>
+
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Top Outcome:</span>
+                                                <span className="font-medium">{topOutcome.name}</span>
+                                            </div>
+                                            <Progress value={topOutcome.percentage} className="h-2" />
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Odds:</span>
+                                                <span className="font-medium">{topOutcome.percentage.toFixed(1)}%</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-1">
+                                                <Users className="h-4 w-4" />
+                                                <span>{market.participants || 0}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <DollarSign className="h-4 w-4" />
+                                                <span>${market.poolAmount || 0}</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Button asChild variant="outline" className="w-full">
+                                            <Link href={`/markets/${market.id}`}>View Market</Link>
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            );
+                        } catch (error) {
+                            console.error(`Error rendering related market ${market.id}:`, error);
+                            return null; // Skip rendering this market if there's an error
+                        }
+                    }).filter(Boolean)}
+                </div>
             </div>
-        </div>
-    );
+        );
+    } catch (error) {
+        console.error("Error in RelatedMarkets component:", error);
+        return (
+            <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Related Markets</h2>
+                <p className="text-muted-foreground">Unable to load related markets at this time.</p>
+            </div>
+        );
+    }
 }
 
 export default async function MarketPage({ params }: { params: { id: string } }) {
@@ -228,7 +290,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
 
     return (
         <div className="container max-w-5xl xl:max-w-7xl py-10 space-y-8">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-4">
                 <Link href="/markets" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Markets
@@ -248,6 +310,14 @@ export default async function MarketPage({ params }: { params: { id: string } })
                         {market.status.charAt(0).toUpperCase() + market.status.slice(1)}
                     </Badge>
                 </div>
+            </div>
+            
+            {/* Voting Deadline at the top for visibility */}
+            <div className="mb-6">
+                <MarketDeadlineSection
+                    endDate={market.endDate}
+                    isMarketClosed={isMarketClosed}
+                />
             </div>
 
             {/* Market status notifications */}
@@ -284,7 +354,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 <Card className="border-2 shadow-sm lg:col-span-2">
                     <CardHeader className="border-b bg-muted/50">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center justify-between gap-2 mb-2">
                             <Badge variant={market.type === 'binary' ? 'secondary' : 'secondary'}>
                                 {market.type === 'binary' ? (
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -293,6 +363,16 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                 )}
                                 {market.type === 'binary' ? 'Yes/No Question' : 'Multiple Choice'}
                             </Badge>
+                            
+                            {!isMarketClosed && (
+                                <div className="flex items-center gap-1.5">
+                                    <span className="relative flex h-2.5 w-2.5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                    </span>
+                                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">ACTIVE</span>
+                                </div>
+                            )}
                         </div>
                         <CardTitle className="text-2xl">{market.name}</CardTitle>
                         <CardDescription className="flex flex-wrap gap-4 mt-2">
@@ -351,23 +431,6 @@ export default async function MarketPage({ params }: { params: { id: string } })
                             )}
                         </div>
 
-                        <div className="flex items-center text-sm bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-6">
-                            <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
-                            <div>
-                                <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-1">Voting Deadline</h3>
-                                <p className="text-blue-700 dark:text-blue-400">
-                                    Predictions for this market {isMarketClosed ? 'ended' : 'will end'} on{' '}
-                                    {new Date(market.endDate).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        timeZoneName: 'short'
-                                    })}
-                                </p>
-                            </div>
-                        </div>
                     </CardContent>
                 </Card>
 
@@ -383,7 +446,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                             <CardContent>
                                 <PredictionForm
                                     market={market}
-                                    outcomes={market.outcomes as any}
+                                    outcomes={sortedOutcomes}
                                     userId={user?.id as string}
                                 />
                             </CardContent>
@@ -402,6 +465,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                     )}
                 </div>
             </div>
+
 
             <Suspense fallback={<LoadingState />}>
                 <MarketPredictions marketId={market.id} />

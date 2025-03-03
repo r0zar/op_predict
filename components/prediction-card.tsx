@@ -53,7 +53,7 @@ export function PredictionCard({
         // If creatorName is provided as prop, use it
         // Otherwise use a truncated version of the userId
         if (creatorName) {
-            setDisplayCreator(creatorName);
+            setDisplayCreator(truncateUserId(prediction.userId));
         } else {
             setDisplayCreator(truncateUserId(prediction.userId));
         }

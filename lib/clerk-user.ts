@@ -3,7 +3,12 @@ import { truncateUserId } from "./user-utils";
 /**
  * Get a user's display name from their ID using Clerk
  */
-export async function getUserNameById(userId: string): Promise<string | undefined> {
+export async function getUserNameById(userId: string): Promise<string> {
+    // Handle anonymous or invalid user IDs before even making the API call
+    if (!userId || userId === 'anonymous' || userId.length < 5) {
+        return 'Anonymous';
+    }
+    
     try {
         const user = await (await clerkClient()).users.getUser(userId);
 
@@ -14,13 +19,21 @@ export async function getUserNameById(userId: string): Promise<string | undefine
                 return user.username;
             }
 
-            // Last resort: truncated user ID with prefix
-            return `${truncateUserId(userId)}`;
+            // Second choice: first + last name if available
+            const firstName = user.firstName || '';
+            const lastName = user.lastName ? user.lastName.charAt(0) + '.' : '';
+            if (firstName) {
+                return `${firstName} ${lastName}`.trim();
+            }
+
+            // Third choice: truncated user ID with prefix
+            return `User ${truncateUserId(userId)}`;
         }
 
-        return undefined;
+        return `User ${truncateUserId(userId)}`;
     } catch (error) {
         console.error(`Error fetching user ${userId}:`, error);
-        return `${truncateUserId(userId)}`;
+        // Return a generic anonymous identifier without exposing the ID
+        return 'Anonymous User';
     }
 }
