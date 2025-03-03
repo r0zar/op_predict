@@ -22,7 +22,7 @@ export async function FeaturedAndStatsSection() {
     }
 
     return (
-        <section className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="mb-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
             <div className="flex flex-col bg-muted/40 rounded-lg p-4">
                 <span className="text-muted-foreground mb-1">Active Predictions</span>

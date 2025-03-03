@@ -3,8 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, Coins, type LucideIcon, Scale, ShieldCheck, Users } from "lucide-react"
 import { PredictionProcessTimeline } from "@/components/prediction-process-timeline"
 
-const FeatureCard = ({ icon: Icon, title, description }: { icon: LucideIcon; title: string; description: string }) => (
-  <Card>
+const FeatureCard = ({ 
+  icon: Icon, 
+  title, 
+  description, 
+  useGradient = false 
+}: { 
+  icon: LucideIcon; 
+  title: string; 
+  description: string;
+  useGradient?: boolean;
+}) => (
+  <Card className={useGradient ? 'bg-secondary-gradient' : ''}>
     <CardHeader>
       <CardTitle className="flex justify-items-center gap-2">
         <Icon className="h-5 w-5 text-primary" />
@@ -12,7 +22,7 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: LucideIcon; tit
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <p className="text-muted-foreground">{description}</p>
+      <p className={useGradient ? 'text-foreground' : 'text-muted-foreground'}>{description}</p>
     </CardContent>
   </Card>
 )
@@ -31,11 +41,13 @@ export function HowItWorksContent() {
             icon={Scale}
             title="Efficient Forecasting"
             description="These markets aggregate diverse perspectives and insights, often outperforming traditional forecasting methods by tapping into distributed knowledge."
+            useGradient={true}
           />
           <FeatureCard
             icon={Users}
             title="Collective Wisdom"
             description="Your unique insights contribute to a powerful network effect—the more participants share their knowledge, the more accurate the predictions become."
+            useGradient={true}
           />
         </div>
       </section>

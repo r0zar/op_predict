@@ -17,16 +17,16 @@ export async function ExploreContent() {
 
   // Filter functions for different sections
   const getTrendingMarkets = (markets: any[]) =>
-    [...markets].sort((a, b) => (b.participants || 0) - (a.participants || 0)).slice(0, 3)
+    [...markets].sort((a, b) => (b.participants || 0) - (a.participants || 0)).slice(0, 4)
 
   const getPersonalizedMarkets = (markets: any[]) =>
-    markets.slice(0, 3)
+    markets.slice(0, 4)
 
   const getNewestMarkets = (markets: any[]) =>
-    [...markets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3)
+    [...markets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4)
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4">
+    <div className="mx-auto px-4">
 
       {/* Top Vaults Section */}
       {/* <VaultsSection /> */}

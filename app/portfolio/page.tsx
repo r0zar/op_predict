@@ -67,10 +67,10 @@ export default async function PortfolioPage() {
     const allPredictions = allPredictionsResult.success
         ? allPredictionsResult.predictions || []
         : [];
-        
+
     // Import function to get user names
     const { getUserNameById } = await import("@/lib/clerk-user");
-    
+
     // Get creator names for the user's predictions
     const userPredictionsWithCreatorNames = await Promise.all(
         userPredictions.map(async (prediction) => {
@@ -78,15 +78,15 @@ export default async function PortfolioPage() {
             return { ...prediction, creatorName };
         })
     );
-    
+
     // Get creator names for all predictions (admin view)
-    const allPredictionsWithCreatorNames = isUserAdmin 
+    const allPredictionsWithCreatorNames = isUserAdmin
         ? await Promise.all(
             allPredictions.map(async (prediction) => {
                 const creatorName = await getUserNameById(prediction.userId);
                 return { ...prediction, creatorName };
             })
-        ) 
+        )
         : [];
 
     // Get user balance data
@@ -119,7 +119,7 @@ export default async function PortfolioPage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
                 {/* Total Balance Card */}
-                <Card className="bg-primary text-primary-foreground">
+                <Card className="bg-secondary-gradient">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-primary-foreground/80">Total Balance</CardDescription>
                         <CardTitle className="text-3xl font-bold">

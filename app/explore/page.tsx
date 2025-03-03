@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ExplorePage() {
   return (
-    <div className="container max-w-5xl py-10">
+    <div className="container py-10">
       <div className="flex flex-col space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Explore Markets</h1>

@@ -2,7 +2,8 @@ import Link from "next/link"
 import { currentUser } from "@clerk/nextjs/server"
 import { isAdmin } from "@/lib/src/utils"
 import { SectionHeader } from "./section-header"
-import { MarketCard } from "./market-card"
+import { MarketCard } from "@/components/market-card"
+import { DeleteMarketButton } from "@/components/delete-market-button"
 
 // Market grid for trending/personalized/new markets
 export async function MarketsSection({
@@ -26,11 +27,23 @@ export async function MarketsSection({
                 icon={icon}
                 viewAllHref={viewAllHref}
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {markets.map((market) => (
-                    <Link href={`/markets/${market.id}`} key={market.id}>
-                        <MarketCard market={market} isUserAdmin={isUserAdmin} />
-                    </Link>
+                    <div key={market.id} className="relative">
+                        {isUserAdmin && (
+                            <div className="absolute -top-3 -right-3 z-10">
+                                <DeleteMarketButton marketId={market.id} />
+                            </div>
+                        )}
+                        <MarketCard
+                            market={{
+                                ...market,
+                                category: market.category || "General",
+                                endDate: market.endDate || new Date().toISOString(),
+                                status: market.status || "active"
+                            }}
+                        />
+                    </div>
                 ))}
             </div>
         </section>

@@ -37,7 +37,7 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
   const [showSignInDialog, setShowSignInDialog] = useState(false)
   const [showAllOutcomes, setShowAllOutcomes] = useState(false)
   const { name, participants, poolAmount, outcomes, category, endDate, type } = market
-  
+
   // Format the end date
   const formatEndDate = (dateString: string): string => {
     const date = new Date(dateString)
@@ -133,14 +133,14 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
 
   // Determine which outcomes to show
   const visibleOutcomes = type === 'multiple' && !showAllOutcomes
-    ? normalizedOutcomes.slice(0, 3)
+    ? normalizedOutcomes.slice(0, 2)
     : normalizedOutcomes
 
   return (
     <>
       {showSignInDialog && <SignIn />}
       <Card className="overflow-hidden transition-all hover:shadow-md flex flex-col">
-        <CardHeader className="flex flex-col flex-1">
+        <CardHeader className="flex flex-col flex-1 p-4">
           <div className="flex items-center justify-between">
             <Badge className="bg-secondary/10  bg-secondary-gradient">
               {category}
@@ -152,7 +152,7 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
           </div>
           <CardTitle className="line-clamp-2 text-xl mt-4 flex-1">{name}</CardTitle>
         </CardHeader>
-        <CardContent className="flex-grow-0">
+        <CardContent className="flex-grow-0 p-4 pt-0">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
             <span>{participants.toLocaleString()} participants</span>
@@ -203,6 +203,32 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
                   />
                 </div>
               </div>
+
+              {/* Action button for binary markets */}
+              <div className="mt-2">
+                {isSignedIn ? (
+                  <Button
+                    className="w-full items-center"
+                    variant="outline"
+                    size="sm"
+                    disabled={disabled || market.status !== 'active'}
+                  >
+                    <Link href={`/markets/${market.id}`} className="w-full">
+                      View Market
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full items-center"
+                    variant="outline"
+                    size="sm"
+                    disabled={disabled || market.status !== 'active'}
+                    onClick={handleButtonClick}
+                  >
+                    Sign in to Predict
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             // Multiple choice layout
@@ -239,45 +265,76 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
                 ))}
               </div>
 
-              {/* Show more/less button */}
-              {type === 'multiple' && normalizedOutcomes.length > 3 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full mt-2 text-xs items-center"
-                  onClick={handleExpandClick}
-                >
-                  {showAllOutcomes ? (
-                    <><ChevronUp className="h-4 w-4 mr-1" /> Show Less</>
+              {/* Integrated show more/less button with action button for multiple choice */}
+              {type === 'multiple' && normalizedOutcomes.length > 2 ? (
+                <div className="flex gap-2 items-center mt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs items-center w-full"
+                    onClick={handleExpandClick}
+                  >
+                    {showAllOutcomes ? (
+                      <><ChevronUp className="h-3 w-3 mr-1" /> Show Less</>
+                    ) : (
+                      <><ChevronDown className="h-3 w-3 mr-1" /> {normalizedOutcomes.length - 2} More</>
+                    )}
+                  </Button>
+
+                  {isSignedIn ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={disabled || market.status !== 'active'}
+                      className="w-full items-center"
+                    >
+                      <Link href={`/markets/${market.id}`}>
+                        View Market
+                      </Link>
+                    </Button>
                   ) : (
-                    <><ChevronDown className="h-4 w-4 mr-1" /> Show {normalizedOutcomes.length - 3} More</>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={disabled || market.status !== 'active'}
+                      onClick={handleButtonClick}
+                      className="flex-shrink-0 items-center"
+                    >
+                      Predict
+                    </Button>
                   )}
-                </Button>
+                </div>
+              ) : (
+                <div className="mt-2">
+                  {isSignedIn ? (
+                    <Button
+                      className="w-full items-center"
+                      variant="outline"
+                      size="sm"
+                      disabled={disabled || market.status !== 'active'}
+                    >
+                      <Link href={`/markets/${market.id}`} className="w-full">
+                        View Market
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full items-center"
+                      variant="outline"
+                      size="sm"
+                      disabled={disabled || market.status !== 'active'}
+                      onClick={handleButtonClick}
+                    >
+                      Sign in to Predict
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           )}
         </CardContent>
-        <CardFooter className="pt-2">
-          {isSignedIn ? (
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={disabled || market.status !== 'active'}
-            >
-              <Link href={`/markets/${market.id}`} className="w-full">
-                View Market
-              </Link>
-            </Button>
-          ) : (
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={disabled || market.status !== 'active'}
-              onClick={handleButtonClick}
-            >
-              Sign in to Predict
-            </Button>
-          )}
+        <CardFooter className="hidden">
+          {/* Moved to integrated UI above */}
         </CardFooter>
       </Card>
     </>
