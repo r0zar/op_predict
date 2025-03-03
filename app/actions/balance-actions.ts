@@ -2,9 +2,8 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { userBalanceStore } from '@/lib/user-balance-store';
+import { userBalanceStore } from '@op-predict/lib';
 import { currentUser } from '@clerk/nextjs/server';
-import { isAdmin } from '@/lib/utils';
 
 // Define the validation schema for deposit/withdraw operations
 const balanceOperationSchema = z.object({

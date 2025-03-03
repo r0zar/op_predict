@@ -1,6 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { isAdmin } from '@/lib/utils';
+import { isAdmin } from '@/lib/src/utils';
 import { currentUser } from '@clerk/nextjs/server';
 
 export async function POST(request: Request) {

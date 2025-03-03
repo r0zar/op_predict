@@ -1,6 +1,6 @@
 'use server';
 
-import { userStatsStore, LeaderboardEntry } from '@/lib/user-stats-store';
+import { userStatsStore, LeaderboardEntry } from '@op-predict/lib';
 import { getUserNameById } from '@/lib/clerk-user';
 import { currentUser } from '@clerk/nextjs/server';
 

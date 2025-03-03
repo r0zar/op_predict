@@ -13,7 +13,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Toaster } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/src/utils"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -46,12 +46,13 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col bg-background">
             <header className="px-4 sticky justify-items-center top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="container flex h-16 items-center justify-between py-4">
-                <div className="flex items-center gap-2">
+                <div className="items-center gap-2 hidden sm:flex">
                   <TrendingUp className="h-6 w-6 text-primary" />
                   <Link href="/" className="text-xl font-bold tracking-tight">
                     OP_PREDICT
                   </Link>
                 </div>
+                <div className='flex sm:hidden' />
                 <nav className="hidden md:flex items-center gap-6">
                   <Link href="/markets" className="text-sm font-medium text-muted-foreground hover:text-foreground">
                     Markets

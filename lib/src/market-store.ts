@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import * as kvStore from "./kv-store.js";
 import crypto from 'crypto';
 
 // Define market types
@@ -33,18 +33,13 @@ export type Market = {
     totalWinningAmount?: number; // Total amount staked on winning outcome
 };
 
-// KV store keys
-const MARKETS_KEY = 'markets';
-const MARKET_IDS_KEY = 'market_ids';
-const USER_MARKETS_KEY = 'user_markets';
-
 // Market store with Vercel KV
 export const marketStore = {
     // Get all markets
     async getMarkets(): Promise<Market[]> {
         try {
             // Get all market IDs
-            const marketIds = await kv.smembers(MARKET_IDS_KEY) as string[];
+            const marketIds = await kvStore.getSetMembers('MARKET_IDS', '');
 
             if (marketIds.length === 0) {
                 // If no markets exist, create sample markets
@@ -68,7 +63,7 @@ export const marketStore = {
     // Get a specific market by ID
     async getMarket(id: string): Promise<Market | undefined> {
         try {
-            const market = await kv.get<Market>(`${MARKETS_KEY}:${id}`);
+            const market = await kvStore.getEntity<Market>('MARKET', id);
             return market || undefined;
         } catch (error) {
             console.error(`Error getting market ${id}:`, error);
@@ -110,14 +105,14 @@ export const marketStore = {
             };
 
             // Store market by ID
-            await kv.set(`${MARKETS_KEY}:${id}`, JSON.stringify(market));
+            await kvStore.storeEntity('MARKET', id, market);
 
-            // Add to market_ids set (corrected from markets set)
-            await kv.sadd(MARKET_IDS_KEY, id);
+            // Add to market_ids set
+            await kvStore.addToSet('MARKET_IDS', '', id);
 
             // Add to user's markets set
             if (data.createdBy) {
-                await kv.sadd(`${USER_MARKETS_KEY}:${data.createdBy}`, id);
+                await kvStore.addToSet('USER_MARKETS', data.createdBy, id);
             }
 
             return market;
@@ -136,7 +131,7 @@ export const marketStore = {
             const updatedMarket = { ...market, ...marketData };
 
             // Store the updated market
-            await kv.set(`${MARKETS_KEY}:${id}`, JSON.stringify(updatedMarket));
+            await kvStore.storeEntity('MARKET', id, updatedMarket);
 
             return updatedMarket;
         } catch (error) {
@@ -149,10 +144,10 @@ export const marketStore = {
     async deleteMarket(id: string): Promise<boolean> {
         try {
             // Delete the market
-            await kv.del(`${MARKETS_KEY}:${id}`);
+            await kvStore.deleteEntity('MARKET', id);
 
             // Remove the market ID from the set of all market IDs
-            await kv.srem(MARKET_IDS_KEY, id);
+            await kvStore.removeFromSet('MARKET_IDS', '', id);
 
             return true;
         } catch (error) {
@@ -161,9 +156,81 @@ export const marketStore = {
         }
     },
 
+    // Update market stats when a prediction is made
+    async updateMarketStats(marketId: string, outcomeId: number, amount: number): Promise<Market | undefined> {
+        const market = await this.getMarket(marketId);
+        if (!market) return undefined;
+
+        // Update the market stats
+        market.participants = (market.participants || 0) + 1;
+        market.poolAmount = (market.poolAmount || 0) + amount;
+
+        // Update the outcome stats
+        const outcome = market.outcomes.find(o => o.id === outcomeId);
+        if (outcome) {
+            outcome.votes = (outcome.votes || 0) + 1;
+            outcome.amount = (outcome.amount || 0) + amount;
+        }
+
+        // Save the updated market
+        return this.updateMarket(marketId, market);
+    },
+
+    // Get related markets based on category and similarity
+    async getRelatedMarkets(marketId: string, limit: number = 3): Promise<Market[]> {
+        try {
+            const market = await this.getMarket(marketId);
+            if (!market) return [];
+
+            // Get all markets
+            const allMarkets = await this.getMarkets();
+
+            // Filter out the current market and non-active markets
+            const candidates = allMarkets.filter(m =>
+                m.id !== marketId &&
+                m.status === 'active' &&
+                (
+                    // Same category
+                    m.category === market.category ||
+                    // Or contains similar keywords in name/description
+                    this.calculateSimilarity(m, market) > 0.3
+                )
+            );
+
+            // Sort by similarity score
+            const sortedMarkets = candidates.sort((a, b) =>
+                this.calculateSimilarity(b, market) - this.calculateSimilarity(a, market)
+            );
+
+            return sortedMarkets.slice(0, limit);
+        } catch (error) {
+            console.error('Error getting related markets:', error);
+            return [];
+        }
+    },
+
+    // Calculate similarity score between two markets
+    calculateSimilarity(market1: Market, market2: Market): number {
+        const text1 = `${market1.name} ${market1.description}`.toLowerCase();
+        const text2 = `${market2.name} ${market2.description}`.toLowerCase();
+
+        // Get unique words
+        const words1 = new Set(text1.split(/\W+/));
+        const words2 = new Set(text2.split(/\W+/));
+
+        // Calculate intersection
+        const intersection = new Set(Array.from(words1).filter(x => words2.has(x)));
+
+        // Calculate Jaccard similarity
+        const union = new Set(Array.from(words1).concat(Array.from(words2)));
+        return intersection.size / union.size;
+    },
+
     // Create sample markets for testing
     async createSampleMarkets(): Promise<void> {
         try {
+            console.log('Creating sample markets...');
+
             const sampleMarkets = [
                 {
                     type: 'binary' as const,
@@ -198,14 +265,23 @@ export const marketStore = {
             ];
 
             // Create each sample market
+            console.log(`Creating ${sampleMarkets.length} sample markets...`);
+
             for (const marketData of sampleMarkets) {
-                await this.createMarket({
-                    ...marketData,
-                    createdBy: 'admin',
-                    category: 'general',
-                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                });
+                try {
+                    const market = await this.createMarket({
+                        ...marketData,
+                        createdBy: 'admin',
+                        category: 'general',
+                        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    });
+                    console.log(`Created sample market: ${market.id} - ${market.name}`);
+                } catch (marketError) {
+                    console.error(`Error creating sample market: ${marketData.name}`, marketError);
+                }
             }
+
+            console.log('Sample markets creation completed');
         } catch (error) {
             console.error('Error creating sample markets:', error);
         }

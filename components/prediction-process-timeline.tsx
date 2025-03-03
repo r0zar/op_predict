@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, useInView, useScroll, useSpring, useTransform } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/src/utils"
 
 const timelineEvents = [
   {

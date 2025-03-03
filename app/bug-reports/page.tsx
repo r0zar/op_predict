@@ -5,8 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getBugReports } from "@/app/actions/bug-report-actions";
 import { BugReportForm } from "@/components/bug-report-form";
 import { BugReportTable } from "@/components/bug-report-table";
-import { BugReport } from "@/lib/bug-report-store";
 import { DollarSign, AlertTriangle } from "lucide-react";
+import { BugReport } from "@op-predict/lib";
 
 export default async function BugReportPage() {
     const user = await currentUser();

@@ -1,7 +1,6 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { Clock, Users, DollarSign } from "lucide-react"
+import { Clock, Users, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 import { useState } from "react"
 
@@ -9,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { SignIn } from '@clerk/nextjs'
-import { calculateOutcomePercentages } from "@/lib/utils"
+import { calculateOutcomePercentages } from "@/lib/src/utils"
+import Link from "next/link"
 
 interface MarketCardProps {
   market: {
@@ -27,107 +27,242 @@ interface MarketCardProps {
     category: string
     endDate: string
     status: string
+    type: 'binary' | 'multiple'
   }
   disabled?: boolean
 }
 
-export function MarketCard({ market, disabled }: MarketCardProps) {
+export function MarketCard({ market, disabled = false }: MarketCardProps) {
   const { isSignedIn } = useAuth()
   const [showSignInDialog, setShowSignInDialog] = useState(false)
-
-  const { name, participants, poolAmount, outcomes, category, endDate, id } = market
+  const [showAllOutcomes, setShowAllOutcomes] = useState(false)
+  const { name, participants, poolAmount, outcomes, category, endDate, type } = market
 
   // Calculate outcome percentages using the utility function
   const { outcomesWithPercentages } = calculateOutcomePercentages(outcomes || [])
 
+  // Sort outcomes by percentage for multiple choice
+  const sortedOutcomes = type === 'multiple'
+    ? [...outcomesWithPercentages]
+      .sort((a, b) => b.percentage - a.percentage)
+    : outcomesWithPercentages.sort((a, b) =>
+      // For binary, always show Yes first
+      a.name.toLowerCase() === 'yes' ? -1 : 1
+    )
+
+  // Ensure percentages add up to 100
+  const totalPercentage = sortedOutcomes.reduce((sum, outcome) => sum + outcome.percentage, 0)
+  const normalizedOutcomes = sortedOutcomes.map(outcome => ({
+    ...outcome,
+    percentage: totalPercentage === 0
+      ? outcome.percentage
+      : (outcome.percentage / totalPercentage) * 100
+  }))
+
   // Format pool amount as currency
   const formattedPoolAmount = typeof poolAmount === 'number'
     ? `$${poolAmount.toLocaleString()}`
-    : poolAmount
+    : `$${String(poolAmount)}`
 
   // Handle prediction attempt when not signed in
   const handlePredictionClick = () => {
     if (!isSignedIn) {
       setShowSignInDialog(true)
     }
-    // If signed in, this would handle the prediction logic
   }
+
+  // Handle click events
+  const handleExpandClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowAllOutcomes(!showAllOutcomes)
+  }
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    handlePredictionClick()
+  }
+
+  // Calculate color for outcome
+  const getOutcomeColor = (index: number, total: number = outcomesWithPercentages.length) => {
+    if (type === 'binary') {
+      // Rich, darker shades that complement dark theme
+      return index === 0
+        ? 'hsl(150, 80%, 25%)' // Deep green
+        : 'hsl(350, 80%, 30%)' // Deep red
+    }
+
+    // For multiple choice, create a gradient from gold to blue through green
+    const goldHue = 30    // Theme gold
+    const greenHue = 142  // Mid green
+    const blueHue = 222   // Theme blue
+
+    // Calculate progress through the gradient (0 to 1)
+    const progress = index / (total - 1)
+
+    // First half transitions from gold to green
+    // Second half transitions from green to blue
+    const hue = progress < 0.5
+      ? goldHue + (greenHue - goldHue) * (progress * 2)
+      : greenHue + (blueHue - greenHue) * ((progress - 0.5) * 2)
+
+    // Keep saturation high for vibrant colors but adjust lightness for contrast
+    return `hsl(${Math.round(hue)}, 80%, ${Math.max(25, 45 - index * 3)}%)`
+  }
+
+  // Calculate text color based on background lightness
+  const getTextColor = (index: number) => {
+    if (type === 'binary') {
+      return 'text-white'
+    }
+
+    // For multiple choice, always use white text for better contrast
+    return 'text-white'
+  }
+
+  // Determine which outcomes to show
+  const visibleOutcomes = type === 'multiple' && !showAllOutcomes
+    ? normalizedOutcomes.slice(0, 3)
+    : normalizedOutcomes
 
   return (
     <>
-      {/* Sign In Dialog */}
-      {showSignInDialog && (
-        <SignIn />
-      )}
-      <Card className="overflow-hidden transition-all hover:shadow-md">
-        <CardHeader className="pb-2">
-          <div className="flex justify-items-center justify-between">
+      {showSignInDialog && <SignIn />}
+      <Card className="overflow-hidden transition-all hover:shadow-md flex flex-col">
+        <CardHeader className="flex flex-col flex-1">
+          <div className="flex items-center justify-between">
             <Badge variant="outline" className="bg-primary/10 text-primary">
               {category}
             </Badge>
-            <div className="flex justify-items-center text-sm text-muted-foreground items-center">
-              <Clock className="mr-1 h-3 w-3" />
+            <div className="text-sm text-muted-foreground">
               <span>Ends: {endDate}</span>
             </div>
           </div>
-          <CardTitle className="line-clamp-2 text-lg">{name}</CardTitle>
+          <CardTitle className="line-clamp-2 text-xl mt-4 flex-1">{name}</CardTitle>
         </CardHeader>
-        <CardContent className="pb-2">
-          <div className="flex justify-items-center gap-2 text-sm text-muted-foreground">
+        <CardContent className="flex-grow-0">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
             <span>{participants.toLocaleString()} participants</span>
             <span className="text-primary font-medium">{formattedPoolAmount} pool</span>
           </div>
-          <div className="mt-4 flex justify-items-center justify-between">
-            {outcomesWithPercentages.map((outcome, index) => (
-              <div key={outcome.id || index}>
-                <div className="text-sm font-medium">{outcome.name}</div>
-                <div className={`text-xl font-bold ${outcome.color ||
-                  (index === 0 ? "text-primary" :
-                    index === 1 ? "text-destructive" : "text-primary")}`}>
-                  {outcome.percentage}%
+
+          {type === 'binary' ? (
+            // Binary market layout
+            <div className="mt-4 space-y-2">
+              {/* Percentage bar */}
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="flex h-full">
+                  <div
+                    className="h-full transition-all duration-200 ease-in-out"
+                    style={{
+                      width: `${visibleOutcomes[0]?.percentage || 0}%`,
+                      backgroundColor: getOutcomeColor(0)
+                    }}
+                  />
+                  <div
+                    className="h-full transition-all duration-200 ease-in-out"
+                    style={{
+                      width: `${visibleOutcomes[1]?.percentage || 0}%`,
+                      backgroundColor: getOutcomeColor(1)
+                    }}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div className="flex h-full">
-              {outcomesWithPercentages.map((outcome, index) => (
-                <div
-                  key={outcome.id || index}
-                  className="h-full"
-                  style={{
-                    width: `${outcome.percentage}%`,
-                    backgroundColor: index === 0 ? "var(--primary)" :
-                      index === 1 ? "var(--destructive)" :
-                        `hsl(${index * 60}, 70%, 50%)`
-                  }}
-                />
-              ))}
+
+              {/* Labels and percentages */}
+              <div className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: getOutcomeColor(0) }}
+                  />
+                  <span className="font-medium" style={{ color: getOutcomeColor(0) }}>
+                    {visibleOutcomes[0]?.name} ({(visibleOutcomes[0]?.percentage || 0).toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium" style={{ color: getOutcomeColor(1) }}>
+                    ({(visibleOutcomes[1]?.percentage || 0).toFixed(1)}%) {visibleOutcomes[1]?.name}
+                  </span>
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: getOutcomeColor(1) }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Multiple choice layout
+            <div className="mt-4 space-y-2">
+              {/* Horizontal stacked bar */}
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="flex h-full">
+                  {normalizedOutcomes.map((outcome, index) => (
+                    <div
+                      key={outcome.id || index}
+                      className="h-full transition-all duration-200 ease-in-out"
+                      style={{
+                        width: `${outcome.percentage}%`,
+                        backgroundColor: outcome.color || getOutcomeColor(index)
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Outcome list */}
+              <div className="space-y-1.5">
+                {visibleOutcomes.map((outcome, index) => (
+                  <div key={outcome.id || index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: outcome.color || getOutcomeColor(index) }}
+                      />
+                      <span className="text-sm line-clamp-1">{outcome.name}</span>
+                    </div>
+                    <span className="text-sm font-medium">{outcome.percentage.toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Show more/less button */}
+              {type === 'multiple' && normalizedOutcomes.length > 3 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs items-center"
+                  onClick={handleExpandClick}
+                >
+                  {showAllOutcomes ? (
+                    <><ChevronUp className="h-4 w-4 mr-1" /> Show Less</>
+                  ) : (
+                    <><ChevronDown className="h-4 w-4 mr-1" /> Show {normalizedOutcomes.length - 3} More</>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
         <CardFooter className="pt-2">
           {isSignedIn ? (
-            <div className="w-full grid grid-cols-2 gap-2">
-              {outcomesWithPercentages.slice(0, 2).map((outcome, index) => (
-                <Button
-                  key={outcome.id || index}
-                  className="w-full"
-                  variant={index === 0 ? "default" : index === 1 ? "outline" : "secondary"}
-                  disabled={disabled || market.status !== 'active'}
-                  onClick={handlePredictionClick}
-                >
-                  {outcome.name}
-                </Button>
-              ))}
-            </div>
+            <Button
+              className="w-full"
+              variant="outline"
+              disabled={disabled || market.status !== 'active'}
+            >
+              <Link href={`/markets/${market.id}`} className="w-full">
+                View Market
+              </Link>
+            </Button>
           ) : (
             <Button
               className="w-full"
               variant="outline"
               disabled={disabled || market.status !== 'active'}
-              onClick={() => setShowSignInDialog(true)}
+              onClick={handleButtonClick}
             >
               Sign in to Predict
             </Button>
@@ -137,4 +272,3 @@ export function MarketCard({ market, disabled }: MarketCardProps) {
     </>
   )
 }
-

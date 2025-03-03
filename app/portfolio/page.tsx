@@ -25,8 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { getUserPredictions, getAllPredictions } from "../actions/prediction-actions";
 import { PredictionCard } from "@/components/prediction-card";
-import { isAdmin } from "@/lib/utils";
-import { userBalanceStore } from "@/lib/user-balance-store";
+import { isAdmin } from "@/lib/src/utils";
+import { userBalanceStore } from "@op-predict/lib";
 
 // Mock data - used only for transactions and active markets until we implement those fully
 const mockPortfolioData = {
@@ -69,7 +69,7 @@ export default async function PortfolioPage() {
         : [];
 
     // Get user balance data
-    const userBalance = await userBalanceStore.getCurrentUserBalance();
+    const userBalance = await userBalanceStore.getUserBalance(user.id);
 
     // Set default values if balance doesn't exist (should never happen since we initialize on get)
     const availableBalance = userBalance?.availableBalance || 1000;

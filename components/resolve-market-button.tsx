@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from "@/components/ui/label";
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/src/utils';
 
 type ResolveMarketButtonProps = {
     marketId: string;

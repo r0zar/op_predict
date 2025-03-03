@@ -1,5 +1,5 @@
-import { kv } from '@vercel/kv';
-import { currentUser } from '@clerk/nextjs/server';
+import { z } from "zod";
+import * as kvStore from "./kv-store.js";
 
 // Define user balance types
 export type UserBalance = {
@@ -14,30 +14,14 @@ export type UserBalance = {
 // Default starting balance for new users
 const DEFAULT_STARTING_BALANCE = 1000;
 
-// KV store keys
-const USER_BALANCE_KEY = 'user_balance';
-
 // User balance store with Vercel KV
 export const userBalanceStore = {
-    // Get user balance for the current authenticated user
-    async getCurrentUserBalance(): Promise<UserBalance | null> {
-        try {
-            const user = await currentUser();
-            if (!user) return null;
-
-            return this.getUserBalance(user.id);
-        } catch (error) {
-            console.error('Error getting current user balance:', error);
-            return null;
-        }
-    },
-
     // Get user balance for a specific user
     async getUserBalance(userId: string): Promise<UserBalance | null> {
         try {
             if (!userId) return null;
 
-            let balance = await kv.get<UserBalance>(`${USER_BALANCE_KEY}:${userId}`);
+            let balance = await kvStore.getEntity<UserBalance>('USER_BALANCE', userId);
 
             // If no balance exists, initialize with default balance
             if (!balance) {
@@ -63,7 +47,7 @@ export const userBalanceStore = {
                 lastUpdated: new Date().toISOString()
             };
 
-            await kv.set(`${USER_BALANCE_KEY}:${userId}`, JSON.stringify(newBalance));
+            await kvStore.storeEntity('USER_BALANCE', userId, newBalance);
             return newBalance;
         } catch (error) {
             console.error(`Error initializing user balance for ${userId}:`, error);
@@ -89,7 +73,7 @@ export const userBalanceStore = {
                 lastUpdated: new Date().toISOString()
             };
 
-            await kv.set(`${USER_BALANCE_KEY}:${userId}`, JSON.stringify(updatedBalance));
+            await kvStore.storeEntity('USER_BALANCE', userId, updatedBalance);
             return updatedBalance;
         } catch (error) {
             console.error(`Error updating balance for prediction, user ${userId}:`, error);
@@ -114,7 +98,7 @@ export const userBalanceStore = {
                 lastUpdated: new Date().toISOString()
             };
 
-            await kv.set(`${USER_BALANCE_KEY}:${userId}`, JSON.stringify(updatedBalance));
+            await kvStore.storeEntity('USER_BALANCE', userId, updatedBalance);
             return updatedBalance;
         } catch (error) {
             console.error(`Error updating balance for resolved prediction, user ${userId}:`, error);
@@ -135,7 +119,7 @@ export const userBalanceStore = {
                 lastUpdated: new Date().toISOString()
             };
 
-            await kv.set(`${USER_BALANCE_KEY}:${userId}`, JSON.stringify(updatedBalance));
+            await kvStore.storeEntity('USER_BALANCE', userId, updatedBalance);
             return updatedBalance;
         } catch (error) {
             console.error(`Error adding funds for user ${userId}:`, error);
@@ -161,7 +145,7 @@ export const userBalanceStore = {
                 lastUpdated: new Date().toISOString()
             };
 
-            await kv.set(`${USER_BALANCE_KEY}:${userId}`, JSON.stringify(updatedBalance));
+            await kvStore.storeEntity('USER_BALANCE', userId, updatedBalance);
             return updatedBalance;
         } catch (error) {
             console.error(`Error withdrawing funds for user ${userId}:`, error);

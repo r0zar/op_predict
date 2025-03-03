@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Share, Twitter, Copy, Image, ExternalLink } from 'lucide-react';
+import { Share, Twitter, Copy, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getBaseUrl } from '@/lib/src/utils';
 
 interface PredictionShareProps {
     predictionId: string;
@@ -13,7 +16,11 @@ interface PredictionShareProps {
     outcomeSelected: string;
     amount: number;
     pnl?: number;
+    isNftTokenId?: boolean;
 }
+
+// Safe way to check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
 export default function PredictionShare({
     predictionId,
@@ -22,12 +29,59 @@ export default function PredictionShare({
     outcomeSelected,
     amount,
     pnl,
+    isNftTokenId = true,
 }: PredictionShareProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isImageLoading, setIsImageLoading] = useState(false);
+    const [previewError, setPreviewError] = useState<string | null>(null);
+    const [fallbackImageUrl, setFallbackImageUrl] = useState<string | null>(null);
+    const [baseUrl, setBaseUrl] = useState('https://oppredict.com');
+    const [isClient, setIsClient] = useState(false);
+    const [isDev, setIsDev] = useState(false);
+    const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
+    const [copied, setCopied] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [imageLoaded, setImageLoaded] = useState(false);
 
-    // Create share URLs
-    const baseUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://oppredict.com'}`;
+    // Only access window and environment on client side
+    useEffect(() => {
+        setIsClient(true);
+        const devMode = process.env.NODE_ENV === 'development';
+        setIsDev(devMode);
+
+        // Set base URL safely without direct window access
+        const url = getBaseUrl();
+        setBaseUrl(url);
+
+        // Set preview image URL
+        const imageUrl = `${url}/api/og/prediction/${predictionId}`;
+        setPreviewImageUrl(imageUrl);
+
+        // Create a fallback image URL with query parameters for both dev and prod
+        const fallbackUrl = new URL(`${url}/api/og/debug`);
+        fallbackUrl.searchParams.set('market', marketName);
+        fallbackUrl.searchParams.set('outcome', outcomeSelected);
+        fallbackUrl.searchParams.set('amount', amount.toString());
+        if (isResolved && typeof pnl !== 'undefined') {
+            fallbackUrl.searchParams.set('pnl', pnl.toString());
+        }
+        setFallbackImageUrl(fallbackUrl.toString());
+
+        // Test if the OG image endpoint is available
+        const testImage = new Image();
+        testImage.onload = () => {
+            setImageLoaded(true);
+            console.log("OG image loaded successfully:", imageUrl);
+        };
+        testImage.onerror = () => {
+            console.warn("OG image failed to load:", imageUrl);
+            setPreviewError("OG image failed to load. Using fallback.");
+        };
+        testImage.src = imageUrl;
+
+    }, [predictionId, marketName, outcomeSelected, amount, isResolved, pnl]);
+
+    // Create share URLs based on the state
     const predictionUrl = `${baseUrl}/prediction/${predictionId}`;
 
     // Create social share links
@@ -36,9 +90,6 @@ export default function PredictionShare({
             ? `I just ${pnl && pnl > 0 ? 'won' : 'lost'} ${Math.abs(pnl || 0).toFixed(2)} USD on "${marketName}" with Charisma!`
             : `I predicted "${outcomeSelected}" for "${marketName}" on Charisma!`
     )}&url=${encodeURIComponent(predictionUrl)}`;
-
-    // Preview image URL
-    const previewImageUrl = `${baseUrl}/api/og/prediction/${predictionId}`;
 
     // Handle copy link to clipboard
     const handleCopyLink = () => {
@@ -78,8 +129,33 @@ export default function PredictionShare({
     // Preview the image
     const handlePreviewImage = () => {
         setIsImageLoading(true);
-        window.open(previewImageUrl, '_blank');
+
+        // Determine which URL to use
+        const imageUrlToOpen = previewError || !imageLoaded
+            ? (fallbackImageUrl || `${baseUrl}/api/og/debug?market=${encodeURIComponent(marketName)}`)
+            : previewImageUrl;
+
+        // Log which URL we're using for debugging
+        console.log("Opening preview image:", {
+            using: previewError || !imageLoaded ? "fallback" : "OG image",
+            url: imageUrlToOpen
+        });
+
+        window.open(imageUrlToOpen, '_blank');
         setIsImageLoading(false);
+    };
+
+    // Handle image load error
+    const handleImageError = () => {
+        setPreviewError('Error loading preview image');
+        console.error('Error loading preview image. Using fallback:', fallbackImageUrl);
+        toast.error('Error loading preview image. Using fallback.');
+    };
+
+    // Handle image load success
+    const handleImageLoad = () => {
+        setImageLoaded(true);
+        setPreviewError(null);
     };
 
     return (
@@ -100,13 +176,33 @@ export default function PredictionShare({
 
                     <div className="space-y-4 py-4">
                         <div className="rounded-lg overflow-hidden border border-slate-700 aspect-[1200/630]">
-                            <img
-                                src={previewImageUrl}
-                                alt="Prediction preview"
-                                className="w-full h-full object-cover"
-                                onError={() => toast.error('Error loading preview image')}
-                            />
+                            {previewError || !imageLoaded ? (
+                                <img
+                                    src={fallbackImageUrl || '/placeholder-og-image.png'}
+                                    alt="Prediction preview (fallback)"
+                                    className="w-full h-full object-cover"
+                                    onLoad={() => console.log("Fallback image loaded")}
+                                    onError={() => {
+                                        console.error("Even fallback image failed to load");
+                                        toast.error("Failed to load any preview image");
+                                    }}
+                                />
+                            ) : (
+                                <img
+                                    src={previewImageUrl}
+                                    alt="Prediction preview"
+                                    className="w-full h-full object-cover"
+                                    onLoad={handleImageLoad}
+                                    onError={handleImageError}
+                                />
+                            )}
                         </div>
+
+                        {previewError && (
+                            <div className="text-amber-400 text-sm">
+                                Using fallback preview image. The actual share image will be generated on view.
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-3">
                             <Button onClick={handleTwitterShare} variant="outline" className="gap-2 bg-transparent border-slate-700 hover:bg-slate-700">
@@ -120,7 +216,7 @@ export default function PredictionShare({
                             </Button>
 
                             <Button onClick={handlePreviewImage} variant="outline" className="gap-2 bg-transparent border-slate-700 hover:bg-slate-700">
-                                <Image className="h-4 w-4" />
+                                <ImageIcon className="h-4 w-4" />
                                 {isImageLoading ? 'Loading...' : 'View Image'}
                             </Button>
 

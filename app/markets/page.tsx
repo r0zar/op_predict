@@ -2,19 +2,20 @@ import { getAllMarkets } from "@/app/actions/market-actions";
 import { currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, ListFilter, Users, DollarSign, Calendar } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { DeleteMarketButton } from "@/components/delete-market-button";
-import { isAdmin, calculateOutcomePercentages } from "@/lib/utils";
+import { isAdmin } from "@/lib/src/utils";
+import { MarketCard } from "@/components/market-card";
 
 export default async function MarketsPage() {
     // Get current user to check if they're an admin
     const user = await currentUser();
-    const isUserAdmin = isAdmin(user?.id);
+    const isUserAdmin = isAdmin(user?.id || '');
 
     const markets = await getAllMarkets();
+
+    const activeMarkets = markets.filter((market) => market.status === 'active');
+
+    const sortedMarkets = activeMarkets.sort((a, b) => b.poolAmount! - a.poolAmount!);
 
     return (
         <div className="container py-10">
@@ -26,91 +27,26 @@ export default async function MarketsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {markets.map((market) => {
-                    // Calculate outcome percentages using the utility function
-                    const { outcomesWithPercentages, useFallbackVotes } = calculateOutcomePercentages(market.outcomes);
-
-                    // Get the top two outcomes for display
-                    const topOutcomes = [...outcomesWithPercentages]
-                        .sort((a, b) => b.percentage - a.percentage)
-                        .slice(0, 2);
-
-                    return (
-                        <div key={market.id} className="relative">
-                            {isUserAdmin && (
-                                <div className="absolute top-2 right-2 z-10">
-                                    <DeleteMarketButton marketId={market.id} />
-                                </div>
-                            )}
-                            <Link href={`/markets/${market.id}`}>
-                                <Card className="h-full border-2 hover:border-primary/50 hover:shadow-md transition-all">
-                                    <CardHeader className="pb-2">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Badge variant={market.type === 'binary' ? 'default' : 'secondary'}>
-                                                {market.type === 'binary' ? (
-                                                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                                                ) : (
-                                                    <ListFilter className="h-3 w-3 mr-1" />
-                                                )}
-                                                {market.type === 'binary' ? 'Yes/No' : 'Multiple Choice'}
-                                            </Badge>
-                                            <Badge variant={market.status === 'active' ? 'outline' : 'secondary'} className="capitalize">
-                                                {market.status}
-                                            </Badge>
-                                        </div>
-                                        <CardTitle className="line-clamp-2">{market.name}</CardTitle>
-                                    </CardHeader>
-
-                                    <CardContent>
-                                        <p className="text-muted-foreground line-clamp-2 mb-4">{market.description}</p>
-
-                                        <div className="space-y-3">
-                                            {topOutcomes.map((outcome) => (
-                                                <div key={outcome.id} className="space-y-1">
-                                                    <div className="flex justify-between items-center text-sm">
-                                                        <span className="font-medium">{outcome.name}</span>
-                                                        <span>{outcome.percentage}%</span>
-                                                    </div>
-                                                    <Progress
-                                                        value={outcome.percentage}
-                                                        className={`h-2 ${market.type === 'binary'
-                                                            ? outcome.name === 'Yes'
-                                                                ? 'bg-primary/20'
-                                                                : 'bg-destructive/20'
-                                                            : 'bg-secondary/50'
-                                                            }`}
-                                                        indicatorClassName={
-                                                            market.type === 'binary'
-                                                                ? outcome.name === 'Yes'
-                                                                    ? 'bg-primary'
-                                                                    : 'bg-destructive'
-                                                                : ''
-                                                        }
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-
-                                    <CardFooter className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-0">
-                                        <div className="flex items-center">
-                                            <Users className="h-3 w-3 mr-1" />
-                                            <span>{market.participants || 0}</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <DollarSign className="h-3 w-3 mr-1" />
-                                            <span>${market.poolAmount || 0}</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <Calendar className="h-3 w-3 mr-1" />
-                                            <span>{new Date(market.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </CardFooter>
-                                </Card>
-                            </Link>
-                        </div>
-                    );
-                })}
+                {sortedMarkets.map((market) => (
+                    <div key={market.id} className="relative">
+                        {isUserAdmin && (
+                            <div className="absolute top-2 right-2 z-10">
+                                <DeleteMarketButton marketId={market.id} />
+                            </div>
+                        )}
+                        <MarketCard
+                            market={{
+                                ...market,
+                                category: market.category || 'General', // Provide default category if missing
+                                endDate: new Date(market.endDate).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                })
+                            } as any}
+                        />
+                    </div>
+                ))}
             </div>
 
             {markets.length === 0 && (
@@ -118,7 +54,7 @@ export default async function MarketsPage() {
                     <h2 className="text-2xl font-semibold mb-2">No markets found</h2>
                     <p className="text-muted-foreground mb-6">Be the first to create a prediction market!</p>
                     <Link href="/create">
-                        <Button size="lg">Create Market</Button>
+                        <Button size="lg" className='items-center'>Create Market</Button>
                     </Link>
                 </div>
             )}

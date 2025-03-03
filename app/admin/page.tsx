@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { redirect } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { isAdmin } from '@/lib/utils';
+import { isAdmin } from '@/lib/src/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ADMIN_USER_IDS } from '@/lib/utils';
+import { ADMIN_USER_IDS } from '@/lib/src/utils';
 
 export default function AdminPage() {
     const { user, isLoaded } = useUser();

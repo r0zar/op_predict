@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { MarketCard } from "@/components/market-card"
 import { TopMarkets } from "@/components/top-markets"
 import { getAllMarkets } from "@/app/actions/market-actions"
-import { calculateOutcomePercentages } from "@/lib/utils"
+import { calculateOutcomePercentages } from "@/lib/src/utils"
 
 export default async function Home() {
   const { userId } = await auth();
@@ -18,13 +18,15 @@ export default async function Home() {
 
   // Get the most active market by participants count (or pool amount)
   const featuredMarket = markets.length > 0
-    ? [...markets].sort((a, b) => (b.participants || 0) - (a.participants || 0))[0]
+    ? [...markets]
+      .filter(m => m.status === 'active')
+      .sort((a, b) => (b.participants || 0) - (a.participants || 0))[0]
     : null;
 
-  // Get trending markets (excluding the featured one)
+  // Get trending markets (excluding the featured one and completed markets)
   const trendingMarkets = markets.length > 1
     ? [...markets]
-      .filter(m => m.id !== featuredMarket?.id)
+      .filter(m => m.id !== featuredMarket?.id && m.status === 'active')
       .sort((a, b) => (b.participants || 0) - (a.participants || 0))
       .slice(0, 6)
     : [];
@@ -106,7 +108,7 @@ export default async function Home() {
                     </CardContent>
                     <CardFooter>
                       <Link href={`/markets/${featuredMarket.id}`} className="w-full">
-                        <Button className="w-full">View Market</Button>
+                        <Button className="w-full" variant="outline">View Market</Button>
                       </Link>
                     </CardFooter>
                   </Card>
@@ -155,6 +157,7 @@ export default async function Home() {
                       market={{
                         id: market.id,
                         name: market.name,
+                        type: market.type,
                         participants: market.participants || 0,
                         poolAmount: market.poolAmount || 0,
                         outcomes: (market.outcomes || []).map(outcome => ({
@@ -164,7 +167,7 @@ export default async function Home() {
                           amount: outcome.amount
                         })),
                         category: market.category || 'General',
-                        endDate: market.endDate || new Date(market.createdAt).toLocaleDateString(),
+                        endDate: new Date(market.createdAt).toLocaleDateString(),
                         status: market.status || 'inactive'
                       }}
                       disabled={market.status !== 'active'}
@@ -210,4 +213,3 @@ export default async function Home() {
     </div>
   )
 }
-

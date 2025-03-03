@@ -1,14 +1,12 @@
 'use server'
 
 import { z } from 'zod';
-import { marketStore, Market, MarketOutcome } from '@/lib/market-store';
 import { revalidatePath } from 'next/cache';
-import { userStatsStore } from '@/lib/user-stats-store';
-import { predictionStore } from '@/lib/prediction-store';
+import { predictionStore } from '@op-predict/lib';
+import { Market, marketStore, userStatsStore } from "@op-predict/lib";
+import { userBalanceStore } from '@op-predict/lib';
 import { currentUser } from '@clerk/nextjs/server';
-import { isAdmin } from '@/lib/utils';
-import { getMarketPredictions } from './prediction-actions';
-import { userBalanceStore } from '@/lib/user-balance-store';
+import { isAdmin } from '@/lib/src/utils';
 
 // Define the validation schema for market creation
 const marketFormSchema = z.object({
@@ -218,6 +216,14 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
                 potentialPayout: isWinner ? winnerShare : 0,
                 resolvedAt: new Date().toISOString()
             });
+
+            // Update user stats for leaderboard
+            await userStatsStore.updateStatsForResolvedPrediction(
+                prediction.userId,
+                prediction,
+                isWinner,
+                isWinner ? winnerShare : -prediction.amount
+            );
         }
 
         // Revalidate relevant paths
@@ -225,6 +231,7 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
         revalidatePath('/markets');
         revalidatePath('/portfolio');
         revalidatePath('/explore');
+        revalidatePath('/leaderboard');
 
         return {
             success: true,

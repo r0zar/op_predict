@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { PredictionNFTReceipt } from "@/lib/prediction-store";
+import { PredictionNFTReceipt } from "@op-predict/lib";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -135,11 +135,12 @@ export function PredictionReceipt({
 
                     <div className="flex-1">
                         <PredictionShare
-                            predictionId={receipt.tokenId}
+                            predictionId={receipt.predictionId || receipt.tokenId}
                             marketName={receipt.marketName}
                             isResolved={false}
                             outcomeSelected={receipt.outcomeName}
                             amount={receipt.amount}
+                            isNftTokenId={!receipt.predictionId}
                         />
                     </div>
                 </div>

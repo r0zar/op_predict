@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/src/utils";
 import { createMarket, CreateMarketFormData } from "@/app/actions/market-actions";
 
 // Define market types

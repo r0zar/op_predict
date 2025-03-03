@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { currentUser } from "@clerk/nextjs/server"
-import { isAdmin } from "@/lib/utils"
+import { isAdmin } from "@/lib/src/utils"
 import { SectionHeader } from "./section-header"
 import { MarketCard } from "./market-card"
 
@@ -17,7 +17,7 @@ export async function MarketsSection({
     viewAllHref?: string;
 }) {
     const user = await currentUser()
-    const isUserAdmin = isAdmin(user?.id)
+    const isUserAdmin = isAdmin(user?.id || '')
 
     return (
         <section className="mb-8">

@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { ExploreContent } from "@/components/explore-content"
-import { AppSidebar } from "@/components/app-sidebar"
 
 export const metadata: Metadata = {
   title: "Explore | OP_PREDICT",
@@ -9,10 +8,14 @@ export const metadata: Metadata = {
 
 export default function ExplorePage() {
   return (
-    <div className="flex">
-      <AppSidebar />
-      <div className="flex-1 p-6">
-        <h1 className="text-4xl font-bold mb-6">Explore Markets</h1>
+    <div className="container max-w-5xl py-10">
+      <div className="flex flex-col space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Explore Markets</h1>
+          <p className="text-muted-foreground">
+            Discover personalized prediction markets and trending categories.
+          </p>
+        </div>
         <ExploreContent />
       </div>
     </div>

@@ -7,13 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 
 // Admin user IDs
 export const ADMIN_USER_IDS = [
-  'user_2tjVcbojjJk2bkQd856eNE1Ax0S',
-  'user_2tkBcBEVGanm3LHkg6XK7j91DRj'
+  'user_2tjVcbojjJk2bkQd856eNE1Ax0S', // rozar
+  'user_2tkBcBEVGanm3LHkg6XK7j91DRj', // kraken
 ];
 
 // Check if a user is an admin
-export function isAdmin(userId?: string | null): boolean {
-  if (!userId) return false;
+export function isAdmin(userId: string): boolean {
   return ADMIN_USER_IDS.includes(userId);
 }
 
@@ -44,5 +43,27 @@ export function calculateOutcomePercentages(outcomes: any[]) {
     outcomesWithPercentages,
     useFallbackVotes
   };
+}
+
+/**
+ * Safely get the base URL of the application without causing SSR issues
+ * with window access
+ */
+export function getBaseUrl(): string {
+  // Check for environment variable first
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+
+  // Then check if window is available (client-side only)
+  if (typeof window !== 'undefined') {
+    // In development, use window.location.origin
+    if (process.env.NODE_ENV === 'development') {
+      return window.location.origin;
+    }
+  }
+
+  // Default fallback for SSR and production without env var
+  return 'https://oppredict.com';
 }
 

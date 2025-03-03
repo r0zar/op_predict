@@ -1,0 +1,28 @@
+{
+    "name": "@op-predict/mcp",
+    "version": "1.0.0",
+    "description": "MCP Server for Prediction Market Analysis",
+    "main": "dist/index.js",
+    "type": "module",
+    "bin": {
+        "mcp-server": "./dist/index.js"
+    },
+    "scripts": {
+        "clean": "rm -rf dist",
+        "build": "pnpm clean && tsc",
+        "start": "node ./dist/index.js",
+        "dev": "tsc -w",
+        "serve": "pnpm build && pnpm start"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.6.1",
+        "@op-predict/lib": "workspace:*",
+        "dotenv": "^16.4.1",
+        "zod": "^3.22.4",
+        "zod-to-json-schema": "^3.24.3"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.16",
+        "typescript": "^5.3.3"
+    }
+}

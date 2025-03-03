@@ -2,12 +2,11 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { predictionStore, Prediction } from '@/lib/prediction-store';
-import { marketStore } from '@/lib/market-store';
-import { userBalanceStore } from '@/lib/user-balance-store';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { isAdmin } from '@/lib/utils';
-import { userStatsStore } from '@/lib/user-stats-store';
+import { predictionStore, Prediction, userStatsStore, Market } from '@op-predict/lib';
+import { marketStore } from "@op-predict/lib";
+import { userBalanceStore } from '@op-predict/lib';
+import { currentUser } from '@clerk/nextjs/server';
+import { isAdmin } from '@/lib/src/utils';
 
 // Define the validation schema for prediction creation
 const predictionFormSchema = z.object({
@@ -18,6 +17,14 @@ const predictionFormSchema = z.object({
 });
 
 export type CreatePredictionFormData = z.infer<typeof predictionFormSchema>;
+
+export async function getRelatedMarkets(marketId: string): Promise<Market[]> {
+    const market = await marketStore.getMarket(marketId);
+    if (!market) {
+        return [];
+    }
+    return marketStore.getRelatedMarkets(marketId, 3);
+}
 
 /**
  * Create a new prediction and generate an NFT receipt

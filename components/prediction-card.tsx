@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ChevronRight, Trash2, Trophy, Ticket, PercentIcon, CoinsIcon } from "lucide-react";
-import { Prediction } from "@/lib/prediction-store";
+import { Prediction } from "@op-predict/lib";
 import { deletePrediction } from "@/app/actions/prediction-actions";
 import { useRouter } from "next/navigation";
 import { RedeemPredictionButton } from "./redeem-prediction-button";

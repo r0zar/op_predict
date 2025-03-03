@@ -1,5 +1,6 @@
-import { kv } from '@vercel/kv';
-import { Prediction } from './prediction-store';
+import { z } from "zod";
+import * as kvStore from "./kv-store.js";
+import { Prediction } from './prediction-store.js';
 
 // Define user stats types
 export type UserStats = {
@@ -17,12 +18,6 @@ export type LeaderboardEntry = UserStats & {
     rank?: number;
 };
 
-// KV store keys
-const USER_STATS_KEY = 'user_stats';
-const LEADERBOARD_KEY = 'leaderboard';
-const LEADERBOARD_EARNINGS_KEY = 'leaderboard_earnings';
-const LEADERBOARD_ACCURACY_KEY = 'leaderboard_accuracy';
-
 // User stats store with Vercel KV
 export const userStatsStore = {
     // Get user stats for a specific user
@@ -30,7 +25,7 @@ export const userStatsStore = {
         try {
             if (!userId) return null;
 
-            const stats = await kv.get<UserStats>(`${USER_STATS_KEY}:${userId}`);
+            const stats = await kvStore.getEntity<UserStats>('USER_STATS', userId);
             return stats || null;
         } catch (error) {
             console.error(`Error getting user stats for ${userId}:`, error);
@@ -67,7 +62,7 @@ export const userStatsStore = {
                     : 0;
 
             // Store updated stats
-            await kv.set(`${USER_STATS_KEY}:${userId}`, JSON.stringify(updatedStats));
+            await kvStore.storeEntity('USER_STATS', userId, updatedStats);
 
             // Update leaderboard sorted sets for efficient querying
             await this.updateLeaderboardEntries(updatedStats);
@@ -110,7 +105,7 @@ export const userStatsStore = {
                     : 0;
 
             // Store updated stats
-            await kv.set(`${USER_STATS_KEY}:${userId}`, JSON.stringify(updatedStats));
+            await kvStore.storeEntity('USER_STATS', userId, updatedStats);
 
             // Update leaderboard sorted sets
             await this.updateLeaderboardEntries(updatedStats);
@@ -134,7 +129,7 @@ export const userStatsStore = {
                 lastUpdated: new Date().toISOString()
             };
 
-            await kv.set(`${USER_STATS_KEY}:${userId}`, JSON.stringify(updatedStats));
+            await kvStore.storeEntity('USER_STATS', userId, updatedStats);
 
             // Update leaderboard entries
             await this.updateLeaderboardEntries(updatedStats);
@@ -150,23 +145,36 @@ export const userStatsStore = {
     async updateLeaderboardEntries(stats: UserStats): Promise<void> {
         try {
             // Add to earnings leaderboard (sorted by total earnings)
-            await kv.zadd(
-                LEADERBOARD_EARNINGS_KEY,
-                { score: stats.totalEarnings, member: stats.userId }
+            await kvStore.addToSortedSet(
+                'LEADERBOARD_EARNINGS',
+                stats.userId,
+                stats.totalEarnings
             );
 
             // Add to accuracy leaderboard (sorted by accuracy)
-            await kv.zadd(
-                LEADERBOARD_ACCURACY_KEY,
-                { score: stats.accuracy, member: stats.userId }
+            // Only count users with at least 5 predictions for accuracy
+            const accuracyScore = stats.totalPredictions >= 5 ? stats.accuracy : 0;
+            await kvStore.addToSortedSet(
+                'LEADERBOARD_ACCURACY',
+                stats.userId,
+                accuracyScore
             );
 
-            // Add to general leaderboard (combined score using earnings as primary factor)
-            // This is a simplified score calculation - can be adjusted based on preference
-            const combinedScore = stats.totalEarnings + (stats.accuracy * 10);
-            await kv.zadd(
-                LEADERBOARD_KEY,
-                { score: combinedScore, member: stats.userId }
+            // Add to general leaderboard (combined score balancing earnings and accuracy)
+            // Use a more balanced formula that weights accuracy higher
+            // This gives more weight to accuracy while still considering earnings
+            // Normalize earnings by dividing by 100 to make it comparable with accuracy (0-100)
+            const normalizedEarnings = stats.totalEarnings / 100;
+
+            // Formula: 50% weight on normalized earnings, 50% weight on accuracy
+            // Only count users with at least 5 predictions for the accuracy component
+            const accuracyComponent = stats.totalPredictions >= 5 ? stats.accuracy : 0;
+            const combinedScore = (normalizedEarnings * 0.5) + (accuracyComponent * 0.5);
+
+            await kvStore.addToSortedSet(
+                'LEADERBOARD',
+                stats.userId,
+                combinedScore
             );
         } catch (error) {
             console.error('Error updating leaderboard entries:', error);
@@ -178,10 +186,10 @@ export const userStatsStore = {
     async getTopEarners(limit: number = 10): Promise<LeaderboardEntry[]> {
         try {
             // Get top user IDs sorted by earnings (highest first)
-            const userIds = await kv.zrange(LEADERBOARD_EARNINGS_KEY, 0, limit - 1, { rev: true });
+            const userIds = await kvStore.getTopFromSortedSet('LEADERBOARD_EARNINGS', limit);
 
             // Get full stats for each user ID
-            const leaderboard = await this.getUserStatsForIds(userIds as string[]);
+            const leaderboard = await this.getUserStatsForIds(userIds);
 
             // Add rank
             return leaderboard.map((entry, index) => ({
@@ -198,10 +206,10 @@ export const userStatsStore = {
     async getTopAccuracy(limit: number = 10): Promise<LeaderboardEntry[]> {
         try {
             // Get top user IDs sorted by accuracy (highest first)
-            const userIds = await kv.zrange(LEADERBOARD_ACCURACY_KEY, 0, limit - 1, { rev: true });
+            const userIds = await kvStore.getTopFromSortedSet('LEADERBOARD_ACCURACY', limit);
 
             // Get full stats for each user ID
-            const leaderboard = await this.getUserStatsForIds(userIds as string[]);
+            const leaderboard = await this.getUserStatsForIds(userIds);
 
             // Add rank
             return leaderboard.map((entry, index) => ({
@@ -218,10 +226,10 @@ export const userStatsStore = {
     async getLeaderboard(limit: number = 10): Promise<LeaderboardEntry[]> {
         try {
             // Get top user IDs sorted by combined score (highest first)
-            const userIds = await kv.zrange(LEADERBOARD_KEY, 0, limit - 1, { rev: true });
+            const userIds = await kvStore.getTopFromSortedSet('LEADERBOARD', limit);
 
             // Get full stats for each user ID
-            const leaderboard = await this.getUserStatsForIds(userIds as string[]);
+            const leaderboard = await this.getUserStatsForIds(userIds);
 
             // Add rank
             return leaderboard.map((entry, index) => ({

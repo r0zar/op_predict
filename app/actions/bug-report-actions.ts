@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from "@clerk/nextjs/server";
-import { bugReportStore, BugReport } from "@/lib/bug-report-store";
+import { bugReportStore, BugReport } from "@op-predict/lib";
 
 export interface BugReportFormData {
     title: string;
@@ -38,7 +38,8 @@ export async function createBugReport(data: BugReportFormData) {
 
         const newReport = await bugReportStore.createBugReport({
             ...data,
-            createdBy: user.id
+            createdBy: user.id,
+            status: 'open' as const
         });
 
         // Process the initial $10 reward
@@ -51,13 +52,22 @@ export async function createBugReport(data: BugReportFormData) {
             });
 
             // Update newReport for the response
-            newReport.initialRewardPaid = true;
+            const updatedReport = await bugReportStore.getBugReport(newReport.id);
+            if (!updatedReport) {
+                throw new Error('Failed to get updated report');
+            }
+
+            return {
+                success: true,
+                data: updatedReport,
+                rewardPaid: initialRewardPaid
+            };
         }
 
         return {
             success: true,
             data: newReport,
-            rewardPaid: initialRewardPaid
+            rewardPaid: false
         };
     } catch (error) {
         console.error('Error creating bug report:', error);
@@ -96,7 +106,7 @@ export async function getBugReports() {
 }
 
 // Update bug report status
-export async function updateBugReportStatus(reportId: string, status: string) {
+export async function updateBugReportStatus(reportId: string, status: BugReportStatus) {
     try {
         const user = await currentUser();
 
@@ -129,7 +139,7 @@ export async function updateBugReportStatus(reportId: string, status: string) {
 
         // Prepare update data
         const updateData: Partial<BugReport> = {
-            status: status as BugReportStatus,
+            status,
             updatedBy: user.id,
             updatedAt: new Date().toISOString()
         };

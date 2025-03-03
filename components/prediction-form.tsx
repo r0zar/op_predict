@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Market, MarketOutcome } from "@/lib/market-store";
+import { Market, MarketOutcome } from "@op-predict/lib";
 import { createPrediction } from "@/app/actions/prediction-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
-import { PredictionNFTReceipt } from "@/lib/prediction-store";
-import { cn } from "@/lib/utils";
+import { PredictionNFTReceipt } from "@op-predict/lib";
+import { cn } from "@/lib/src/utils";
 
 interface PredictionFormProps {
     market: Market;

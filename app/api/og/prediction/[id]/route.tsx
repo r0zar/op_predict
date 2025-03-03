@@ -1,264 +1,275 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import { kv } from '@vercel/kv';
+import * as kvStore from '@op-predict/lib/kv-store';
+import { Prediction } from '@op-predict/lib';
+import { Market } from '@op-predict/lib';
 
 export const runtime = 'edge';
 
-/**
- * Generate dynamic Open Graph images for predictions
- * @route GET /api/og/prediction/[id]
- */
+// Use a generic type approach to avoid conflicts with imported types
+interface BasicNFTReceipt {
+    id: string;
+    predictionId: string;
+    userId: string;
+    createdAt: string | number;
+    tokenId?: string;
+    transactionHash?: string;
+    // Optional fields that might exist in some receipts
+    image?: string;
+    marketName?: string;
+    outcomeName?: string;
+    amount?: number;
+}
+
+// Extended prediction type with NFT info - avoiding intersection with imported types
+type PredictionWithNFT = {
+    id: string;
+    marketId: string;
+    userId: string;
+    outcomeId: number | string;
+    amount: number | string;
+    createdAt: number | string;
+    // Include any other prediction fields we might need
+    odds?: number | string;
+    potentialPayout?: number;
+    status?: string;
+    // NFT receipt info
+    nftReceipt?: Record<string, any>;
+};
+
+// Preload the font
+const interBold = fetch(
+    new URL('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-0.woff2', import.meta.url)
+).then((res) => res.arrayBuffer());
+
 export async function GET(
-    request: NextRequest,
+    req: NextRequest,
     { params }: { params: { id: string } }
-): Promise<Response> {
+) {
     try {
         const id = params.id;
+        if (!id) {
+            return new Response('Prediction ID is required', { status: 400 });
+        }
 
-        // Fetch prediction data from KV store
-        const prediction = await kv.hgetall(`prediction:${id}`);
+        // Debug logging
+        console.log(`[OG Debug] Processing prediction OG for ID: ${id}`);
 
+        // First determine if the ID is for a prediction or NFT receipt
+        let prediction: PredictionWithNFT | null = null;
+
+        // Try to fetch as a prediction first
+        prediction = await kvStore.getEntity<PredictionWithNFT>('PREDICTION', id);
+        console.log(`[OG Debug] Direct prediction lookup result: ${prediction ? 'found' : 'not found'}`);
+
+        // If not found, try to see if it's an NFT receipt ID
         if (!prediction) {
-            return new Response('Prediction not found', { status: 404 });
+            console.log(`[OG Debug] Looking up as NFT receipt`);
+            const nftReceipt = await kvStore.getEntity<BasicNFTReceipt>('PREDICTION_NFT', id);
+            console.log(`[OG Debug] NFT receipt lookup result: ${nftReceipt ? 'found' : 'not found'}`);
+
+            // If we found an NFT receipt, get the associated prediction
+            if (nftReceipt && nftReceipt.predictionId) {
+                console.log(`[OG Debug] Found NFT with prediction ID: ${nftReceipt.predictionId}`);
+                // Get the prediction using the predictionId from the receipt
+                prediction = await kvStore.getEntity<PredictionWithNFT>('PREDICTION', nftReceipt.predictionId);
+                console.log(`[OG Debug] Prediction from NFT lookup: ${prediction ? 'found' : 'not found'}`);
+
+                // Add the NFT receipt to the prediction
+                if (prediction) {
+                    prediction.nftReceipt = nftReceipt as Record<string, any>;
+                }
+            }
         }
-
-        // Get market data
-        const marketId = prediction.marketId as string;
-        const market = await kv.hgetall(`market:${marketId}`);
-
-        if (!market) {
-            return new Response('Market not found', { status: 404 });
-        }
-
-        // Determine if market is resolved
-        const isResolved = market.status === 'resolved';
-
-        // Extract key data for the OG image
-        const marketName = market.name as string;
-        const selectedOutcomeId = prediction.outcomeId as string;
-        const amount = parseFloat(prediction.amount as string);
-        const odds = parseFloat(prediction.odds as string);
-        const potentialPnl = amount * (odds - 1);
-
-        // For resolved markets, calculate actual PnL
-        let actualPnl = 0;
-        let percentageGain = 0;
-
-        if (isResolved) {
-            const winningOutcomeId = market.winningOutcomeId;
-            if (selectedOutcomeId === winningOutcomeId) {
-                actualPnl = potentialPnl;
-                percentageGain = ((odds - 1) * 100);
-            } else {
-                actualPnl = -amount;
-                percentageGain = -100;
+        // If ID is a prediction but it might have an NFT receipt, check for that
+        else if (prediction) {
+            // Try to find an NFT receipt for this prediction
+            const nftId = prediction.id;
+            const receipt = await kvStore.getEntity<BasicNFTReceipt>('PREDICTION_NFT', nftId);
+            if (receipt) {
+                console.log(`[OG Debug] Found matching NFT receipt for prediction`);
+                prediction.nftReceipt = receipt as Record<string, any>;
             }
         }
 
-        // Get outcomes
-        const outcomes = JSON.parse(market.outcomes as string || '[]');
+        // If still no prediction found
+        if (!prediction) {
+            console.log(`[OG Debug] Final check - prediction not found`);
+            // Check if it's in the old format
+            prediction = await kvStore.getEntity<PredictionWithNFT>('PREDICTION', id);
+            if (!prediction) {
+                console.log(`[OG Debug] All lookups failed, returning 404`);
+                return new Response('Prediction not found', { status: 404 });
+            }
+        }
 
-        // Format currency
-        const formatCurrency = (value: number) => {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-            }).format(value);
-        };
+        // Fetch the market
+        console.log(`[OG Debug] Looking up market with ID: ${prediction.marketId}`);
+        const market = prediction.marketId
+            ? await kvStore.getEntity<Market>('MARKET', prediction.marketId)
+            : null;
 
-        // Generate the OG image based on market status
+        console.log(`[OG Debug] Market lookup result: ${market ? 'found' : 'not found'}`);
+
+        if (!market) {
+            console.log(`[OG Debug] Market not found for prediction with ID: ${id}, returning 404`);
+            return new Response('Market not found for this prediction', { status: 404 });
+        }
+
+        // Extract data with type safety
+        console.log(`[OG Debug] Generating OG image with market name: ${market.name}`);
+        const marketName = market.name;
+        const isResolved = market.status === 'resolved';
+
+        const selectedOutcomeId = typeof prediction.outcomeId === 'number'
+            ? prediction.outcomeId
+            : Number(prediction.outcomeId);
+
+        const amount = typeof prediction.amount === 'number'
+            ? prediction.amount
+            : Number(prediction.amount || 0);
+
+        // Find the selected outcome
+        const outcomes = Array.isArray(market.outcomes)
+            ? market.outcomes
+            : JSON.parse(typeof market.outcomes === 'string' ? market.outcomes : '[]');
+
+        const selectedOutcome = outcomes.find((o: any) => o.id === selectedOutcomeId) || { name: 'Unknown' };
+
+        // Get the odds (might not be in the type definition)
+        const odds = typeof (prediction as any).odds === 'number'
+            ? (prediction as any).odds
+            : Number((prediction as any).odds || 1);
+
+        // For resolved markets, calculate actual PnL
+        let pnlText = '';
+        let isWinner = false;
+
+        if (isResolved) {
+            // Use resolvedOutcomeId or winningOutcomeId (backward compatibility)
+            const winningOutcomeId = market.resolvedOutcomeId || (market as any).winningOutcomeId;
+            isWinner = selectedOutcomeId === winningOutcomeId;
+
+            const pnl = isWinner ? amount * (odds - 1) : -amount;
+            pnlText = `${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}`;
+        }
+
+        // Load font
+        const fontData = await interBold;
+
+        // Generate image
         return new ImageResponse(
             (
                 <div
                     style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         width: '100%',
                         height: '100%',
-                        backgroundColor: '#0f172a', // slate-900
-                        padding: 40,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: '#1e293b',
+                        padding: '40px',
                         color: 'white',
-                        fontFamily: 'SF Pro, Inter, system-ui, sans-serif',
+                        fontFamily: 'Inter',
                     }}
                 >
-                    {/* Branding header */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            position: 'absolute',
-                            top: 30,
-                            left: 40,
-                            alignItems: 'center',
-                            color: '#94a3b8', // slate-400
-                        }}
-                    >
-                        <span style={{ fontSize: 24, fontWeight: 'bold' }}>Charisma Prediction</span>
+                    {/* Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h1 style={{ fontSize: 36, margin: 0 }}>OP_PREDICT</h1>
+                        <div style={{
+                            fontSize: 24,
+                            backgroundColor: isResolved ? (isWinner ? '#10b981' : '#ef4444') : '#3b82f6',
+                            borderRadius: 20,
+                            padding: '6px 16px',
+                        }}>
+                            {isResolved ? (isWinner ? 'Won' : 'Lost') : 'Active'}
+                        </div>
                     </div>
 
-                    {isResolved ? (
-                        // Layout for resolved markets - focus on financial outcome
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                textAlign: 'center',
-                                gap: 24,
-                            }}
-                        >
-                            <div style={{ fontSize: 32, color: '#94a3b8' }}>Prediction Result</div>
+                    {/* Market Name */}
+                    <div style={{
+                        fontSize: 44,
+                        fontWeight: 'bold',
+                        lineHeight: 1.2,
+                        marginBottom: '30px',
+                        maxHeight: 160,
+                        overflow: 'hidden',
+                    }}>
+                        {marketName}
+                    </div>
 
-                            <div
-                                style={{
-                                    fontSize: 72,
-                                    fontWeight: 'bold',
-                                    color: actualPnl >= 0 ? '#22c55e' : '#ef4444', // green-500 or red-500
-                                }}
-                            >
-                                {actualPnl >= 0 ? '+' : ''}{formatCurrency(actualPnl)}
+                    {/* Prediction Details */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: '#2d3748',
+                        borderRadius: 12,
+                        padding: '24px',
+                        marginBottom: '20px',
+                    }}>
+                        <div style={{ marginBottom: '12px' }}>
+                            <div style={{ fontSize: 20, color: '#94a3b8' }}>Selected Outcome</div>
+                            <div style={{ fontSize: 36, fontWeight: 'bold' }}>{selectedOutcome?.name || 'Unknown'}</div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '40px' }}>
+                            <div>
+                                <div style={{ fontSize: 20, color: '#94a3b8' }}>Amount</div>
+                                <div style={{ fontSize: 32, fontWeight: 'bold' }}>${amount.toFixed(2)}</div>
                             </div>
 
-                            <div style={{ fontSize: 36, color: actualPnl >= 0 ? '#22c55e' : '#ef4444' }}>
-                                {actualPnl >= 0 ? '+' : ''}{percentageGain.toFixed(0)}%
-                            </div>
-
-                            <div style={{ fontSize: 24, marginTop: 40, color: '#e2e8f0' }}>
-                                {marketName}
-                            </div>
-
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    fontSize: 28,
-                                    gap: 12,
-                                }}
-                            >
-                                <div style={{
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: '50%',
-                                    backgroundColor: actualPnl >= 0 ? '#22c55e' : '#ef4444',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}>
-                                    {actualPnl >= 0 ? '✓' : '✗'}
-                                </div>
+                            {isResolved && (
                                 <div>
-                                    {outcomes.find((o: any) => o.id === selectedOutcomeId)?.name || 'Unknown'}
-                                </div>
-                            </div>
-
-                            <div style={{ fontSize: 20, color: '#94a3b8', marginTop: 20 }}>
-                                Predicted with {formatCurrency(amount)}
-                            </div>
-                        </div>
-                    ) : (
-                        // Layout for unresolved markets - focus on market and prediction
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                textAlign: 'center',
-                                gap: 20,
-                            }}
-                        >
-                            <div style={{ fontSize: 26, color: '#94a3b8' }}>Open Prediction</div>
-
-                            <div style={{ fontSize: 52, fontWeight: 'bold', maxWidth: 900, lineHeight: 1.2 }}>
-                                {marketName}
-                            </div>
-
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    width: '100%',
-                                    maxWidth: 700,
-                                    marginTop: 20,
-                                    gap: 16,
-                                }}
-                            >
-                                {outcomes.map((outcome: any) => (
-                                    <div
-                                        key={outcome.id}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            backgroundColor: selectedOutcomeId === outcome.id ? 'rgba(59, 130, 246, 0.2)' : 'rgba(30, 41, 59, 0.5)', // selected: blue-500 with opacity
-                                            borderRadius: 12,
-                                            padding: '12px 20px',
-                                            gap: 16,
-                                        }}
-                                    >
-                                        {selectedOutcomeId === outcome.id && (
-                                            <div style={{
-                                                width: 28,
-                                                height: 28,
-                                                borderRadius: '50%',
-                                                backgroundColor: '#3b82f6', // blue-500
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: 16,
-                                            }}>
-                                                ✓
-                                            </div>
-                                        )}
-
-                                        <div style={{ flex: 1, fontSize: 24, textAlign: 'left' }}>
-                                            {outcome.name}
-                                        </div>
-
-                                        <div style={{ fontSize: 20, color: '#94a3b8' }}>
-                                            {((outcome.id === selectedOutcomeId ? odds : outcome.odds) || 1).toFixed(2)}x
-                                        </div>
+                                    <div style={{ fontSize: 20, color: '#94a3b8' }}>Result</div>
+                                    <div style={{
+                                        fontSize: 32,
+                                        fontWeight: 'bold',
+                                        color: isWinner ? '#10b981' : '#ef4444',
+                                    }}>
+                                        {pnlText}
                                     </div>
-                                ))}
-                            </div>
-
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    gap: 40,
-                                    marginTop: 40,
-                                }}
-                            >
-                                <div style={{ fontSize: 18, color: '#94a3b8' }}>
-                                    <span style={{ color: '#e2e8f0' }}>Amount:</span> {formatCurrency(amount)}
                                 </div>
-
-                                <div style={{ fontSize: 18, color: '#94a3b8' }}>
-                                    <span style={{ color: '#e2e8f0' }}>Potential Payout:</span> {formatCurrency(amount + potentialPnl)}
-                                </div>
-                            </div>
+                            )}
                         </div>
-                    )}
+                    </div>
 
-                    {/* Footer with website URL */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            bottom: 30,
-                            fontSize: 16,
-                            color: '#64748b', // slate-500
-                        }}
-                    >
-                        charisma.fi
+                    {/* Footer */}
+                    <div style={{
+                        marginTop: 'auto',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: 16,
+                        color: '#94a3b8',
+                    }}>
+                        <div>Prediction #{id.substring(0, 8)}</div>
+                        {prediction.nftReceipt && (
+                            <div style={{
+                                backgroundColor: '#3b82f6',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: 8,
+                            }}>
+                                NFT Minted
+                            </div>
+                        )}
                     </div>
                 </div>
             ),
             {
                 width: 1200,
                 height: 630,
+                fonts: [
+                    {
+                        name: 'Inter',
+                        data: fontData,
+                        style: 'normal',
+                        weight: 700,
+                    },
+                ],
             }
         );
-    } catch (error) {
-        console.error('Error generating OG image:', error);
-        return new Response('Error generating image', { status: 500 });
+    } catch (error: any) {
+        console.error('Error generating prediction OG image:', error);
+        return new Response(`Error: ${error.message}`, { status: 500 });
     }
 } 

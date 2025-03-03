@@ -18,8 +18,8 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { updateBugReportStatus } from "@/app/actions/bug-report-actions";
-import { BugReport } from "@/lib/bug-report-store";
+import { BugReportStatus, updateBugReportStatus } from "@/app/actions/bug-report-actions";
+import { BugReport } from "@op-predict/lib";
 import { DollarSign, CheckCircle, Clock } from "lucide-react";
 
 interface BugReportTableProps {
@@ -31,7 +31,7 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
     const router = useRouter();
 
     // Status update handler
-    async function updateStatus(reportId: string, status: string) {
+    async function updateStatus(reportId: string, status: BugReportStatus) {
         try {
             const result = await updateBugReportStatus(reportId, status);
 
@@ -159,7 +159,7 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
                                 <TableCell>
                                     <Select
                                         defaultValue={report.status}
-                                        onValueChange={(value) => updateStatus(report.id, value)}
+                                        onValueChange={(value: BugReportStatus) => updateStatus(report.id, value)}
                                     >
                                         <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700 text-slate-300">
                                             <SelectValue placeholder="Update Status" />

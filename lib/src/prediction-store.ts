@@ -1,5 +1,6 @@
-import { kv } from '@vercel/kv';
+import * as kvStore from "./kv-store.js";
 import crypto from 'crypto';
+import { marketStore } from "./market-store.js";
 
 // Define the prediction data types
 export type Prediction = {
@@ -28,12 +29,6 @@ export type PredictionNFTReceipt = {
     createdAt: string;
 };
 
-// KV store keys
-const PREDICTIONS_KEY = 'predictions';
-const USER_PREDICTIONS_KEY = 'user_predictions';
-const MARKET_PREDICTIONS_KEY = 'market_predictions';
-const PREDICTION_NFT_KEY = 'prediction_nfts';
-
 // Prediction store with Vercel KV
 export const predictionStore = {
     // Create a new prediction
@@ -61,7 +56,7 @@ export const predictionStore = {
                 createdAt: now
             };
 
-            // Create the prediction with NFT receipt
+            // Create the prediction
             const prediction: Prediction = {
                 id,
                 marketId: data.marketId,
@@ -74,17 +69,15 @@ export const predictionStore = {
                 status: 'active'
             };
 
-            // Store prediction
-            await kv.set(`${PREDICTIONS_KEY}:${id}`, JSON.stringify(prediction));
-
-            // Add to user's predictions set
-            await kv.sadd(`${USER_PREDICTIONS_KEY}:${data.userId}`, id);
-
-            // Add to market's predictions set
-            await kv.sadd(`${MARKET_PREDICTIONS_KEY}:${data.marketId}`, id);
-
-            // Store NFT receipt
-            await kv.set(`${PREDICTION_NFT_KEY}:${nftReceipt.id}`, JSON.stringify(nftReceipt));
+            // Store the prediction and NFT receipt
+            await Promise.all([
+                kvStore.storeEntity('PREDICTION', id, prediction),
+                kvStore.storeEntity('PREDICTION_NFT', nftReceipt.id, nftReceipt),
+                kvStore.addToSet('USER_PREDICTIONS', data.userId, id),
+                kvStore.addToSet('MARKET_PREDICTIONS', data.marketId, id),
+                // Update market stats
+                marketStore.updateMarketStats(data.marketId, data.outcomeId, data.amount)
+            ]);
 
             return prediction;
         } catch (error) {
@@ -99,7 +92,7 @@ export const predictionStore = {
             if (!userId) return [];
 
             // Get all prediction IDs for the user
-            const predictionIds = await kv.smembers(`${USER_PREDICTIONS_KEY}:${userId}`) as string[];
+            const predictionIds = await kvStore.getSetMembers('USER_PREDICTIONS', userId);
 
             if (predictionIds.length === 0) {
                 return [];
@@ -124,7 +117,7 @@ export const predictionStore = {
             if (!marketId) return [];
 
             // Get all prediction IDs for the market
-            const predictionIds = await kv.smembers(`${MARKET_PREDICTIONS_KEY}:${marketId}`) as string[];
+            const predictionIds = await kvStore.getSetMembers('MARKET_PREDICTIONS', marketId);
 
             if (predictionIds.length === 0) {
                 return [];
@@ -148,7 +141,7 @@ export const predictionStore = {
         try {
             if (!id) return undefined;
 
-            const prediction = await kv.get<Prediction>(`${PREDICTIONS_KEY}:${id}`);
+            const prediction = await kvStore.getEntity<Prediction>('PREDICTION', id);
             return prediction || undefined;
         } catch (error) {
             console.error(`Error getting prediction ${id}:`, error);
@@ -161,7 +154,7 @@ export const predictionStore = {
         try {
             if (!id) return undefined;
 
-            const receipt = await kv.get<PredictionNFTReceipt>(`${PREDICTION_NFT_KEY}:${id}`);
+            const receipt = await kvStore.getEntity<PredictionNFTReceipt>('PREDICTION_NFT', id);
             return receipt || undefined;
         } catch (error) {
             console.error(`Error getting NFT receipt ${id}:`, error);
@@ -181,7 +174,7 @@ export const predictionStore = {
             const updatedPrediction = { ...prediction, status };
 
             // Store the updated prediction
-            await kv.set(`${PREDICTIONS_KEY}:${id}`, JSON.stringify(updatedPrediction));
+            await kvStore.storeEntity('PREDICTION', id, updatedPrediction);
 
             return updatedPrediction;
         } catch (error) {
@@ -225,17 +218,17 @@ export const predictionStore = {
             if (!prediction) return false;
 
             // Delete from the main predictions store
-            await kv.del(`${PREDICTIONS_KEY}:${predictionId}`);
+            await kvStore.deleteEntity('PREDICTION', predictionId);
 
             // Remove from user's predictions set
-            await kv.srem(`${USER_PREDICTIONS_KEY}:${prediction.userId}`, predictionId);
+            await kvStore.removeFromSet('USER_PREDICTIONS', prediction.userId, predictionId);
 
             // Remove from market's predictions set
-            await kv.srem(`${MARKET_PREDICTIONS_KEY}:${prediction.marketId}`, predictionId);
+            await kvStore.removeFromSet('MARKET_PREDICTIONS', prediction.marketId, predictionId);
 
             // Delete the NFT receipt if it exists
             if (prediction.nftReceipt?.id) {
-                await kv.del(`${PREDICTION_NFT_KEY}:${prediction.nftReceipt.id}`);
+                await kvStore.deleteEntity('PREDICTION_NFT', prediction.nftReceipt.id);
             }
 
             return true;
@@ -263,7 +256,7 @@ export const predictionStore = {
             };
 
             // Store updated prediction
-            await kv.set(`${PREDICTIONS_KEY}:${predictionId}`, JSON.stringify(updatedPrediction));
+            await kvStore.storeEntity('PREDICTION', predictionId, updatedPrediction);
 
             return updatedPrediction;
         } catch (error) {

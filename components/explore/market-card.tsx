@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Users, DollarSign } from "lucide-react"
 import { DeleteMarketButton } from "@/components/delete-market-button"
-import { calculateOutcomePercentages } from "@/lib/utils"
+import { calculateOutcomePercentages } from "@/lib/src/utils"
 
 // Market card component with progress bar for leading outcome
 export function MarketCard({ market, isUserAdmin }: { market: any; isUserAdmin: boolean }) {

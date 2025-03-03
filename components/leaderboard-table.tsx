@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatUserIdentifier, isStacksAddress } from "@/lib/user-utils"
 import { getLeaderboard, getTopEarners, getTopAccuracy } from "@/app/actions/leaderboard-actions"
-import { LeaderboardEntry } from "@/lib/user-stats-store"
+import { LeaderboardEntry } from "@op-predict/lib"
 
 type SortKey = "rank" | "accuracy" | "earnings"
 type LeaderboardType = "overall" | "earnings" | "accuracy"

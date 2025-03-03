@@ -1,30 +1,35 @@
-import { Metadata } from 'next';
-import { kv } from '@vercel/kv';
+import type { Metadata } from 'next';
+import * as kvStore from '@op-predict/lib/kv-store';
 import { currentUser } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, XCircle, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 import PredictionShare from '@/components/prediction-share';
+import { Prediction } from '@op-predict/lib';
+import { Market, MarketOutcome } from '@op-predict/lib';
+import { calculateOutcomePercentages } from '@/lib/src/utils';
 
 // Dynamic metadata for the page
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const id = params.id;
+    const { id } = params;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oppredict.com';
 
     // Fetch prediction and market data
-    const prediction = await kv.hgetall(`prediction:${id}`);
+    const prediction = await kvStore.getEntity<Prediction>('PREDICTION', id);
 
     if (!prediction) {
         return {
-            title: 'Prediction Not Found | OP_PREDICT',
+            title: 'Prediction Not Found',
+            description: 'The requested prediction could not be found.',
         };
     }
 
-    const marketId = prediction.marketId as string;
-    const market = await kv.hgetall(`market:${marketId}`);
+    // Get market details
+    const market = prediction.marketId ?
+        await kvStore.getEntity<Market>('MARKET', prediction.marketId) :
+        null;
 
     if (!market) {
         return {
@@ -80,7 +85,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
     const user = await currentUser();
 
     // Fetch prediction data
-    const prediction = await kv.hgetall(`prediction:${id}`);
+    const prediction = await kvStore.getEntity<Prediction>('PREDICTION', id);
 
     if (!prediction) {
         return (
@@ -106,8 +111,9 @@ export default async function PredictionPage({ params }: { params: { id: string 
     }
 
     // Fetch market data
-    const marketId = prediction.marketId as string;
-    const market = await kv.hgetall(`market:${marketId}`);
+    const market = prediction.marketId ?
+        await kvStore.getEntity<Market>('MARKET', prediction.marketId) :
+        null;
 
     if (!market) {
         return (
@@ -132,14 +138,76 @@ export default async function PredictionPage({ params }: { params: { id: string 
         );
     }
 
-    // Extract data
-    const marketName = market.name as string;
+    // Extract data (with proper type handling)
+    const marketName = market.name;
     const isResolved = market.status === 'resolved';
-    const selectedOutcomeId = prediction.outcomeId as string;
-    const amount = parseFloat(prediction.amount as string);
-    const odds = parseFloat(prediction.odds as string);
+    const selectedOutcomeId = typeof prediction.outcomeId === 'number'
+        ? prediction.outcomeId
+        : Number(prediction.outcomeId);
+
+    const amount = typeof prediction.amount === 'number'
+        ? prediction.amount
+        : Number(prediction.amount);
+
+    // Get outcomes with proper type handling
+    const outcomes: MarketOutcome[] = Array.isArray(market.outcomes)
+        ? market.outcomes
+        : JSON.parse(typeof market.outcomes === 'string' ? market.outcomes : '[]');
+
+    const selectedOutcome = outcomes.find((o: any) => o.id === selectedOutcomeId);
+
+    // Calculate outcome percentages properly
+    const { outcomesWithPercentages } = calculateOutcomePercentages(outcomes);
+
+    // Calculate proper odds based on percentages (implied probability)
+    // If the outcome has a percentage, calculate odds as 100/percentage
+    // This represents the fair payout for a given probability
+    const selectedOutcomeWithPercentage = outcomesWithPercentages.find((o: any) => o.id === selectedOutcomeId);
+    const outcomePercentage = selectedOutcomeWithPercentage?.percentage || 0;
+
+    // Calculate odds: 100 / percentage (with a minimum to avoid division by zero)
+    // This converts a percentage probability to decimal odds
+    const odds = outcomePercentage > 0
+        ? Number(((100 / outcomePercentage)).toFixed(2))
+        : Number((prediction as any).odds || 2.0); // Fallback to stored odds or default
+
+    // Calculate potential profit based on the fair odds
     const potentialPnl = amount * (odds - 1);
-    const createdAt = new Date(parseInt(prediction.createdAt as string));
+
+    // For debugging purposes
+    console.log('Prediction odds calculation:', {
+        predictionId: id,
+        selectedOutcomeId,
+        outcomePercentage,
+        calculatedOdds: odds,
+        amount,
+        potentialPnl
+    });
+
+    // Safely parse the creation date with fallback
+    let createdAt: Date;
+    try {
+        if (typeof prediction.createdAt === 'string' && prediction.createdAt.includes('-')) {
+            // Handle ISO format string
+            createdAt = new Date(prediction.createdAt);
+        } else if (typeof prediction.createdAt === 'number') {
+            // Handle timestamp as number
+            createdAt = new Date(prediction.createdAt);
+        } else {
+            // Try to parse as number, but handle potential NaN
+            const timestamp = Number(prediction.createdAt);
+            createdAt = !isNaN(timestamp) ? new Date(timestamp) : new Date();
+        }
+
+        // Verify it's a valid date, if not use current date as fallback
+        if (!(createdAt instanceof Date) || isNaN(createdAt.getTime())) {
+            console.warn('Invalid date detected, using fallback');
+            createdAt = new Date();
+        }
+    } catch (error) {
+        console.error('Error parsing date:', error);
+        createdAt = new Date(); // Fallback to current date
+    }
 
     // For resolved markets, calculate actual PnL
     let actualPnl = 0;
@@ -147,7 +215,8 @@ export default async function PredictionPage({ params }: { params: { id: string 
     let isWinner = false;
 
     if (isResolved) {
-        const winningOutcomeId = market.winningOutcomeId;
+        // Use resolvedOutcomeId or winningOutcomeId (backward compatibility)
+        const winningOutcomeId = market.resolvedOutcomeId || (market as any).winningOutcomeId;
         isWinner = selectedOutcomeId === winningOutcomeId;
 
         if (isWinner) {
@@ -159,10 +228,6 @@ export default async function PredictionPage({ params }: { params: { id: string 
         }
     }
 
-    // Get outcomes
-    const outcomes = JSON.parse(market.outcomes as string || '[]');
-    const selectedOutcome = outcomes.find((o: any) => o.id === selectedOutcomeId);
-
     // Format currency
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', {
@@ -173,13 +238,30 @@ export default async function PredictionPage({ params }: { params: { id: string 
 
     // Format date
     const formatDate = (date: Date) => {
-        return new Intl.DateTimeFormat('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-        }).format(date);
+        try {
+            // Add a validity check before formatting
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                console.warn('Invalid date in formatDate, using current date');
+                return new Intl.DateTimeFormat('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                }).format(new Date());
+            }
+
+            return new Intl.DateTimeFormat('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+            }).format(date);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return 'Unknown date'; // Fallback to a string
+        }
     };
 
     // Check if user owns the prediction
@@ -189,7 +271,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
         <div className="container mx-auto py-10">
             <div className="max-w-3xl mx-auto">
                 <div className="mb-6 flex items-center justify-between">
-                    <Link href={`/markets/${marketId}`}>
+                    <Link href={`/markets/${prediction.marketId}`}>
                         <Button variant="outline" className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             View Market

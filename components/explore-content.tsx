@@ -1,6 +1,6 @@
 import { ShieldAlert, TrendingUp, Star, Zap } from "lucide-react"
 import { currentUser } from "@clerk/nextjs/server"
-import { isAdmin } from "@/lib/utils"
+import { isAdmin } from "@/lib/src/utils"
 import { getAllMarkets } from "@/app/actions/market-actions"
 
 // Import all section components
@@ -12,7 +12,7 @@ import { MarketsSection } from "./explore/markets-section"
 // Main explore content component
 export async function ExploreContent() {
   const user = await currentUser()
-  const isUserAdmin = isAdmin(user?.id)
+  const isUserAdmin = isAdmin(user?.id || '')
   const markets = await getAllMarkets()
 
   // Filter functions for different sections
@@ -27,7 +27,6 @@ export async function ExploreContent() {
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4">
-      <h1 className="text-2xl font-bold mb-6">Explore Markets</h1>
 
       {/* Top Vaults Section */}
       {/* <VaultsSection /> */}
