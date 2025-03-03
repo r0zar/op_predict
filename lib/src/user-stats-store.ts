@@ -16,10 +16,33 @@ export type UserStats = {
 
 export type LeaderboardEntry = UserStats & {
     rank?: number;
+    score?: number;
 };
 
 // User stats store with Vercel KV
 export const userStatsStore = {
+    // Helper to calculate user score consistently across the app
+    calculateUserScore(stats: UserStats): number {
+        // Only count users with at least 5 predictions for the accuracy component
+        const accuracyComponent = stats.totalPredictions >= 5 ? stats.accuracy : 0;
+        
+        // Normalize earnings (0-100 scale typically)
+        const normalizedEarnings = stats.totalEarnings / 100;
+        
+        // Prediction volume factor (logarithmic scale to prevent domination by volume)
+        const volumeFactor = stats.totalPredictions > 0 ? Math.log10(stats.totalPredictions + 1) * 10 : 0;
+        
+        // Consistency factor - higher for users who maintain accuracy across more predictions
+        const consistencyFactor = stats.totalPredictions >= 10 ? 
+            (accuracyComponent * Math.min(stats.totalPredictions / 20, 1.5)) : 
+            accuracyComponent;
+        
+        // Final composite score
+        return (consistencyFactor * 0.4) + 
+               (normalizedEarnings * 0.3) + 
+               (Math.min(volumeFactor, 25) * 0.3);
+    },
+
     // Get user stats for a specific user
     async getUserStats(userId: string): Promise<UserStats | null> {
         try {
@@ -160,21 +183,15 @@ export const userStatsStore = {
                 accuracyScore
             );
 
-            // Add to general leaderboard (combined score balancing earnings and accuracy)
-            // Use a more balanced formula that weights accuracy higher
-            // This gives more weight to accuracy while still considering earnings
-            // Normalize earnings by dividing by 100 to make it comparable with accuracy (0-100)
-            const normalizedEarnings = stats.totalEarnings / 100;
-
-            // Formula: 50% weight on normalized earnings, 50% weight on accuracy
-            // Only count users with at least 5 predictions for the accuracy component
-            const accuracyComponent = stats.totalPredictions >= 5 ? stats.accuracy : 0;
-            const combinedScore = (normalizedEarnings * 0.5) + (accuracyComponent * 0.5);
-
+            // Advanced scoring algorithm for leaderboard ranking
+            // Calculate the composite score using the helper method
+            const compositeScore = this.calculateUserScore(stats);
+            
+            // Store in the main leaderboard
             await kvStore.addToSortedSet(
                 'LEADERBOARD',
                 stats.userId,
-                combinedScore
+                compositeScore
             );
         } catch (error) {
             console.error('Error updating leaderboard entries:', error);
@@ -191,11 +208,17 @@ export const userStatsStore = {
             // Get full stats for each user ID
             const leaderboard = await this.getUserStatsForIds(userIds);
 
-            // Add rank
-            return leaderboard.map((entry, index) => ({
-                ...entry,
-                rank: index + 1
-            }));
+            // Get scores from the same sorted set to ensure consistency
+            const scoresMap = await kvStore.getScoresFromSortedSet('LEADERBOARD_EARNINGS', userIds);
+
+            // Add rank and use the actual scores from Redis
+            return leaderboard.map((entry, index) => {
+                return {
+                    ...entry,
+                    rank: index + 1,
+                    score: scoresMap[entry.userId] || this.calculateUserScore(entry)
+                };
+            });
         } catch (error) {
             console.error('Error getting top earners:', error);
             return [];
@@ -211,11 +234,17 @@ export const userStatsStore = {
             // Get full stats for each user ID
             const leaderboard = await this.getUserStatsForIds(userIds);
 
-            // Add rank
-            return leaderboard.map((entry, index) => ({
-                ...entry,
-                rank: index + 1
-            }));
+            // Get scores from the same sorted set to ensure consistency
+            const scoresMap = await kvStore.getScoresFromSortedSet('LEADERBOARD_ACCURACY', userIds);
+
+            // Add rank and use the actual scores from Redis
+            return leaderboard.map((entry, index) => {
+                return {
+                    ...entry,
+                    rank: index + 1,
+                    score: scoresMap[entry.userId] || this.calculateUserScore(entry)
+                };
+            });
         } catch (error) {
             console.error('Error getting top accuracy:', error);
             return [];
@@ -231,11 +260,17 @@ export const userStatsStore = {
             // Get full stats for each user ID
             const leaderboard = await this.getUserStatsForIds(userIds);
 
-            // Add rank
-            return leaderboard.map((entry, index) => ({
-                ...entry,
-                rank: index + 1
-            }));
+            // Get scores from the same sorted set to ensure consistency
+            const scoresMap = await kvStore.getScoresFromSortedSet('LEADERBOARD', userIds);
+
+            // Add rank and use the actual scores from Redis
+            return leaderboard.map((entry, index) => {
+                return {
+                    ...entry,
+                    rank: index + 1,
+                    score: scoresMap[entry.userId] || this.calculateUserScore(entry)
+                };
+            });
         } catch (error) {
             console.error('Error getting leaderboard:', error);
             return [];

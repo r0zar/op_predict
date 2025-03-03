@@ -20,7 +20,8 @@ import {
     marketStore,
     predictionStore,
     bugReportStore,
-    userBalanceStore
+    userBalanceStore,
+    userStatsStore
 } from "@op-predict/lib";
 import { z } from "zod";
 
@@ -135,6 +136,28 @@ const CreateBatchPredictionsSchema = z.object({
     })).describe("Array of predictions to create")
 });
 
+// User stats schemas
+const GetLeaderboardSchema = z.object({
+    limit: z.number().optional().default(10).describe("Number of users to return in the leaderboard")
+});
+
+const GetTopEarnersSchema = z.object({
+    limit: z.number().optional().default(10).describe("Number of users to return in the top earners list")
+});
+
+const GetTopAccuracySchema = z.object({
+    limit: z.number().optional().default(10).describe("Number of users to return in the top accuracy list")
+});
+
+const GetUserStatsSchema = z.object({
+    userId: z.string().describe("The ID of the user to get stats for")
+});
+
+const UpdateUsernameSchema = z.object({
+    userId: z.string().describe("The ID of the user to update"),
+    username: z.string().describe("The new username for the user")
+});
+
 // Add new schema for batch market creation
 const CreateBatchMarketsSchema = z.object({
     markets: z.array(z.object({
@@ -169,7 +192,12 @@ enum ToolName {
     UPDATE_MARKET = "update_market",
     UPDATE_BUG_REPORT = "update_bug_report",
     ADD_USER_BALANCE = "add_user_balance",
-    PROCESS_BUG_REPORT_REWARD = "process_bug_report_reward"
+    PROCESS_BUG_REPORT_REWARD = "process_bug_report_reward",
+    GET_LEADERBOARD = "get_leaderboard",
+    GET_TOP_EARNERS = "get_top_earners",
+    GET_TOP_ACCURACY = "get_top_accuracy",
+    GET_USER_STATS = "get_user_stats",
+    UPDATE_USERNAME = "update_username",
 }
 
 // Prompt names enum
@@ -243,9 +271,12 @@ export const createServer = () => {
         let startIndex = 0;
 
         // Get all resources from different stores
-        const [markets, bugReports] = await Promise.all([
+        const [markets, bugReports, leaderboard, topEarners, topAccuracy] = await Promise.all([
             marketStore.getMarkets(),
-            bugReportStore.getBugReports()
+            bugReportStore.getBugReports(),
+            userStatsStore.getLeaderboard(),
+            userStatsStore.getTopEarners(),
+            userStatsStore.getTopAccuracy()
         ]);
 
         // Combine all resources into a single array with individual URIs
@@ -261,6 +292,31 @@ export const createServer = () => {
                 name: report.title || `Bug Report ${report.id}`,
                 mimeType: "application/json",
                 text: JSON.stringify(report)
+            })),
+            {
+                uri: `leaderboard://overall`,
+                name: `Overall Leaderboard`,
+                mimeType: "application/json",
+                text: JSON.stringify(leaderboard)
+            },
+            {
+                uri: `leaderboard://earnings`,
+                name: `Top Earners Leaderboard`,
+                mimeType: "application/json",
+                text: JSON.stringify(topEarners)
+            },
+            {
+                uri: `leaderboard://accuracy`,
+                name: `Top Accuracy Leaderboard`,
+                mimeType: "application/json",
+                text: JSON.stringify(topAccuracy)
+            },
+            // Add user stats resources for all users in the leaderboard
+            ...leaderboard.map(entry => ({
+                uri: `user-stats://${entry.userId}`,
+                name: entry.username || `User ${entry.userId}`,
+                mimeType: "application/json",
+                text: JSON.stringify(entry)
             }))
         ];
 
@@ -308,6 +364,26 @@ export const createServer = () => {
                     name: "Bug Report",
                     description: "A bug report"
                 },
+                {
+                    uriTemplate: "leaderboard://overall",
+                    name: "Overall Leaderboard",
+                    description: "The overall user leaderboard"
+                },
+                {
+                    uriTemplate: "leaderboard://earnings",
+                    name: "Earnings Leaderboard",
+                    description: "The top earners leaderboard"
+                },
+                {
+                    uriTemplate: "leaderboard://accuracy",
+                    name: "Accuracy Leaderboard",
+                    description: "The top accuracy leaderboard"
+                },
+                {
+                    uriTemplate: "user-stats://{userId}",
+                    name: "User Stats",
+                    description: "Statistical data for a specific user"
+                }
             ]
         };
     });
@@ -356,6 +432,45 @@ export const createServer = () => {
                 contents: [{
                     uri,
                     text: JSON.stringify(report)
+                }]
+            };
+        }
+
+        // Leaderboard resources
+        if (uri.startsWith("leaderboard://")) {
+            const leaderboardType = uri.split("//")[1];
+            let leaderboardData;
+
+            // Get appropriate leaderboard data based on type
+            if (leaderboardType === "overall") {
+                leaderboardData = await userStatsStore.getLeaderboard();
+            } else if (leaderboardType === "earnings") {
+                leaderboardData = await userStatsStore.getTopEarners();
+            } else if (leaderboardType === "accuracy") {
+                leaderboardData = await userStatsStore.getTopAccuracy();
+            } else {
+                throw new Error(`Unknown leaderboard type: ${leaderboardType}`);
+            }
+
+            return {
+                contents: [{
+                    uri,
+                    text: JSON.stringify(leaderboardData)
+                }]
+            };
+        }
+
+        // User stats
+        if (uri.startsWith("user-stats://")) {
+            const userId = uri.split("//")[1];
+            const userStats = await userStatsStore.getUserStats(userId);
+            if (!userStats) {
+                throw new Error(`User stats not found for user ${userId}`);
+            }
+            return {
+                contents: [{
+                    uri,
+                    text: JSON.stringify(userStats)
                 }]
             };
         }
@@ -427,6 +542,15 @@ export const createServer = () => {
                         });
                         console.log(`Notified update for bug report: ${reportId}`);
                     }
+                }
+                // Check if it's a leaderboard resource
+                else if (uri.startsWith('leaderboard://')) {
+                    // Always notify about leaderboard updates since they may change frequently
+                    server.notification({
+                        method: "notifications/resources/updated",
+                        params: { uri },
+                    });
+                    console.log(`Notified update for leaderboard resource`);
                 }
             }
         } catch (error) {
@@ -877,6 +1001,80 @@ export const createServer = () => {
                     },
                     required: ["reportId", "rewardType"]
                 }
+            },
+            {
+                name: ToolName.GET_LEADERBOARD,
+                description: "Get the overall leaderboard data sorted by combined score",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        limit: {
+                            type: "number",
+                            default: 10,
+                            description: "Number of users to return in the leaderboard"
+                        }
+                    }
+                }
+            },
+            {
+                name: ToolName.GET_TOP_EARNERS,
+                description: "Get the top earners leaderboard data sorted by total earnings",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        limit: {
+                            type: "number",
+                            default: 10,
+                            description: "Number of users to return in the top earners list"
+                        }
+                    }
+                }
+            },
+            {
+                name: ToolName.GET_TOP_ACCURACY,
+                description: "Get the top accuracy leaderboard data sorted by prediction accuracy",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        limit: {
+                            type: "number",
+                            default: 10,
+                            description: "Number of users to return in the top accuracy list"
+                        }
+                    }
+                }
+            },
+            {
+                name: ToolName.GET_USER_STATS,
+                description: "Get statistics for a specific user",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        userId: {
+                            type: "string",
+                            description: "The ID of the user to get stats for"
+                        }
+                    },
+                    required: ["userId"]
+                }
+            },
+            {
+                name: ToolName.UPDATE_USERNAME,
+                description: "Update a user's username in their stats",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        userId: {
+                            type: "string",
+                            description: "The ID of the user to update"
+                        },
+                        username: {
+                            type: "string",
+                            description: "The new username for the user"
+                        }
+                    },
+                    required: ["userId", "username"]
+                }
             }
         ];
 
@@ -937,26 +1135,44 @@ export const createServer = () => {
         if (name === ToolName.CREATE_PREDICTION) {
             const { marketId, prediction, confidence } = CreatePredictionSchema.parse(args);
 
-            // Check if market exists
+            // Calculate amount from confidence
+            const amount = Math.round(confidence * 100);
+
+            // Get the market to find the appropriate outcome ID
             const market = await marketStore.getMarket(marketId);
             if (!market) {
                 throw new Error(`Market ${marketId} not found`);
             }
 
-            // Create prediction
-            const newPrediction = await predictionStore.createPrediction({
+            // Try to find an outcome that matches the prediction text, otherwise use the first outcome
+            let outcomeId = market.outcomes[0]?.id;
+            const matchingOutcome = market.outcomes.find(o =>
+                o.name.toLowerCase() === prediction.toLowerCase()
+            );
+            if (matchingOutcome) {
+                outcomeId = matchingOutcome.id;
+            }
+
+            if (!outcomeId) {
+                throw new Error(`No valid outcomes found for market ${marketId}`);
+            }
+
+            // Use the new enhanced function that performs validation and balance updates
+            const result = await predictionStore.createPredictionWithBalanceUpdate({
                 marketId,
-                marketName: market.name,
-                outcomeId: 1, // Default outcome id
-                outcomeName: prediction, // Using the prediction text as the outcome name
+                outcomeId,
                 userId: 'anonymous', // Default user
-                amount: Math.round(confidence * 100) // Convert confidence to amount
+                amount: amount
             });
+
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to create prediction');
+            }
 
             return {
                 content: [{
                     type: "text",
-                    text: `Prediction created successfully: ${JSON.stringify(newPrediction, null, 2)}`
+                    text: `Prediction created successfully: ${JSON.stringify(result.prediction, null, 2)}`
                 }],
             };
         }
@@ -1077,30 +1293,72 @@ export const createServer = () => {
         if (name === ToolName.CREATE_BATCH_PREDICTIONS) {
             const { predictions } = CreateBatchPredictionsSchema.parse(args);
 
-            // Create predictions for each market
-            const createdPredictions = await Promise.all(
+            // Create predictions for each market using the enhanced function
+            const results = await Promise.all(
                 predictions.map(async prediction => {
                     const { marketId, prediction: predictionValue, confidence } = prediction;
+                    const amount = Math.round(confidence * 100);
 
-                    // Check if market exists
+                    // Get the market to find the appropriate outcome ID
                     const market = await marketStore.getMarket(marketId);
                     if (!market) {
-                        throw new Error(`Market ${marketId} not found`);
+                        return {
+                            success: false,
+                            marketId,
+                            error: `Market ${marketId} not found`
+                        };
                     }
 
-                    // Create prediction
-                    const newPrediction = await predictionStore.createPrediction({
+                    // Try to find an outcome that matches the prediction text
+                    let outcomeId = market.outcomes[0]?.id;
+                    const matchingOutcome = market.outcomes.find(o =>
+                        o.name.toLowerCase() === predictionValue.toLowerCase()
+                    );
+                    if (matchingOutcome) {
+                        outcomeId = matchingOutcome.id;
+                    }
+
+                    if (!outcomeId) {
+                        return {
+                            success: false,
+                            marketId,
+                            error: `No valid outcomes found for market ${marketId}`
+                        };
+                    }
+
+                    // Use the new enhanced function for each prediction
+                    const result = await predictionStore.createPredictionWithBalanceUpdate({
                         marketId,
-                        marketName: market.name,
-                        outcomeId: 1, // Default outcome id
-                        outcomeName: predictionValue,
+                        outcomeId,
                         userId: 'anonymous', // Default user
-                        amount: Math.round(confidence * 100) // Convert confidence to amount
+                        amount: amount
                     });
 
-                    return newPrediction;
+                    if (!result.success) {
+                        return {
+                            success: false,
+                            marketId,
+                            error: result.error
+                        };
+                    }
+
+                    return {
+                        success: true,
+                        prediction: result.prediction
+                    };
                 })
             );
+
+            // Check if any prediction failed
+            const failures = results.filter(r => !r.success);
+            if (failures.length > 0) {
+                throw new Error(`Some predictions failed: ${JSON.stringify(failures)}`);
+            }
+
+            // Extract successfully created predictions
+            const createdPredictions = results
+                .filter(r => r.success)
+                .map(r => r.prediction);
 
             return {
                 content: [{
@@ -1174,22 +1432,69 @@ export const createServer = () => {
                 throw new Error(`Market ${marketId} not found`);
             }
 
-            // Update the market data
-            const updatedMarket = await marketStore.updateMarket(marketId, {
-                ...data,
-                updatedAt: new Date().toISOString()
-            });
+            // Check if the update is attempting to resolve the market
+            if (data.status === 'resolved' && existingMarket.status !== 'resolved') {
+                // For market resolution, we need a winning outcome ID
+                // In a real implementation, this should be specified in the schema
+                // For now, we intelligently try to find an outcome that is mentioned in the status update
+                let winningOutcomeId: number | undefined;
 
-            if (!updatedMarket) {
-                throw new Error(`Failed to update market ${marketId}`);
+                // If data has a description field that mentions an outcome, try to use that
+                if (data.description) {
+                    // Look for outcome names in the description
+                    for (const outcome of existingMarket.outcomes) {
+                        if (data.description.toLowerCase().includes(outcome.name.toLowerCase())) {
+                            winningOutcomeId = outcome.id;
+                            break;
+                        }
+                    }
+                }
+
+                // If no outcome found in description, use the first outcome as fallback
+                if (!winningOutcomeId) {
+                    winningOutcomeId = existingMarket.outcomes[0]?.id;
+
+                    // Ensure we have a valid outcome
+                    if (!winningOutcomeId) {
+                        throw new Error('No valid outcomes found for market resolution');
+                    }
+                }
+
+                // Use the new enhanced market resolution function
+                const resolutionResult = await marketStore.resolveMarketWithPayouts(
+                    marketId,
+                    winningOutcomeId,
+                    'system' // Admin ID
+                );
+
+                if (!resolutionResult.success) {
+                    throw new Error(resolutionResult.error || 'Failed to resolve market');
+                }
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Market resolved successfully: ${JSON.stringify(resolutionResult.market, null, 2)}`
+                    }],
+                };
+            } else {
+                // For regular updates, use standard updateMarket
+                const updatedMarket = await marketStore.updateMarket(marketId, {
+                    ...data,
+                    updatedAt: new Date().toISOString()
+                });
+
+                if (!updatedMarket) {
+                    throw new Error(`Failed to update market ${marketId}`);
+                }
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Market updated successfully: ${JSON.stringify(updatedMarket, null, 2)}`
+                    }],
+                };
             }
-
-            return {
-                content: [{
-                    type: "text",
-                    text: `Market updated successfully: ${JSON.stringify(updatedMarket, null, 2)}`
-                }],
-            };
         }
 
         if (name === ToolName.UPDATE_BUG_REPORT) {
@@ -1258,91 +1563,156 @@ export const createServer = () => {
                     updateStatus = true
                 } = ProcessBugReportRewardSchema.parse(args);
 
-                // Get the existing report
+                // Get the existing report to get the user ID
                 const existingReport = await bugReportStore.getBugReport(reportId);
                 if (!existingReport) {
                     throw new Error(`Bug report ${reportId} not found`);
                 }
 
-                // Set default reward amounts based on type
-                const INITIAL_REWARD_AMOUNT = 10;
-                const CONFIRMATION_REWARD_AMOUNT = 90;
+                // Use the enhanced process reward payment function
+                const result = await bugReportStore.processRewardPayment(
+                    reportId,
+                    existingReport.createdBy,
+                    rewardType,
+                    customAmount,
+                    reason
+                );
 
-                let rewardAmount = rewardType === 'initial' ? INITIAL_REWARD_AMOUNT : CONFIRMATION_REWARD_AMOUNT;
-                if (customAmount !== undefined && customAmount > 0) {
-                    rewardAmount = customAmount;
+                if (!result.success) {
+                    throw new Error(result.error || `Failed to process ${rewardType} reward for bug report ${reportId}`);
                 }
-
-                // Set default reward reason based on type and severity
-                const defaultReason = rewardType === 'initial'
-                    ? `Initial bug report reward for ${existingReport.severity} severity bug`
-                    : `Confirmation reward for verified ${existingReport.severity} severity bug`;
-
-                const rewardReason = reason || defaultReason;
-
-                // Check if the reward has already been paid to avoid duplicates
-                if (rewardType === 'initial' && existingReport.initialRewardPaid) {
-                    return {
-                        content: [{
-                            type: "text",
-                            text: `Initial reward for bug report ${reportId} has already been paid.`
-                        }],
-                    };
-                }
-
-                if (rewardType === 'confirmation' && existingReport.confirmationRewardPaid) {
-                    return {
-                        content: [{
-                            type: "text",
-                            text: `Confirmation reward for bug report ${reportId} has already been paid.`
-                        }],
-                    };
-                }
-
-                // Update user balance
-                const userId = existingReport.createdBy;
-                const updatedBalance = await userBalanceStore.addFunds(userId, rewardAmount);
-
-                if (!updatedBalance) {
-                    throw new Error(`Failed to update balance for user ${userId}`);
-                }
-
-                // Prepare bug report update data
-                const updateData: any = {
-                    updatedAt: new Date().toISOString(),
-                    updatedBy: adminId || 'system'
-                };
-
-                // Update reward flags based on reward type
-                if (rewardType === 'initial') {
-                    updateData.initialRewardPaid = true;
-                } else {
-                    updateData.confirmationRewardPaid = true;
-
-                    // For confirmation rewards, also update confirmation details
-                    if (adminId) {
-                        updateData.confirmedBy = adminId;
-                        updateData.confirmedAt = new Date().toISOString();
-                    }
-
-                    // Update status to resolved if requested
-                    if (updateStatus && existingReport.status !== 'resolved') {
-                        updateData.status = 'resolved';
-                    }
-                }
-
-                // Update the bug report
-                const updatedReport = await bugReportStore.updateBugReport(reportId, updateData);
 
                 return {
                     content: [{
                         type: "text",
-                        text: `Successfully processed ${rewardType} reward of $${rewardAmount} for bug report ${reportId}.\nPaid to user: ${userId}\nNew balance: $${updatedBalance.availableBalance.toFixed(2)}\nReason: ${rewardReason}\nBug report updated: ${JSON.stringify(updatedReport, null, 2)}`
+                        text: `Successfully processed ${rewardType} reward of $${result.amount} for bug report ${reportId}.\nPaid to user: ${existingReport.createdBy}\nReason: ${reason || 'Bug report reward'}\nBug report updated: ${JSON.stringify(result.report, null, 2)}`
                     }],
                 };
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
                 throw new Error(`Failed to process bug report reward: ${errorMessage}`);
+            }
+        }
+
+        // Handle user stats tools
+        if (name === ToolName.GET_LEADERBOARD) {
+            try {
+                const { limit } = GetLeaderboardSchema.parse(args);
+                const leaderboard = await userStatsStore.getLeaderboard(limit);
+                
+                // Include score information to ensure consistent display in UI and API
+                const entriesWithScores = leaderboard.map(entry => ({
+                    ...entry,
+                    score: entry.score || userStatsStore.calculateUserScore(entry)
+                }));
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: JSON.stringify(entriesWithScores, null, 2)
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to get leaderboard: ${errorMessage}`);
+            }
+        }
+
+        if (name === ToolName.GET_TOP_EARNERS) {
+            try {
+                const { limit } = GetTopEarnersSchema.parse(args);
+                const topEarners = await userStatsStore.getTopEarners(limit);
+                
+                // Include score information to ensure consistent display in UI and API
+                const entriesWithScores = topEarners.map(entry => ({
+                    ...entry,
+                    score: entry.score || userStatsStore.calculateUserScore(entry)
+                }));
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: JSON.stringify(entriesWithScores, null, 2)
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to get top earners: ${errorMessage}`);
+            }
+        }
+
+        if (name === ToolName.GET_TOP_ACCURACY) {
+            try {
+                const { limit } = GetTopAccuracySchema.parse(args);
+                const topAccuracy = await userStatsStore.getTopAccuracy(limit);
+                
+                // Include score information to ensure consistent display in UI and API
+                const entriesWithScores = topAccuracy.map(entry => ({
+                    ...entry,
+                    score: entry.score || userStatsStore.calculateUserScore(entry)
+                }));
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: JSON.stringify(entriesWithScores, null, 2)
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to get top accuracy: ${errorMessage}`);
+            }
+        }
+
+        if (name === ToolName.GET_USER_STATS) {
+            try {
+                const { userId } = GetUserStatsSchema.parse(args);
+                const userStats = await userStatsStore.getUserStats(userId);
+
+                if (!userStats) {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: JSON.stringify({ error: `User stats not found for user ID: ${userId}` })
+                        }],
+                    };
+                }
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: JSON.stringify(userStats, null, 2)
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to get user stats: ${errorMessage}`);
+            }
+        }
+
+        if (name === ToolName.UPDATE_USERNAME) {
+            try {
+                const { userId, username } = UpdateUsernameSchema.parse(args);
+                const updatedStats = await userStatsStore.updateUsername(userId, username);
+
+                if (!updatedStats) {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: JSON.stringify({ error: `Failed to update username for user ID: ${userId}` })
+                        }],
+                    };
+                }
+
+                return {
+                    content: [{
+                        type: "text",
+                        text: JSON.stringify(updatedStats, null, 2)
+                    }],
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                throw new Error(`Failed to update username: ${errorMessage}`);
             }
         }
 

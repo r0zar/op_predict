@@ -45,7 +45,7 @@ export default async function LeaderboardPage() {
                   <div className="flex items-center mt-1">
                     <Trophy className="h-5 w-5 text-amber-500 mr-2" />
                     <span className="text-2xl font-bold">
-                      {userStatsResponse?.rank ? `#${userStatsResponse.rank}` : "Unranked"}
+                      {userStatsResponse.stats?.rank ? `#${userStatsResponse.stats.rank}` : "Unranked"}
                     </span>
                   </div>
                 </div>

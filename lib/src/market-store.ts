@@ -33,6 +33,9 @@ export type Market = {
     totalWinningAmount?: number; // Total amount staked on winning outcome
 };
 
+// Define admin fee percentage
+const ADMIN_FEE_PERCENTAGE = 0.05; // 5%
+
 // Market store with Vercel KV
 export const marketStore = {
     // Get all markets
@@ -232,6 +235,133 @@ export const marketStore = {
         // Calculate Jaccard similarity
         const union = new Set(Array.from(words1).concat(Array.from(words2)));
         return intersection.size / union.size;
+    },
+
+    /**
+     * Resolve a market with payouts
+     * This handles the complex resolution logic, admin fees, and payout calculations
+     * 
+     * @param marketId The ID of the market to resolve
+     * @param winningOutcomeId The ID of the winning outcome
+     * @param adminId The ID of the admin resolving the market (for fee attribution)
+     * @returns Object containing success/error status and related data
+     */
+    async resolveMarketWithPayouts(
+        marketId: string, 
+        winningOutcomeId: number, 
+        adminId: string
+    ): Promise<{
+        success: boolean;
+        market?: Market;
+        adminFee?: number;
+        error?: string;
+        predictions?: any[];
+    }> {
+        try {
+            // Get the market
+            const market = await this.getMarket(marketId);
+            if (!market) {
+                return { success: false, error: 'Market not found' };
+            }
+
+            // Check if market is already resolved
+            if (market.resolvedOutcomeId !== undefined) {
+                return { success: false, error: 'Market is already resolved' };
+            }
+
+            // Find the winning outcome
+            const winningOutcome = market.outcomes.find(o => o.id === winningOutcomeId);
+            if (!winningOutcome) {
+                return { success: false, error: 'Winning outcome not found' };
+            }
+
+            // Import prediction store to avoid circular dependencies
+            const { predictionStore } = await import('./prediction-store.js');
+            const { userStatsStore } = await import('./user-stats-store.js');
+            const { userBalanceStore } = await import('./user-balance-store.js');
+
+            // Get all predictions for this market
+            const marketPredictions = await predictionStore.getMarketPredictions(market.id);
+
+            if (marketPredictions.length === 0) {
+                return { success: false, error: 'No predictions found for this market' };
+            }
+
+            // Calculate total pot and admin fee (5%)
+            const totalPot = marketPredictions.reduce((sum, prediction) => sum + prediction.amount, 0);
+            const adminFee = totalPot * ADMIN_FEE_PERCENTAGE;
+            const remainingPot = totalPot - adminFee;
+
+            // Find winning predictions
+            const winningPredictions = marketPredictions.filter(
+                p => p.outcomeId === winningOutcomeId
+            );
+
+            // Calculate total winning amount
+            const totalWinningAmount = winningPredictions.reduce(
+                (sum, prediction) => sum + prediction.amount,
+                0
+            );
+
+            // Update market as resolved
+            const updatedMarket = await this.updateMarket(market.id, {
+                resolvedOutcomeId: winningOutcomeId,
+                resolvedAt: new Date().toISOString(),
+                status: 'resolved',
+                resolvedBy: adminId,
+                adminFee: adminFee,
+                remainingPot: remainingPot,
+                totalWinningAmount: totalWinningAmount || 0
+            });
+
+            if (!updatedMarket) {
+                return { success: false, error: 'Failed to update market' };
+            }
+
+            // Add admin fee to admin's balance
+            await userBalanceStore.addFunds(adminId, adminFee);
+
+            // Process all predictions
+            const updatedPredictions = [];
+            for (const prediction of marketPredictions) {
+                const isWinner = prediction.outcomeId === winningOutcomeId;
+
+                // Calculate payout for winners (proportional to their stake in winning pool)
+                // If no winners, winnerShare will be 0
+                const winnerShare = isWinner && totalWinningAmount > 0
+                    ? (prediction.amount / totalWinningAmount) * remainingPot
+                    : 0;
+
+                // Update prediction status
+                const updatedPrediction = await predictionStore.updatePrediction(prediction.id, {
+                    status: isWinner ? 'won' : 'lost',
+                    potentialPayout: isWinner ? winnerShare : 0,
+                    resolvedAt: new Date().toISOString()
+                });
+
+                if (updatedPrediction) {
+                    updatedPredictions.push(updatedPrediction);
+                }
+
+                // Update user stats for leaderboard
+                await userStatsStore.updateStatsForResolvedPrediction(
+                    prediction.userId,
+                    prediction,
+                    isWinner,
+                    isWinner ? winnerShare : -prediction.amount
+                );
+            }
+
+            return {
+                success: true,
+                market: updatedMarket,
+                adminFee: adminFee,
+                predictions: updatedPredictions
+            };
+        } catch (error) {
+            console.error('Error resolving market with payouts:', error);
+            return { success: false, error: 'Failed to resolve market' };
+        }
     },
 
     // Create sample markets for testing

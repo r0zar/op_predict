@@ -1,11 +1,16 @@
-import { bugReportStore, marketStore, userBalanceStore } from "@op-predict/lib";
+import { bugReportStore, marketStore, userBalanceStore, userStatsStore } from "@op-predict/lib";
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
-import { 
+import {
   ListBugReportsSchema,
   UpdateMarketSchema,
   UpdateBugReportSchema,
   AddUserBalanceSchema,
-  ProcessBugReportRewardSchema
+  ProcessBugReportRewardSchema,
+  GetLeaderboardSchema,
+  GetTopEarnersSchema,
+  GetTopAccuracySchema,
+  GetUserStatsSchema,
+  UpdateUsernameSchema,
 } from "./types.js";
 
 // LIST BUG REPORTS
@@ -14,16 +19,16 @@ export const listBugReportsToolName = "mcp__predict__list_bug_reports";
 export async function handleListBugReportsToolCall(args: unknown): Promise<string> {
   try {
     const { status } = ListBugReportsSchema.parse(args);
-    
+
     // Get all bug reports
     const allReports = await bugReportStore.getBugReports();
-    
+
     // Filter by status if not 'all'
     let reports = allReports;
     if (status !== 'all') {
       reports = allReports.filter(report => report.status === status);
     }
-    
+
     return JSON.stringify(reports, null, 2);
   } catch (error) {
     console.error("Error in listBugReports tool:", error);
@@ -53,23 +58,23 @@ export const updateMarketToolName = "mcp__predict__update_market";
 export async function handleUpdateMarketToolCall(args: unknown): Promise<string> {
   try {
     const { marketId, data } = UpdateMarketSchema.parse(args);
-    
+
     // Get the existing market
     const existingMarket = await marketStore.getMarket(marketId);
     if (!existingMarket) {
       throw new Error(`Market ${marketId} not found`);
     }
-    
+
     // Update the market data
     const updatedMarket = await marketStore.updateMarket(marketId, {
       ...data,
       updatedAt: new Date().toISOString()
     });
-    
+
     if (!updatedMarket) {
       throw new Error(`Failed to update market ${marketId}`);
     }
-    
+
     return `Market updated successfully: ${JSON.stringify(updatedMarket, null, 2)}`;
   } catch (error) {
     console.error("Error in updateMarket tool:", error);
@@ -129,14 +134,14 @@ export const updateBugReportToolName = "mcp__predict__update_bug_report";
 export async function handleUpdateBugReportToolCall(args: unknown): Promise<string> {
   try {
     const { reportId, data } = UpdateBugReportSchema.parse(args);
-    
+
     // Update the bug report
     const updatedReport = await bugReportStore.updateBugReport(reportId, {
       ...data,
       updatedAt: new Date().toISOString(),
       updatedBy: 'system'
     });
-    
+
     return `Bug report updated successfully: ${JSON.stringify(updatedReport, null, 2)}`;
   } catch (error) {
     console.error("Error in updateBugReport tool:", error);
@@ -196,23 +201,23 @@ export const addUserBalanceToolName = "mcp__predict__add_user_balance";
 export async function handleAddUserBalanceToolCall(args: unknown): Promise<string> {
   try {
     const { userId, amount, reason } = AddUserBalanceSchema.parse(args);
-    
+
     // Check if the user exists by attempting to get their balance
     const userBalance = await userBalanceStore.getUserBalance(userId);
     if (!userBalance) {
       throw new Error(`User ${userId} not found`);
     }
-    
+
     // Add funds to the user's balance
     const updatedBalance = await userBalanceStore.addFunds(userId, amount);
-    
+
     if (!updatedBalance) {
       throw new Error(`Failed to update balance for user ${userId}`);
     }
-    
+
     // Create a transaction log (we could add this in the future)
     console.log(`Added ${amount} to user ${userId}'s balance. Reason: ${reason}`);
-    
+
     return `Successfully added $${amount} to user ${userId}'s balance.\nNew balance: $${updatedBalance.availableBalance}\nReason: ${reason}`;
   } catch (error) {
     console.error("Error in addUserBalance tool:", error);
@@ -236,7 +241,7 @@ export const addUserBalanceTool: Tool = {
       },
       reason: {
         type: "string",
-        description: "Reason for adding funds (e.g., 'Bug bounty reward', 'Contest prize')" 
+        description: "Reason for adding funds (e.g., 'Bug bounty reward', 'Contest prize')"
       }
     },
     required: ["userId", "amount", "reason"]
@@ -248,82 +253,35 @@ export const processBugReportRewardToolName = "mcp__predict__process_bug_report_
 
 export async function handleProcessBugReportRewardToolCall(args: unknown): Promise<string> {
   try {
-    const { 
-      reportId, 
-      adminId, 
-      rewardType, 
-      customAmount, 
+    const {
+      reportId,
+      adminId,
+      rewardType,
+      customAmount,
       reason,
       updateStatus = true
     } = ProcessBugReportRewardSchema.parse(args);
-    
-    // Get the existing report
+
+    // Get the bug report first to get the user ID
     const existingReport = await bugReportStore.getBugReport(reportId);
     if (!existingReport) {
-      throw new Error(`Bug report ${reportId} not found`);
+      return `Bug report ${reportId} not found`;
     }
 
-    // Set default reward amounts based on type
-    const INITIAL_REWARD_AMOUNT = 10;
-    const CONFIRMATION_REWARD_AMOUNT = 90;
-    
-    let rewardAmount = rewardType === 'initial' ? INITIAL_REWARD_AMOUNT : CONFIRMATION_REWARD_AMOUNT;
-    if (customAmount !== undefined && customAmount > 0) {
-      rewardAmount = customAmount;
+    // Use the enhanced process reward payment function
+    const result = await bugReportStore.processRewardPayment(
+      reportId,
+      existingReport.createdBy,
+      rewardType,
+      customAmount,
+      reason
+    );
+
+    if (!result.success) {
+      return result.error || `Failed to process ${rewardType} reward for bug report ${reportId}`;
     }
-    
-    // Set default reward reason based on type and severity
-    const defaultReason = rewardType === 'initial' 
-      ? `Initial bug report reward for ${existingReport.severity} severity bug` 
-      : `Confirmation reward for verified ${existingReport.severity} severity bug`;
-    
-    const rewardReason = reason || defaultReason;
-    
-    // Check if the reward has already been paid to avoid duplicates
-    if (rewardType === 'initial' && existingReport.initialRewardPaid) {
-      return `Initial reward for bug report ${reportId} has already been paid.`;
-    }
-    
-    if (rewardType === 'confirmation' && existingReport.confirmationRewardPaid) {
-      return `Confirmation reward for bug report ${reportId} has already been paid.`;
-    }
-    
-    // Update user balance
-    const userId = existingReport.createdBy;
-    const updatedBalance = await userBalanceStore.addFunds(userId, rewardAmount);
-    
-    if (!updatedBalance) {
-      throw new Error(`Failed to update balance for user ${userId}`);
-    }
-    
-    // Prepare bug report update data
-    const updateData: any = {
-      updatedAt: new Date().toISOString(),
-      updatedBy: adminId || 'system'
-    };
-    
-    // Update reward flags based on reward type
-    if (rewardType === 'initial') {
-      updateData.initialRewardPaid = true;
-    } else {
-      updateData.confirmationRewardPaid = true;
-      
-      // For confirmation rewards, also update confirmation details
-      if (adminId) {
-        updateData.confirmedBy = adminId;
-        updateData.confirmedAt = new Date().toISOString();
-      }
-      
-      // Update status to resolved if requested
-      if (updateStatus && existingReport.status !== 'resolved') {
-        updateData.status = 'resolved';
-      }
-    }
-    
-    // Update the bug report
-    const updatedReport = await bugReportStore.updateBugReport(reportId, updateData);
-    
-    return `Successfully processed ${rewardType} reward of $${rewardAmount} for bug report ${reportId}.\nPaid to user: ${userId}\nNew balance: $${updatedBalance.availableBalance}\nReason: ${rewardReason}\nBug report updated: ${JSON.stringify(updatedReport, null, 2)}`;
+
+    return `Successfully processed ${rewardType} reward of $${result.amount} for bug report ${reportId}.\nPaid to user: ${result.report?.createdBy}\nReason: ${reason || 'Bug report reward'}\nBug report updated: ${JSON.stringify(result.report, null, 2)}`;
   } catch (error) {
     console.error("Error in processBugReportReward tool:", error);
     throw error;
@@ -364,5 +322,195 @@ export const processBugReportRewardTool: Tool = {
       }
     },
     required: ["reportId", "rewardType"]
+  }
+};
+
+// GET LEADERBOARD
+export const getLeaderboardToolName = "mcp__predict__get_leaderboard";
+
+export async function handleGetLeaderboardToolCall(args: unknown): Promise<string> {
+  try {
+    const { limit } = GetLeaderboardSchema.parse(args);
+
+    // Get leaderboard data
+    const leaderboard = await userStatsStore.getLeaderboard(limit);
+    
+    // Include score information to ensure consistent display in UI and API
+    const entriesWithScores = leaderboard.map(entry => ({
+      ...entry,
+      score: entry.score || userStatsStore.calculateUserScore(entry)
+    }));
+
+    return JSON.stringify(entriesWithScores, null, 2);
+  } catch (error) {
+    console.error("Error in getLeaderboard tool:", error);
+    throw error;
+  }
+}
+
+export const getLeaderboardTool: Tool = {
+  name: getLeaderboardToolName,
+  description: "Get the overall leaderboard data sorted by combined score",
+  inputSchema: {
+    type: "object",
+    properties: {
+      limit: {
+        type: "number",
+        default: 10,
+        description: "Number of users to return in the leaderboard"
+      }
+    }
+  }
+};
+
+// GET TOP EARNERS
+export const getTopEarnersToolName = "mcp__predict__get_top_earners";
+
+export async function handleGetTopEarnersToolCall(args: unknown): Promise<string> {
+  try {
+    const { limit } = GetTopEarnersSchema.parse(args);
+
+    // Get top earners data
+    const topEarners = await userStatsStore.getTopEarners(limit);
+    
+    // Include score information to ensure consistent display in UI and API
+    const entriesWithScores = topEarners.map(entry => ({
+      ...entry,
+      score: entry.score || userStatsStore.calculateUserScore(entry)
+    }));
+
+    return JSON.stringify(entriesWithScores, null, 2);
+  } catch (error) {
+    console.error("Error in getTopEarners tool:", error);
+    throw error;
+  }
+}
+
+export const getTopEarnersTool: Tool = {
+  name: getTopEarnersToolName,
+  description: "Get the top earners leaderboard data sorted by total earnings",
+  inputSchema: {
+    type: "object",
+    properties: {
+      limit: {
+        type: "number",
+        default: 10,
+        description: "Number of users to return in the top earners list"
+      }
+    }
+  }
+};
+
+// GET TOP ACCURACY
+export const getTopAccuracyToolName = "mcp__predict__get_top_accuracy";
+
+export async function handleGetTopAccuracyToolCall(args: unknown): Promise<string> {
+  try {
+    const { limit } = GetTopAccuracySchema.parse(args);
+
+    // Get top accuracy data
+    const topAccuracy = await userStatsStore.getTopAccuracy(limit);
+    
+    // Include score information to ensure consistent display in UI and API
+    const entriesWithScores = topAccuracy.map(entry => ({
+      ...entry,
+      score: entry.score || userStatsStore.calculateUserScore(entry)
+    }));
+
+    return JSON.stringify(entriesWithScores, null, 2);
+  } catch (error) {
+    console.error("Error in getTopAccuracy tool:", error);
+    throw error;
+  }
+}
+
+export const getTopAccuracyTool: Tool = {
+  name: getTopAccuracyToolName,
+  description: "Get the top accuracy leaderboard data sorted by prediction accuracy",
+  inputSchema: {
+    type: "object",
+    properties: {
+      limit: {
+        type: "number",
+        default: 10,
+        description: "Number of users to return in the top accuracy list"
+      }
+    }
+  }
+};
+
+// GET USER STATS
+export const getUserStatsToolName = "mcp__predict__get_user_stats";
+
+export async function handleGetUserStatsToolCall(args: unknown): Promise<string> {
+  try {
+    const { userId } = GetUserStatsSchema.parse(args);
+
+    // Get user stats
+    const userStats = await userStatsStore.getUserStats(userId);
+
+    if (!userStats) {
+      return JSON.stringify({ error: `User stats not found for user ID: ${userId}` });
+    }
+
+    return JSON.stringify(userStats, null, 2);
+  } catch (error) {
+    console.error("Error in getUserStats tool:", error);
+    throw error;
+  }
+}
+
+export const getUserStatsTool: Tool = {
+  name: getUserStatsToolName,
+  description: "Get statistics for a specific user",
+  inputSchema: {
+    type: "object",
+    properties: {
+      userId: {
+        type: "string",
+        description: "The ID of the user to get stats for"
+      }
+    },
+    required: ["userId"]
+  }
+};
+
+// UPDATE USERNAME
+export const updateUsernameToolName = "mcp__predict__update_username";
+
+export async function handleUpdateUsernameToolCall(args: unknown): Promise<string> {
+  try {
+    const { userId, username } = UpdateUsernameSchema.parse(args);
+
+    // Update username in user stats
+    const updatedStats = await userStatsStore.updateUsername(userId, username);
+
+    if (!updatedStats) {
+      return JSON.stringify({ error: `Failed to update username for user ID: ${userId}` });
+    }
+
+    return JSON.stringify(updatedStats, null, 2);
+  } catch (error) {
+    console.error("Error in updateUsername tool:", error);
+    throw error;
+  }
+}
+
+export const updateUsernameTool: Tool = {
+  name: updateUsernameToolName,
+  description: "Update a user's username in their stats",
+  inputSchema: {
+    type: "object",
+    properties: {
+      userId: {
+        type: "string",
+        description: "The ID of the user to update"
+      },
+      username: {
+        type: "string",
+        description: "The new username for the user"
+      }
+    },
+    required: ["userId", "username"]
   }
 };

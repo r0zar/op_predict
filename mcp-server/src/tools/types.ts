@@ -49,3 +49,25 @@ export const ProcessBugReportRewardSchema = z.object({
     updateStatus: z.boolean().optional().default(true).describe("Whether to update the bug report status")
 });
 
+// New schemas for user stats tools
+export const GetLeaderboardSchema = z.object({
+    limit: z.number().optional().default(10).describe("Number of users to return in the leaderboard")
+});
+
+export const GetTopEarnersSchema = z.object({
+    limit: z.number().optional().default(10).describe("Number of users to return in the top earners list")
+});
+
+export const GetTopAccuracySchema = z.object({
+    limit: z.number().optional().default(10).describe("Number of users to return in the top accuracy list")
+});
+
+export const GetUserStatsSchema = z.object({
+    userId: z.string().describe("The ID of the user to get stats for")
+});
+
+export const UpdateUsernameSchema = z.object({
+    userId: z.string().describe("The ID of the user to update"),
+    username: z.string().describe("The new username for the user")
+});
+

@@ -30,6 +30,10 @@ export const BugReportSchema = z.object({
 
 export type BugReport = z.infer<typeof BugReportSchema>;
 
+// Default reward amounts
+const DEFAULT_INITIAL_REWARD = 10;
+const DEFAULT_CONFIRMATION_REWARD = 90;
+
 export class BugReportStore {
     async getBugReports(): Promise<BugReport[]> {
         try {
@@ -132,6 +136,98 @@ export class BugReportStore {
         } catch (error) {
             console.error(`Error deleting bug report ${id}:`, error);
             return false;
+        }
+    }
+
+    /**
+     * Process a reward payment for a bug report
+     * This handles giving the initial or confirmation reward to a user
+     * 
+     * @param reportId Bug report ID
+     * @param userId User ID to receive the reward
+     * @param rewardType Type of reward (initial or confirmation)
+     * @param customAmount Optional custom amount (overrides defaults)
+     * @returns Result object with success/error status
+     */
+    async processRewardPayment(
+        reportId: string,
+        userId: string,
+        rewardType: 'initial' | 'confirmation',
+        customAmount?: number,
+        reason?: string
+    ): Promise<{
+        success: boolean;
+        amount?: number;
+        error?: string;
+        report?: BugReport;
+    }> {
+        try {
+            // Import balance store to avoid circular dependencies
+            const { userBalanceStore } = await import('./user-balance-store.js');
+
+            // Get the bug report
+            const report = await this.getBugReport(reportId);
+            if (!report) {
+                return { success: false, error: 'Bug report not found' };
+            }
+
+            // Determine the reward amount
+            const amount = customAmount ||
+                (rewardType === 'initial' ? DEFAULT_INITIAL_REWARD : DEFAULT_CONFIRMATION_REWARD);
+
+            // Check if reward has already been paid
+            if (rewardType === 'initial' && report.initialRewardPaid) {
+                return {
+                    success: false,
+                    error: 'Initial reward already paid for this report',
+                    report
+                };
+            }
+
+            if (rewardType === 'confirmation' && report.confirmationRewardPaid) {
+                return {
+                    success: false,
+                    error: 'Confirmation reward already paid for this report',
+                    report
+                };
+            }
+
+            // Generate a reason for the transaction
+            const paymentReason = reason || (rewardType === 'initial'
+                ? `Initial bug report reward for report ${reportId}`
+                : `Confirmation reward for verified bug report ${reportId}`);
+
+            // Process the payment
+            const updatedBalance = await userBalanceStore.addFunds(userId, amount);
+
+            if (!updatedBalance) {
+                return { success: false, error: 'Failed to update user balance' };
+            }
+
+            // Update the bug report to reflect the paid reward
+            const updateData: Partial<BugReport> = {};
+            if (rewardType === 'initial') {
+                updateData.initialRewardPaid = true;
+            } else {
+                updateData.confirmationRewardPaid = true;
+
+                // If we're paying the confirmation reward, also update status if not already resolved
+                if (report.status !== 'resolved') {
+                    updateData.status = 'resolved' as const;
+                    updateData.confirmedAt = new Date().toISOString();
+                }
+            }
+
+            const updatedReport = await this.updateBugReport(reportId, updateData);
+
+            return {
+                success: true,
+                amount,
+                report: updatedReport
+            };
+        } catch (error) {
+            console.error(`Error processing reward payment for report ${reportId}:`, error);
+            return { success: false, error: 'Failed to process reward payment' };
         }
     }
 }

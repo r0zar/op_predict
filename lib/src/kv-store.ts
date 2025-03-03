@@ -223,6 +223,43 @@ export async function getTopFromSortedSet(setType: EntityType, limit: number = 1
 }
 
 /**
+ * Get scores for specific members from a sorted set
+ * Returns a map of memberId -> score
+ */
+export async function getScoresFromSortedSet(setType: EntityType, memberIds: string[]): Promise<Record<string, number>> {
+    try {
+        const key = getKey(setType);
+        const result: Record<string, number> = {};
+        
+        // Process members in batches if there are many
+        const batchSize = 50;
+        for (let i = 0; i < memberIds.length; i += batchSize) {
+            const batch = memberIds.slice(i, i + batchSize);
+            
+            // Get scores for this batch
+            const batchScores = await Promise.all(
+                batch.map(async (memberId) => {
+                    const score = await kv.zscore(key, memberId);
+                    return { memberId, score: score ? Number(score) : null };
+                })
+            );
+            
+            // Add scores to result map
+            batchScores.forEach(({ memberId, score }) => {
+                if (score !== null) {
+                    result[memberId] = score;
+                }
+            });
+        }
+        
+        return result;
+    } catch (error) {
+        console.error(`Error getting scores from sorted set ${setType}:`, error);
+        return {};
+    }
+}
+
+/**
  * Get all keys matching a pattern
  */
 export async function getKeys(pattern: string): Promise<string[]> {

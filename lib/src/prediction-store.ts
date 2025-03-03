@@ -207,6 +207,102 @@ export const predictionStore = {
         // Convert SVG to a data URI
         return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     },
+    
+    /**
+     * Create a prediction with balance update
+     * This function handles the complete process of:
+     * 1. Checking user balance and deducting funds
+     * 2. Creating the prediction and NFT receipt
+     * 3. Updating market stats
+     * 4. Updating user stats for leaderboard
+     * 
+     * @param data Prediction data
+     * @returns Object with created prediction or error message
+     */
+    async createPredictionWithBalanceUpdate(data: {
+        marketId: string;
+        outcomeId: number;
+        userId: string;
+        amount: number;
+    }): Promise<{
+        success: boolean;
+        prediction?: Prediction;
+        error?: string;
+        market?: any;
+        outcomeName?: string;
+    }> {
+        try {
+            // Import stores (to avoid circular dependencies)
+            const { marketStore } = await import('./market-store.js');
+            const { userBalanceStore } = await import('./user-balance-store.js');
+            const { userStatsStore } = await import('./user-stats-store.js');
+            
+            // Get the market to verify it exists and get outcome name
+            const market = await marketStore.getMarket(data.marketId);
+            if (!market) {
+                return { success: false, error: 'Market not found' };
+            }
+
+            // Find the outcome
+            const outcome = market.outcomes.find(o => o.id === data.outcomeId);
+            if (!outcome) {
+                return { success: false, error: 'Outcome not found' };
+            }
+
+            // Check if market is already resolved
+            if (market.resolvedOutcomeId !== undefined) {
+                return { success: false, error: 'Market is already resolved' };
+            }
+
+            // Check if market end date has passed
+            if (new Date(market.endDate) < new Date()) {
+                return { success: false, error: 'Market has ended' };
+            }
+
+            // Deduct the amount from user's balance
+            const balanceResult = await userBalanceStore.updateBalanceForPrediction(
+                data.userId,
+                data.amount
+            );
+
+            if (!balanceResult) {
+                return { success: false, error: 'Failed to update user balance' };
+            }
+
+            // Create the prediction with NFT receipt
+            const prediction = await this.createPrediction({
+                marketId: market.id,
+                marketName: market.name,
+                outcomeId: data.outcomeId,
+                outcomeName: outcome.name,
+                userId: data.userId,
+                amount: data.amount
+            });
+
+            // Update user stats for leaderboard tracking
+            await userStatsStore.updateStatsForNewPrediction(data.userId, prediction);
+
+            return {
+                success: true,
+                prediction,
+                market,
+                outcomeName: outcome.name
+            };
+        } catch (error) {
+            // Handle specific errors
+            if (error instanceof Error) {
+                if (error.message === 'Insufficient balance') {
+                    return {
+                        success: false,
+                        error: 'Insufficient balance. Please add more funds to your account.'
+                    };
+                }
+            }
+            
+            console.error('Error creating prediction with balance update:', error);
+            return { success: false, error: 'Failed to create prediction' };
+        }
+    },
 
     // Delete a prediction and its associated NFT receipt
     async deletePrediction(predictionId: string): Promise<boolean> {
@@ -266,7 +362,134 @@ export const predictionStore = {
     },
 
     /**
+     * Validate if a prediction is eligible for redemption
+     * 
+     * @param predictionId ID of the prediction
+     * @param userId User attempting to redeem
+     * @returns Validation result with prediction if successful
+     */
+    async validateRedemptionEligibility(
+        predictionId: string, 
+        userId: string
+    ): Promise<{
+        success: boolean;
+        prediction?: Prediction;
+        error?: string;
+        isAdmin?: boolean;
+    }> {
+        try {
+            // Get prediction
+            const prediction = await this.getPrediction(predictionId);
+            if (!prediction) {
+                return { success: false, error: 'Prediction not found' };
+            }
+
+            // Import utils to check admin status
+            const { isAdmin } = await import('./utils.js');
+            const userIsAdmin = isAdmin(userId);
+
+            // Verify the prediction belongs to the user or user is admin
+            if (prediction.userId !== userId && !userIsAdmin) {
+                return { success: false, error: 'Unauthorized: This prediction does not belong to you' };
+            }
+
+            // Check if prediction is already redeemed
+            if (prediction.status === 'redeemed') {
+                return { success: false, error: 'Prediction has already been redeemed' };
+            }
+
+            // Check if prediction is eligible for redemption (must be won or lost)
+            if (prediction.status !== 'won' && prediction.status !== 'lost') {
+                return { success: false, error: 'Prediction is not eligible for redemption yet' };
+            }
+
+            return { 
+                success: true, 
+                prediction,
+                isAdmin: userIsAdmin 
+            };
+        } catch (error) {
+            console.error(`Error validating redemption eligibility for prediction ${predictionId}:`, error);
+            return { success: false, error: 'Failed to validate prediction redemption eligibility' };
+        }
+    },
+
+    /**
+     * Redeem a prediction with balance update
+     * This function handles the complete process of:
+     * 1. Validating the prediction is eligible for redemption 
+     * 2. Updating the prediction status
+     * 3. Updating the user's balance
+     * 
+     * @param predictionId The ID of the prediction to redeem
+     * @param userId The ID of the user trying to redeem
+     * @returns Object with redemption result
+     */
+    async redeemPredictionWithBalanceUpdate(
+        predictionId: string,
+        userId: string
+    ): Promise<{
+        success: boolean;
+        prediction?: Prediction;
+        payout?: number;
+        error?: string;
+    }> {
+        try {
+            // First validate eligibility
+            const validationResult = await this.validateRedemptionEligibility(predictionId, userId);
+            if (!validationResult.success) {
+                return { success: false, error: validationResult.error };
+            }
+
+            const prediction = validationResult.prediction!;
+
+            // Calculate payout (winners get their calculated payout, losers get 0)
+            const payout = prediction.status === 'won' ? prediction.potentialPayout || 0 : 0;
+
+            // Update prediction as redeemed
+            const updatedPrediction = await this.updatePrediction(predictionId, {
+                status: 'redeemed',
+                redeemedAt: new Date().toISOString()
+            });
+
+            if (!updatedPrediction) {
+                return { success: false, error: 'Failed to update prediction' };
+            }
+
+            // Import balance store to update user balance
+            const { userBalanceStore } = await import('./user-balance-store.js');
+
+            // Update user's balance
+            if (payout > 0) {
+                await userBalanceStore.updateBalanceForResolvedPrediction(
+                    userId,
+                    prediction.amount,
+                    payout
+                );
+            } else {
+                // For losers, just update to decrease the inPredictions amount
+                await userBalanceStore.updateBalanceForResolvedPrediction(
+                    userId,
+                    prediction.amount,
+                    0
+                );
+            }
+
+            return {
+                success: true,
+                prediction: updatedPrediction,
+                payout
+            };
+        } catch (error) {
+            console.error(`Error redeeming prediction ${predictionId}:`, error);
+            return { success: false, error: 'Failed to redeem prediction' };
+        }
+    },
+
+    /**
      * Redeem a prediction after market resolution
+     * This is kept for backward compatibility but we recommend using 
+     * redeemPredictionWithBalanceUpdate for new code
      */
     async redeemPrediction(predictionId: string): Promise<{
         prediction: Prediction | null;
