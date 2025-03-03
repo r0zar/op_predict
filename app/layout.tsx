@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     siteName: "OP_PREDICT",
     locale: "en_US",
     images: [{
-      url: 'https://oppredict.com/og-image.png',
+      url: 'https://oppredict.com/og-lp.png',
       width: 1200,
       height: 630,
       alt: "OP_PREDICT - Prediction Markets Platform",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "OP_PREDICT | Predict the future. Earn Bitcoin",
     description: "Explore and participate in markets for politics, sports, and more.",
-    images: ['https://oppredict.com/og-image.png'],
+    images: ['https://oppredict.com/og-lp.png'],
     creator: "@lordrozar",
   },
 }
