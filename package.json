@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm mcp:build && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "prebuild": "cd lib && pnpm build",
     "mcp:kill": "kill-port 3002 || true",
     "mcp:build": "cd mcp-server && pnpm install && pnpm build",
     "mcp:server": "cd mcp-server && MCP_PORT=3002 pnpm start",
