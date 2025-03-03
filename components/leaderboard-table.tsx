@@ -204,21 +204,21 @@ export function LeaderboardTable() {
 
     // If it's a .btc name, show it with emphasis
     if (user.username.endsWith('.btc')) {
-      return <span className="font-semibold text-primary">{user.username}</span>;
+      return <span className="font-semibold text-primary">{user.userId}</span>;
     }
 
     // If it's a Stacks address, format it nicely
     if (isStacksAddress(user.username)) {
-      return <span className="font-mono text-sm">{formatUserIdentifier(user.username)}</span>;
+      return <span className="font-mono text-sm">{formatUserIdentifier(user.userId)}</span>;
     }
 
     // If it starts with "user-", it's an anonymized id
-    if (user.username.startsWith('user-')) {
-      return <span className="font-mono text-sm">{user.username}</span>;
+    if (user.userId.startsWith('user-')) {
+      return <span className="font-mono text-sm">{user.userId}</span>;
     }
 
     // For any other username (custom usernames, not real names)
-    return <span>{user.username}</span>;
+    return <span>{user.userId}</span>;
   };
 
   return (
