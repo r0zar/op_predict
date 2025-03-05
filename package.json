@@ -7,18 +7,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prebuild": "cd lib && pnpm build",
+    "prebuild": "echo 'Using wisdom-sdk package. No local build needed.'",
     "mcp:kill": "kill-port 3002 || true",
     "mcp:build": "cd mcp-server && pnpm install && pnpm build",
     "mcp:server": "cd mcp-server && MCP_PORT=3002 pnpm start",
     "mcp:inspector": "cd mcp-server && CLIENT_PORT=5173 SERVER_PORT=3003 npx @modelcontextprotocol/inspector -e MCP_PORT=3002 -- node /home/rozar/Documents/charisma/op_predict/mcp-server/dist/index.js",
-    "dev:all": "pnpm mcp:kill && pnpm mcp:build && concurrently \"pnpm dev\" \"pnpm mcp:inspector\""
+    "dev:all": "pnpm mcp:kill && pnpm mcp:build && concurrently \"pnpm dev\" \"pnpm mcp:inspector\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.2",
     "@hookform/resolvers": "^4.1.2",
     "@modelcontextprotocol/sdk": "^1.6.1",
-    "@op-predict/lib": "workspace:*",
     "@op-predict/mcp": "workspace:*",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -51,19 +54,27 @@
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "wisdom-sdk": "^0.1.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.4.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/ui": "^3.0.7",
     "concurrently": "^8.2.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.16",
+    "jsdom": "^26.0.0",
     "kill-port": "^2.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.0.7"
   }
 }

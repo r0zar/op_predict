@@ -8,6 +8,12 @@
 - `cd lib && pnpm build` - Build the lib package
 - `cd mcp-server && pnpm build` - Build the MCP server
 
+## Testing Commands
+- `pnpm test` - Run all tests once
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm test:ui` - Run tests with UI
+- `pnpm test:coverage` - Generate test coverage report
+
 ## Code Style Guidelines
 - **Imports**: Group by external → internal, React/Next first, then UI components, utilities, local
 - **Naming**: PascalCase for components/types/interfaces, camelCase for functions/variables

@@ -29,6 +29,7 @@ OP_PREDICT is a decentralized prediction market platform built on blockchain tec
 - **Animations**: Framer Motion
 - **Data Visualization**: Recharts
 - **Icons**: Lucide React
+- **Testing**: Vitest, Testing Library
 
 ## Getting Started
 
@@ -56,6 +57,28 @@ OP_PREDICT is a decentralized prediction market platform built on blockchain tec
    ```
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+### Testing
+
+Run the test suite:
+```bash
+pnpm test
+```
+
+Run tests in watch mode:
+```bash
+pnpm test:watch
+```
+
+Run tests with UI:
+```bash
+pnpm test:ui
+```
+
+Generate coverage report:
+```bash
+pnpm test:coverage
+```
 
 ## Building for Production
 
