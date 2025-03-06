@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Share, Twitter, Copy, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getBaseUrl } from '@/lib/src/utils';
+import { getBaseUrl } from "@/lib/utils";
 
 interface PredictionShareProps {
     predictionId: string;

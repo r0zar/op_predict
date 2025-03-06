@@ -2,7 +2,7 @@
 
 import { Clock } from "lucide-react";
 import { MarketCountdown } from "./market-countdown";
-import { cn } from "@/lib/src/utils";
+import { cn } from "@/lib/utils";
 
 interface MarketDeadlineSectionProps {
     endDate: string;

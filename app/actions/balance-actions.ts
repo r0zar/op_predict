@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { userBalanceStore } from '@op-predict/lib';
+import { userBalanceStore } from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
 
 // Define the validation schema for deposit/withdraw operations

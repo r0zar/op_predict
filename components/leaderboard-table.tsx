@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/tooltip"
 import { formatUserIdentifier, isStacksAddress, truncateUserId } from "@/lib/user-utils"
 import { getLeaderboard, getTopEarners, getTopAccuracy, getCurrentUserStats } from "@/app/actions/leaderboard-actions"
-import { LeaderboardEntry } from "@op-predict/lib"
+import { type LeaderboardEntry } from "wisdom-sdk"
 import { useAuth } from "@clerk/nextjs"
 
 // NOTE: We rely on the score returned from the backend

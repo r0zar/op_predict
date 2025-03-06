@@ -1,8 +1,13 @@
 'use server';
 
 import { currentUser } from "@clerk/nextjs/server";
-import { bugReportStore, BugReport, userBalanceStore } from "@op-predict/lib";
-import { isAdmin } from "@/lib/src/utils";
+import { getBugReportStore, getUserBalanceStore } from "wisdom-sdk";
+import type { BugReport } from "wisdom-sdk";
+
+// Get store instances
+const bugReportStore = getBugReportStore();
+const userBalanceStore = getUserBalanceStore();
+import { isAdmin } from "@/lib/utils";
 
 export interface BugReportFormData {
     title: string;
@@ -60,8 +65,7 @@ export async function createBugReport(data: BugReportFormData) {
 
         const newReport = await bugReportStore.createBugReport({
             ...data,
-            createdBy: user.id,
-            status: 'open' as const
+            createdBy: user.id
         });
 
         // Process the initial $10 reward
@@ -112,7 +116,7 @@ export async function getBugReports() {
             };
         }
 
-        const reports = await bugReportStore.getBugReports();
+        const reports = await bugReportStore.getAllBugReports();
 
         return {
             success: true,

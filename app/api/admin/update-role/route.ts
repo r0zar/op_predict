@@ -1,6 +1,6 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/src/utils";
+import { isAdmin } from "@/lib/utils";
 
 // This is a protected admin-only API route to set user roles
 export async function POST(request: Request) {

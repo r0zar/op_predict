@@ -1,7 +1,10 @@
 'use server'
 
 import { currentUser } from "@clerk/nextjs/server";
-import { marketStore } from "@op-predict/lib";
+import { getMarketStore } from "wisdom-sdk";
+
+// Get store instance
+const marketStore = getMarketStore();
 
 // Types for our data
 export type TopVault = {

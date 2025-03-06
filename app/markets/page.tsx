@@ -3,7 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DeleteMarketButton } from "@/components/delete-market-button";
-import { isAdmin } from "@/lib/src/utils";
+import { isAdmin } from "@/lib/utils";
 import { MarketCard } from "@/components/market-card";
 
 export default async function MarketsPage() {

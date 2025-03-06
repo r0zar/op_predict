@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Market, MarketOutcome } from "@op-predict/lib";
+import type { Market, MarketOutcome, PredictionNFTReceipt } from "wisdom-sdk";
 import { createPrediction } from "@/app/actions/prediction-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
-import { PredictionNFTReceipt } from "@op-predict/lib";
-import { cn } from "@/lib/src/utils";
+import { cn } from "@/lib/utils";
+import { useSignet } from "@/lib/signet-context";
 import { InfoIcon } from "lucide-react";
 
 interface PredictionFormProps {
@@ -36,6 +36,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
     const [nftReceipt, setNftReceipt] = useState<PredictionNFTReceipt | null>(null);
+    
+    // Use the Signet context
+    const { isExtensionInstalled, triggerPredictionEvent } = useSignet();
 
     // Predefined amounts for quick selection
     const predefinedAmounts = [5, 10, 25, 50];
@@ -55,11 +58,14 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
         // If no percentage data or amount is not set, return 0
         if (!outcome.percentage || amount <= 0) return 0;
 
+        // For very small percentages (< 0.1%), use a minimum value to avoid extremely high multipliers
+        const safePercentage = Math.max(outcome.percentage, 0.1);
+        
         // Simplified payout calculation based on odds
         // Formula: amount * (100/outcome_percentage)
         // Higher percentage = lower payout, Lower percentage = higher payout
         // 5% admin fee is subtracted
-        const rawPayout = amount * (100 / outcome.percentage);
+        const rawPayout = amount * (100 / safePercentage);
         const adminFee = rawPayout * 0.05; // 5% fee
         return rawPayout - adminFee;
     };
@@ -84,6 +90,12 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
         setIsSubmitting(true);
 
         try {
+            // Get the selected outcome details
+            const selectedOutcomeData = outcomes.find(o => o.id === selectedOutcome);
+            if (!selectedOutcomeData) {
+                throw new Error("Selected outcome not found");
+            }
+            
             // Call the server action to create a prediction
             const result = await createPrediction({
                 marketId: market.id,
@@ -94,6 +106,19 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
 
             if (result.success && result.prediction) {
                 toast.success("Prediction placed successfully!");
+
+                // Trigger Signet prediction event if extension is installed
+                if (isExtensionInstalled) {
+                    // Trigger the prediction event in Signet
+                    await triggerPredictionEvent({
+                        marketId: market.id,
+                        marketName: market.name,
+                        outcomeId: selectedOutcome,
+                        outcomeName: selectedOutcomeData.name,
+                        amount
+                    });
+                    // Notification is handled in the context
+                }
 
                 // Set the NFT receipt to show in the dialog
                 setNftReceipt(result.prediction.nftReceipt);
@@ -124,9 +149,22 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
 
     return (
         <div className="space-y-4">
+            {/* Signet extension status indicator */}
+            {isExtensionInstalled ? (
+                <div className="flex items-center gap-2 justify-end mb-2">
+                    <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                    <span className="text-xs text-muted-foreground">Signet Extension Connected</span>
+                </div>
+            ) : (
+                <div className="flex items-center gap-2 justify-end mb-2">
+                    <span className="inline-block w-2 h-2 bg-muted rounded-full"></span>
+                    <span className="text-xs text-muted-foreground">Signet Extension Not Detected</span>
+                </div>
+            )}
+            
             {/* Explanation of how predictions work */}
             <div className="text-right">
-                <Tooltip>
+                <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
                         <div className="inline-flex items-center text-xs text-muted-foreground cursor-help">
                             <InfoIcon className="h-3 w-3 mr-1" />
@@ -193,7 +231,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                 </span>
 
                                 <div className="flex items-center gap-2">
-                                    <Tooltip>
+                                    <Tooltip delayDuration={0}>
                                         <TooltipTrigger asChild>
                                             <div className="flex items-center space-x-2">
                                                 <span className={cn(
@@ -301,7 +339,15 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                 Processing...
                             </>
                         ) : (
-                            `Place $${amount} Prediction`
+                            <>
+                                {isExtensionInstalled && (
+                                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                        <path d="m9 12 2 2 4-4" />
+                                    </svg>
+                                )}
+                                Place ${amount} Prediction {isExtensionInstalled && ' with Signet'}
+                            </>
                         )}
                     </Button>
                 </div>

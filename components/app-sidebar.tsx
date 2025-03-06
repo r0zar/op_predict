@@ -19,7 +19,7 @@ import {
   Bug,
   X
 } from "lucide-react"
-import { cn } from "@/lib/src/utils"
+import { cn } from "@/lib/utils"
 
 interface SidebarProps {
   className?: string

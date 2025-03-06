@@ -23,7 +23,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { PredictionForm } from "@/components/prediction-form";
-import { cn, isAdmin, calculateOutcomePercentages } from "@/lib/src/utils";
+import { cn, isAdmin, calculateOutcomePercentages } from "@/lib/utils";
 import { PredictionCard } from "@/components/prediction-card";
 import { ResolveMarketButton } from "@/components/resolve-market-button";
 import { MarketDeadlineSection } from "@/components/market-deadline-section";
@@ -249,23 +249,32 @@ export default async function MarketPage({ params }: { params: { id: string } })
         notFound();
     }
 
-    // Calculate actual votes from predictions
-    const votesByOutcome = predictions.predictions?.reduce((acc, prediction) => {
+    // Calculate actual votes and amounts from predictions
+    const predictionsByOutcome = predictions.predictions?.reduce((acc, prediction) => {
         const outcomeId = prediction.outcomeId;
-        acc[outcomeId] = (acc[outcomeId] || 0) + 1;
+        if (!acc[outcomeId]) {
+            acc[outcomeId] = {
+                votes: 0,
+                amount: 0
+            };
+        }
+        acc[outcomeId].votes += 1;
+        acc[outcomeId].amount += prediction.amount || 0;
         return acc;
-    }, {} as Record<string, number>) || {};
+    }, {} as Record<string, { votes: number, amount: number }>) || {};
 
-    // Calculate total votes
-    const totalVotes = Object.values(votesByOutcome).reduce((sum, count) => sum + count, 0);
+    // Calculate total votes and amounts
+    const totalVotes = Object.values(predictionsByOutcome).reduce((sum, data) => sum + data.votes, 0);
+    const totalAmount = Object.values(predictionsByOutcome).reduce((sum, data) => sum + data.amount, 0);
 
-    // Calculate percentages with actual vote counts
+    // Calculate percentages with actual vote counts and amounts
     const outcomesWithVotes = market.outcomes.map(outcome => ({
         ...outcome,
-        votes: votesByOutcome[outcome.id] || 0,
-        percentage: totalVotes === 0
-            ? 100 / market.outcomes.length // Equal distribution if no votes
-            : ((votesByOutcome[outcome.id] || 0) / totalVotes) * 100
+        votes: predictionsByOutcome[outcome.id]?.votes || 0,
+        amount: predictionsByOutcome[outcome.id]?.amount || 0,
+        percentage: totalAmount === 0
+            ? 100 / market.outcomes.length // Equal distribution if no amounts
+            : ((predictionsByOutcome[outcome.id]?.amount || 0) / totalAmount) * 100
     }));
 
     // Sort outcomes by percentage
@@ -409,7 +418,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                             )}
                                         </span>
                                         <span className="text-sm text-muted-foreground">
-                                            {outcome.votes} {outcome.votes === 1 ? 'vote' : 'votes'} ({outcome.percentage.toFixed(1)}%)
+                                            ${outcome.amount.toFixed(2)} ({outcome.percentage.toFixed(1)}%) · {outcome.votes} {outcome.votes === 1 ? 'vote' : 'votes'}
                                         </span>
                                     </div>
                                     <Progress

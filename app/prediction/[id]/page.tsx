@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import * as kvStore from '@op-predict/lib/kv-store';
+import { kv } from '@vercel/kv';
 import { currentUser } from '@clerk/nextjs/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, XCircle, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 import PredictionShare from '@/components/prediction-share';
-import { Prediction } from '@op-predict/lib';
-import { Market, MarketOutcome } from '@op-predict/lib';
-import { calculateOutcomePercentages } from '@/lib/src/utils';
+import { type Prediction } from 'wisdom-sdk';
+import { type Market, type MarketOutcome } from 'wisdom-sdk';
+import { calculateOutcomePercentages } from "@/lib/utils";
 
 // Dynamic metadata for the page
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oppredict.com';
 
     // Fetch prediction and market data
-    const prediction = await kvStore.getEntity<Prediction>('PREDICTION', id);
+    const prediction = await kv.get<Prediction>(`prediction:${id}`);
 
     if (!prediction) {
         return {
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
     // Get market details
     const market = prediction.marketId ?
-        await kvStore.getEntity<Market>('MARKET', prediction.marketId) :
+        await kv.get<Market>(`market:${prediction.marketId}`) :
         null;
 
     if (!market) {
@@ -85,7 +85,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
     const user = await currentUser();
 
     // Fetch prediction data
-    const prediction = await kvStore.getEntity<Prediction>('PREDICTION', id);
+    const prediction = await kv.get<Prediction>(`prediction:${id}`);
 
     if (!prediction) {
         return (
@@ -112,7 +112,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
 
     // Fetch market data
     const market = prediction.marketId ?
-        await kvStore.getEntity<Market>('MARKET', prediction.marketId) :
+        await kv.get<Market>(`market:${prediction.marketId}`) :
         null;
 
     if (!market) {

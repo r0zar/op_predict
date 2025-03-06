@@ -2,11 +2,16 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { predictionStore, Prediction, userStatsStore, Market } from '@op-predict/lib';
-import { marketStore } from "@op-predict/lib";
-import { userBalanceStore } from '@op-predict/lib';
+import { getMarketStore, getPredictionStore, getUserBalanceStore, getUserStatsStore } from 'wisdom-sdk';
+import type { Prediction, Market } from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
-import { isAdmin } from '@/lib/src/utils';
+import { isAdmin } from "@/lib/utils";
+
+// Get store instances
+const marketStore = getMarketStore();
+const predictionStore = getPredictionStore();
+const userBalanceStore = getUserBalanceStore();
+const userStatsStore = getUserStatsStore();
 
 // Define the validation schema for prediction creation
 const predictionFormSchema = z.object({
@@ -44,6 +49,15 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
         const market = await marketStore.getMarket(validatedData.marketId);
         if (!market) {
             return { success: false, error: 'Market not found' };
+        }
+        
+        // Check if the market has ended
+        if (market.endDate) {
+            const endDate = new Date(market.endDate);
+            const now = new Date();
+            if (now >= endDate) {
+                return { success: false, error: 'This market has ended and is no longer accepting predictions' };
+            }
         }
 
         // Find the outcome

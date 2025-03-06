@@ -1,32 +1,49 @@
 /**
- * Format a user's ID for display (when no name is available)
+ * Utilities for working with user IDs and display names
+ */
+
+/**
+ * Format a user identifier for display
+ * @param userId User ID to format
+ * @returns Formatted user identifier
+ */
+export function formatUserIdentifier(userId: string): string {
+  if (!userId) return 'Anonymous';
+  
+  // If it's a Stacks address
+  if (isStacksAddress(userId)) {
+    return truncateUserId(userId);
+  }
+  
+  // If it's a .btc name
+  if (userId.endsWith('.btc')) {
+    return userId;
+  }
+  
+  // Default truncation
+  return truncateUserId(userId);
+}
+
+/**
+ * Check if a string is a Stacks address
+ * @param str String to check
+ * @returns True if it's a Stacks address
+ */
+export function isStacksAddress(str: string): boolean {
+  return /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{28,40}$/.test(str);
+}
+
+/**
+ * Truncate a user ID for display
+ * @param userId User ID to truncate
+ * @returns Truncated user ID
  */
 export function truncateUserId(userId: string): string {
-    if (!userId) return "Unknown";
-    return `${userId.slice(0, 5)}...${userId.slice(-5)}`;
+  if (!userId) return 'Anonymous';
+  
+  // If it's already short, return as is
+  if (userId.length < 15) return userId;
+  
+  // For longer IDs, truncate middle
+  return `${userId.substring(0, 6)}...${userId.substring(userId.length - 4)}`;
 }
-
-/**
- * Format a Bitcoin BNS name or Stacks address for display
- */
-export function formatUserIdentifier(identifier: string): string {
-    // If it's a .btc name, return as is
-    if (identifier.endsWith('.btc')) {
-        return identifier;
-    }
-
-    // If it's a Stacks address, truncate it
-    if (identifier.startsWith('SP')) {
-        return truncateUserId(identifier);
-    }
-
-    // For anything else, return as is
-    return identifier;
-}
-
-/**
- * Check if the string is a valid Stacks address
- */
-export function isStacksAddress(value: string): boolean {
-    return /^SP[A-Z0-9]{33,}$/.test(value);
-} 

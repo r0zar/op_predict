@@ -13,6 +13,7 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { Toaster } from "sonner"
+import { SignetProvider } from "@/lib/signet-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -52,8 +53,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <ClerkProvider>
-        <body className={inter.className}>
-          <div className="flex min-h-screen flex-col bg-background">
+        <SignetProvider>
+          <body className={inter.className}>
+            <div className="flex min-h-screen flex-col bg-background">
             <header className="px-4 sticky justify-items-center top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
               <div className="container flex h-16 items-center justify-between py-4">
                 <div className="items-center gap-2 hidden sm:flex">
@@ -151,6 +153,7 @@ export default function RootLayout({
             }}
           />
         </body>
+        </SignetProvider>
       </ClerkProvider>
     </html>
   )

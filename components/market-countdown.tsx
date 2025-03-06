@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/src/utils";
+import { cn } from "@/lib/utils";
 
 export function MarketCountdown({ endDate }: { endDate: string }) {
     const [timeLeft, setTimeLeft] = useState<{

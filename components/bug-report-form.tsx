@@ -42,7 +42,7 @@ const formSchema = z.object({
     severity: z.string({
         required_error: "Please select a severity level",
     }),
-    url: z.string().url("Please enter a valid URL").optional(),
+    url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 });
 
 export function BugReportForm() {

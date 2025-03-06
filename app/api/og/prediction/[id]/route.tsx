@@ -1,8 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
-import * as kvStore from '@op-predict/lib/kv-store';
-import { Prediction } from '@op-predict/lib';
-import { Market } from '@op-predict/lib';
+import { kv } from '@vercel/kv';
+import { type Prediction } from 'wisdom-sdk';
+import { type Market } from 'wisdom-sdk';
 
 export const runtime = 'edge';
 
@@ -59,20 +59,20 @@ export async function GET(
         let prediction: PredictionWithNFT | null = null;
 
         // Try to fetch as a prediction first
-        prediction = await kvStore.getEntity<PredictionWithNFT>('PREDICTION', id);
+        prediction = await kv.get<PredictionWithNFT>(`prediction:${id}`);
         console.log(`[OG Debug] Direct prediction lookup result: ${prediction ? 'found' : 'not found'}`);
 
         // If not found, try to see if it's an NFT receipt ID
         if (!prediction) {
             console.log(`[OG Debug] Looking up as NFT receipt`);
-            const nftReceipt = await kvStore.getEntity<BasicNFTReceipt>('PREDICTION_NFT', id);
+            const nftReceipt = await kv.get<BasicNFTReceipt>(`prediction_nft:${id}`);
             console.log(`[OG Debug] NFT receipt lookup result: ${nftReceipt ? 'found' : 'not found'}`);
 
             // If we found an NFT receipt, get the associated prediction
             if (nftReceipt && nftReceipt.predictionId) {
                 console.log(`[OG Debug] Found NFT with prediction ID: ${nftReceipt.predictionId}`);
                 // Get the prediction using the predictionId from the receipt
-                prediction = await kvStore.getEntity<PredictionWithNFT>('PREDICTION', nftReceipt.predictionId);
+                prediction = await kv.get<PredictionWithNFT>(`prediction:${nftReceipt.predictionId}`);
                 console.log(`[OG Debug] Prediction from NFT lookup: ${prediction ? 'found' : 'not found'}`);
 
                 // Add the NFT receipt to the prediction
@@ -85,7 +85,7 @@ export async function GET(
         else if (prediction) {
             // Try to find an NFT receipt for this prediction
             const nftId = prediction.id;
-            const receipt = await kvStore.getEntity<BasicNFTReceipt>('PREDICTION_NFT', nftId);
+            const receipt = await kv.get<BasicNFTReceipt>(`prediction_nft:${nftId}`);
             if (receipt) {
                 console.log(`[OG Debug] Found matching NFT receipt for prediction`);
                 prediction.nftReceipt = receipt as Record<string, any>;
@@ -96,7 +96,7 @@ export async function GET(
         if (!prediction) {
             console.log(`[OG Debug] Final check - prediction not found`);
             // Check if it's in the old format
-            prediction = await kvStore.getEntity<PredictionWithNFT>('PREDICTION', id);
+            prediction = await kv.get<PredictionWithNFT>(`prediction:${id}`);
             if (!prediction) {
                 console.log(`[OG Debug] All lookups failed, returning 404`);
                 return new Response('Prediction not found', { status: 404 });
@@ -106,7 +106,7 @@ export async function GET(
         // Fetch the market
         console.log(`[OG Debug] Looking up market with ID: ${prediction.marketId}`);
         const market = prediction.marketId
-            ? await kvStore.getEntity<Market>('MARKET', prediction.marketId)
+            ? await kv.get<Market>(`market:${prediction.marketId}`)
             : null;
 
         console.log(`[OG Debug] Market lookup result: ${market ? 'found' : 'not found'}`);

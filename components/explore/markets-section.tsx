@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { currentUser } from "@clerk/nextjs/server"
-import { isAdmin } from "@/lib/src/utils"
+import { isAdmin } from "@/lib/utils"
 import { SectionHeader } from "./section-header"
 import { MarketCard } from "@/components/market-card"
 import { DeleteMarketButton } from "@/components/delete-market-button"

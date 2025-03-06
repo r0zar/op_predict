@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { SignIn } from '@clerk/nextjs'
-import { calculateOutcomePercentages } from "@/lib/src/utils"
+import { calculateOutcomePercentages } from "@/lib/utils"
 import Link from "next/link"
 
 interface MarketCardProps {

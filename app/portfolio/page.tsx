@@ -25,8 +25,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { getUserPredictions, getAllPredictions } from "../actions/prediction-actions";
 import { PredictionCard } from "@/components/prediction-card";
-import { isAdmin } from "@/lib/src/utils";
-import { userBalanceStore } from "@op-predict/lib";
+import { isAdmin } from "@/lib/utils";
+import { getUserBalanceStore } from "wisdom-sdk";
+
+// Get store instance
+const userBalanceStore = getUserBalanceStore();
 
 // Mock data - used only for transactions and active markets until we implement those fully
 const mockPortfolioData = {

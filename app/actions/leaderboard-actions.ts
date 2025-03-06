@@ -1,6 +1,10 @@
 'use server';
 
-import { userStatsStore, LeaderboardEntry, UserStats } from '@op-predict/lib';
+import { getUserStatsStore } from 'wisdom-sdk';
+import type { LeaderboardEntry, UserStats } from 'wisdom-sdk';
+
+// Get store instance
+const userStatsStore = getUserStatsStore();
 import { getUserNameById } from '@/lib/clerk-user';
 import { currentUser } from '@clerk/nextjs/server';
 
@@ -23,11 +27,11 @@ export type LeaderboardResponse = {
 export async function getLeaderboard(limit: number = 10): Promise<LeaderboardResponse> {
     try {
         // Get all entries for total count (could be optimized with a count-only query in the future)
-        const allEntries = await userStatsStore.getLeaderboard(100); // Get up to 100 to estimate total
+        const allEntries = await userStatsStore.getTopUsers(100); // Get up to 100 to estimate total
         const totalCount = allEntries.length;
         
         // Get paginated entries
-        const entries = await userStatsStore.getLeaderboard(limit);
+        const entries = await userStatsStore.getTopUsers(limit);
 
         // For each entry, if there's no username, try to get it from Clerk
         const entriesWithUsernames = await Promise.all(
@@ -168,7 +172,7 @@ export async function getCurrentUserStats(): Promise<{
         }
 
         // Get all leaderboard entries to find the user's rank
-        const allEntries = await userStatsStore.getLeaderboard(100);  // Get top 100 for now
+        const allEntries = await userStatsStore.getTopUsers(100);  // Get top 100 for now
         const userRank = allEntries.findIndex(entry => entry.userId === user.id) + 1;
         
         // Calculate the user's score using the same algorithm

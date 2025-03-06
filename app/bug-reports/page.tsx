@@ -6,8 +6,12 @@ import { getBugReports } from "@/app/actions/bug-report-actions";
 import { BugReportForm } from "@/components/bug-report-form";
 import { BugReportTable } from "@/components/bug-report-table";
 import { DollarSign, AlertTriangle } from "lucide-react";
-import { BugReport, userBalanceStore } from "@op-predict/lib";
-import { isAdmin } from "@/lib/src/utils";
+import { getUserBalanceStore } from "wisdom-sdk";
+import type { BugReport } from "wisdom-sdk";
+
+// Get store instance
+const userBalanceStore = getUserBalanceStore();
+import { isAdmin } from "@/lib/utils";
 
 export default async function BugReportPage() {
     const user = await currentUser();

@@ -1,0 +1,4 @@
+components/prediction-form.tsx
+components/prediction-card.tsx
+components/bug-report-table.tsx
+components/prediction-receipt.tsx

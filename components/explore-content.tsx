@@ -1,6 +1,6 @@
 import { ShieldAlert, TrendingUp, Star, Zap } from "lucide-react"
 import { currentUser } from "@clerk/nextjs/server"
-import { isAdmin } from "@/lib/src/utils"
+import { isAdmin } from "@/lib/utils"
 import { getAllMarkets } from "@/app/actions/market-actions"
 
 // Import all section components

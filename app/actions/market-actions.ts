@@ -2,11 +2,16 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { predictionStore } from '@op-predict/lib';
-import { Market, marketStore, userStatsStore } from "@op-predict/lib";
-import { userBalanceStore } from '@op-predict/lib';
+import { getMarketStore, getPredictionStore, getUserBalanceStore, getUserStatsStore } from 'wisdom-sdk';
+import type { Market } from "wisdom-sdk";
 import { currentUser } from '@clerk/nextjs/server';
-import { isAdmin } from '@/lib/src/utils';
+import { isAdmin } from "@/lib/utils";
+
+// Get store instances
+const marketStore = getMarketStore();
+const predictionStore = getPredictionStore();
+const userBalanceStore = getUserBalanceStore();
+const userStatsStore = getUserStatsStore();
 
 // Define the validation schema for market creation
 const marketFormSchema = z.object({

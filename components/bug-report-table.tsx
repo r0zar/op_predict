@@ -21,8 +21,9 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { BugReportStatus, updateBugReportStatus } from "@/app/actions/bug-report-actions";
-import { BugReport } from "@op-predict/lib";
+import { updateBugReportStatus } from "@/app/actions/bug-report-actions";
+import type { BugReportStatus } from "@/app/actions/bug-report-actions";
+import type { BugReport } from "wisdom-sdk";
 import { DollarSign, CheckCircle, Clock, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 interface BugReportTableProps {

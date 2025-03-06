@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
-import { marketStore, predictionStore } from '@op-predict/lib';
+import { marketStore, predictionStore } from 'wisdom-sdk';
 
 // Load .env from project root
 config({ path: resolve(__dirname, '../.env.local') });

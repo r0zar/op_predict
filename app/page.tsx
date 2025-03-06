@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { MarketCard } from "@/components/market-card"
 import { TopMarkets } from "@/components/top-markets"
 import { getAllMarkets } from "@/app/actions/market-actions"
-import { calculateOutcomePercentages } from "@/lib/src/utils"
+import { calculateOutcomePercentages } from "@/lib/utils"
 
 export default async function Home() {
   const { userId } = await auth();
