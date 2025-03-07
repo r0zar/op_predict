@@ -1,10 +1,9 @@
 import { ShieldAlert, TrendingUp, Star, Zap } from "lucide-react"
 import { currentUser } from "@clerk/nextjs/server"
 import { isAdmin } from "@/lib/utils"
-import { 
-  getMarkets, 
-  getTrendingMarkets, 
-  MARKET_CATEGORIES 
+import {
+  getMarkets,
+  getTrendingMarkets
 } from "@/app/actions/market-actions"
 
 // Import all section components
@@ -17,16 +16,16 @@ import { MarketsSection } from "./explore/markets-section"
 export async function ExploreContent() {
   const user = await currentUser()
   const isUserAdmin = isAdmin(user?.id || '')
-  
+
   // Get markets with our new paginated API
   const marketsResult = await getMarkets({
     status: 'active',
     limit: 20
   })
-  
+
   // Get trending markets with optimized function
   const trendingMarkets = await getTrendingMarkets(4)
-  
+
   // Get markets sorted by creation date
   const newestMarketsResult = await getMarkets({
     status: 'active',
@@ -34,7 +33,7 @@ export async function ExploreContent() {
     sortDirection: 'desc',
     limit: 4
   })
-  
+
   // For personalized markets, we'll just use a slice of the main markets for now
   // In a real implementation, this would use user preferences or history
   const personalizedMarkets = marketsResult.items.slice(0, 4)
