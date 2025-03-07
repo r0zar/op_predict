@@ -332,7 +332,7 @@ export async function getAllPredictions(): Promise<{
         const allPredictions: any[] = [];
 
         // Gather all predictions from all markets
-        for (const market of markets) {
+        for (const market of markets.items) {
             const m = market as any;
             if (m && m.id) {
                 const marketPredictions = await predictionStore.getMarketPredictions(m.id);

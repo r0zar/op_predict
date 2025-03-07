@@ -7,12 +7,14 @@ import {
     predictionStore,
     userBalanceStore,
     userStatsStore,
+    Market,
+} from 'wisdom-sdk';
+import {
     MarketQueryOptions,
     PaginatedResult,
-    Market,
     SortField,
     SortDirection
-} from 'wisdom-sdk';
+} from 'wisdom-sdk/dist/utils.cjs';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
 import { MARKET_CATEGORIES } from '../components/markets-table';
@@ -130,14 +132,14 @@ export async function getMarkets(params: MarketQueryParams = {}): Promise<Pagina
     };
 
     console.log("Fetching markets with options:", JSON.stringify(queryOptions));
-    
+
     // Try to get markets with the new method
     let result;
-    
+
     try {
         result = await marketStore.getMarkets(queryOptions);
         console.log(`Found ${result.items.length} markets of ${result.total} total`);
-        
+
         // If no results found, try getting all markets without filters as fallback
         if (result.items.length === 0 && (params.category || params.status)) {
             console.log("No markets found with filters, trying without filters");
@@ -151,7 +153,7 @@ export async function getMarkets(params: MarketQueryParams = {}): Promise<Pagina
         }
     } catch (error) {
         console.error("Error fetching markets:", error);
-        
+
         // Return empty result on error
         return {
             items: [],

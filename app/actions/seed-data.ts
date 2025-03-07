@@ -1,6 +1,6 @@
 'use server'
 
-import { marketStore } from 'wisdom-sdk';
+import { Market, marketStore } from 'wisdom-sdk';
 
 // Sample markets to create if no markets exist
 const sampleMarkets = [
@@ -82,32 +82,32 @@ export async function createSampleMarkets(): Promise<{ success: boolean, count: 
   try {
     // Check if there are any existing markets
     const existingMarkets = await marketStore.getMarkets();
-    
+
     if (existingMarkets.items.length > 0) {
       console.log(`Found ${existingMarkets.items.length} existing markets, skipping sample data creation`);
       return { success: true, count: 0 };
     }
-    
+
     console.log("No existing markets found, creating sample data...");
-    
+
     // Create sample markets
-    const createdMarkets = [];
+    const createdMarkets: Market[] = [];
     for (const marketData of sampleMarkets) {
       try {
-        const market = await marketStore.createMarket(marketData);
+        const market: Market = await marketStore.createMarket(marketData as any);
         createdMarkets.push(market);
         console.log(`Created sample market: ${market.name}`);
       } catch (error) {
         console.error(`Error creating sample market ${marketData.name}:`, error);
       }
     }
-    
+
     // Build indexes for the new markets
     await marketStore.buildMarketIndexes();
-    
-    return { 
-      success: true, 
-      count: createdMarkets.length 
+
+    return {
+      success: true,
+      count: createdMarkets.length
     };
   } catch (error) {
     console.error("Error creating sample markets:", error);

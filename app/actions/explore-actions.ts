@@ -26,58 +26,7 @@ export type FeaturedCreator = {
  * Get top performing vaults based on engagement and fair resolution
  */
 export async function getTopVaults(): Promise<TopVault[]> {
-    // In a real application, this would fetch from a database
-    // For now, we'll generate some mock data based on existing markets
-    try {
-        const markets = await marketStore.getMarkets();
-
-        // Group markets by creator to simulate "vaults"
-        const vaultMap = new Map<string, {
-            markets: typeof markets,
-            name: string,
-            engagement: number,
-            fairResolution: number
-        }>();
-
-        // Create simulated vaults based on market creators
-        markets.forEach((market: any) => {
-            const creatorId = market?.createdBy || 'anonymous';
-            if (!vaultMap.has(creatorId)) {
-                // Initialize a new vault
-                vaultMap.set(creatorId, {
-                    markets: [market],
-                    name: generateVaultName(),
-                    engagement: Math.floor(Math.random() * 5000) + 5000, // Random engagement between 5000-10000
-                    fairResolution: Math.floor(Math.random() * 10) + 90 // Random fair resolution 90-100%
-                });
-            } else {
-                // Add to existing vault
-                const vault = vaultMap.get(creatorId)!;
-                vault.markets.push(market);
-                // Increase engagement a bit for each additional market
-                vault.engagement += Math.floor(Math.random() * 500);
-            }
-        });
-
-        // Convert to array and sort by engagement
-        const vaults = Array.from(vaultMap.entries()).map(([id, data]) => ({
-            id,
-            name: data.name,
-            engagement: data.engagement,
-            fairResolution: data.fairResolution,
-            markets: data.markets.length,
-            totalValue: data.markets.reduce((sum: number, market: any) => sum + (typeof market?.poolAmount === 'number' ? market.poolAmount : 0), 0)
-        }));
-
-        // Sort by engagement and take top 3
-        return vaults
-            .sort((a, b) => b.engagement - a.engagement)
-            .slice(0, 3);
-
-    } catch (error) {
-        console.error("Error fetching top vaults:", error);
-        return defaultTopVaults;
-    }
+    return []
 }
 
 /**
@@ -159,9 +108,9 @@ export async function getPlatformStats(): Promise<{
         const markets = await marketStore.getMarkets();
 
         // Calculate actual stats based on markets
-        const activePredictions = markets.length;
-        const totalValueLocked = markets.reduce((sum: number, market: any) => sum + (typeof market?.poolAmount === 'number' ? market.poolAmount : 0), 0);
-        const upcomingResolutions = markets.filter((m: any) => m?.status === 'active').length;
+        const activePredictions = markets.items.length;
+        const totalValueLocked = markets.items.reduce((sum: number, market: any) => sum + (typeof market?.poolAmount === 'number' ? market.poolAmount : 0), 0);
+        const upcomingResolutions = markets.items.filter((m: any) => m?.status === 'active').length;
 
         return {
             activePredictions,

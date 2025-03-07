@@ -207,11 +207,11 @@ export async function getMultipleUserStats(userIds: string[]): Promise<{
         }
 
         // Filter out duplicate IDs
-        const uniqueUserIds = [...new Set(userIds)];
-        
+        const uniqueUserIds = Array.from(new Set(userIds));
+
         // Initialize stats object with default values
         const statsObj: Record<string, any> = {};
-        
+
         // Fetch stats for each user in parallel
         await Promise.all(
             uniqueUserIds.map(async (userId) => {
@@ -230,10 +230,10 @@ export async function getMultipleUserStats(userIds: string[]): Promise<{
                         };
                         return;
                     }
-                    
+
                     // Get stats from the store
-                    const userStats = await userStatsStore.getUserStats(userId);
-                    
+                    const userStats: any = await userStatsStore.getUserStats(userId);
+
                     if (userStats) {
                         statsObj[userId] = {
                             ...userStats,
@@ -269,13 +269,13 @@ export async function getMultipleUserStats(userIds: string[]): Promise<{
                 }
             })
         );
-        
+
         return { success: true, stats: statsObj };
     } catch (error) {
         console.error("Error fetching multiple user stats:", error);
-        return { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Failed to fetch user stats" 
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch user stats"
         };
     }
 }
