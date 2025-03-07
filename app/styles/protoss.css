@@ -1,0 +1,423 @@
+/* Protoss Nexus Theme Styles */
+
+/* Core theme variables */
+[data-theme="protoss"] {
+  /* Font configuration */
+  --font-primary: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-display: 'JetBrains Mono', monospace; /* Use JetBrains Mono as display font for Protoss */
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  /* Theme colors - Enhanced with more alien feel */
+  --void-void: 260 80% 5%;
+  --void-dark: 260 60% 10%;
+  --void-medium: 260 50% 17%;
+  --psi-gold: 38 95% 65%;       /* Deeper, more intense gold */
+  --psi-energy: 170 85% 65%;    /* Slightly adjusted teal */
+  --psi-blade: 272 90% 75%;     /* More vibrant purple */
+  --psi-storm: 320 100% 72%;    /* Stronger magenta */
+  --warp-field: 150 100% 67%;
+  --shield-aura: 195 90% 70%;   /* Bluer shield */
+  --khala-light: 220 30% 96%;   /* Slightly blue-tinted white */
+  --khala-medium: 260 45% 70%;
+  --khala-dark: 260 27% 35%;
+  
+  /* Tailwind CSS vars - mapping to Protoss colors */
+  --background: hsl(var(--void-void));
+  --foreground: hsl(var(--khala-light));
+  --card: hsl(var(--void-dark));
+  --card-foreground: hsl(var(--khala-light));
+  --popover: hsl(var(--void-dark));
+  --popover-foreground: hsl(var(--khala-light));
+  --primary: hsl(var(--psi-blade));
+  --primary-foreground: #000;
+  --secondary: hsl(var(--psi-gold));
+  --secondary-foreground: #000;
+  --accent: hsl(var(--psi-energy));
+  --accent-foreground: #000;
+  --muted: hsl(var(--void-medium));
+  --muted-foreground: hsl(var(--khala-medium));
+  --destructive: hsl(var(--psi-storm));
+  --destructive-foreground: #fff;
+  --border: hsl(var(--khala-dark));
+  --input: hsl(var(--khala-dark));
+  --ring: hsl(var(--psi-blade));
+  
+  /* Protoss-specific animations */
+  --button-hover-scale: 1.03;
+  --input-focus-effect: psi-charge 3s infinite;
+  --card-hover-transform: translateY(-3px) scale(1.01);
+  --loading-animation: psi-loading 2s infinite;
+}
+
+/* Button variants */
+[data-theme="protoss"] .theme-button-primary {
+  @apply text-psi-blade border-psi-blade/50 hover:shadow-md hover:shadow-psi-blade/20;
+}
+
+[data-theme="protoss"] .theme-button-secondary {
+  @apply text-psi-gold border-psi-gold/50 hover:shadow-md hover:shadow-psi-gold/20;
+}
+
+[data-theme="protoss"] .theme-button-danger {
+  @apply text-psi-storm border-psi-storm/50 hover:shadow-md hover:shadow-psi-storm/20;
+}
+
+/* Legacy cyber buttons with protoss styling */
+[data-theme="protoss"] .cyber-button {
+  @apply relative overflow-hidden bg-transparent text-psi-blade font-medium
+         border border-psi-blade/50 px-4 py-2 rounded-md
+         hover:shadow-md hover:shadow-psi-blade/20
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+[data-theme="protoss"] .cyber-button-success {
+  @apply relative overflow-hidden bg-transparent text-psi-energy font-medium
+         border border-psi-energy/50 px-4 py-2 rounded-md
+         hover:shadow-md hover:shadow-psi-energy/20
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+[data-theme="protoss"] .cyber-button-danger {
+  @apply relative overflow-hidden bg-transparent text-psi-storm font-medium
+         border border-psi-storm/50 px-4 py-2 rounded-md
+         hover:shadow-md hover:shadow-psi-storm/20
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+/* Glowing text effects */
+[data-theme="protoss"] .text-glow {
+  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.3), 0 0 10px hsl(var(--psi-gold) / 0.2);
+}
+
+[data-theme="protoss"] .text-glow-purple {
+  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.3), 0 0 10px hsl(var(--psi-blade) / 0.2);
+}
+
+[data-theme="protoss"] .text-glow-pink {
+  text-shadow: 0 0 5px hsl(var(--psi-storm) / 0.3), 0 0 10px hsl(var(--psi-storm) / 0.2);
+}
+
+/* Psionic text effects */
+[data-theme="protoss"] .text-psionic {
+  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.3), 0 0 10px hsl(var(--psi-gold) / 0.2);
+}
+
+[data-theme="protoss"] .text-psionic-energy {
+  text-shadow: 0 0 5px hsl(var(--psi-energy) / 0.3), 0 0 10px hsl(var(--psi-energy) / 0.2);
+}
+
+[data-theme="protoss"] .text-psionic-blade {
+  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.3), 0 0 10px hsl(var(--psi-blade) / 0.2);
+}
+
+/* Corner accents */
+[data-theme="protoss"] .corner-accents::before,
+[data-theme="protoss"] .corner-accents::after {
+  @apply border-[hsl(var(--psi-gold))]/50;
+}
+
+/* Crystal accents */
+[data-theme="protoss"] .crystal-accents::before,
+[data-theme="protoss"] .crystal-accents::after {
+  @apply border-[hsl(var(--psi-gold))]/50;
+}
+
+/* Crystal glow effect */
+[data-theme="protoss"] .crystal-glow::before {
+  box-shadow: 0 0 15px #ffda7b, 0 0 30px rgba(189, 147, 249, 0.2);
+}
+
+/* Energy wave effect */
+[data-theme="protoss"] .energy-wave {
+  background: linear-gradient(90deg, transparent, rgba(255, 218, 123, 0.7), rgba(189, 147, 249, 0.7), transparent);
+}
+
+/* Pulse animations */
+[data-theme="protoss"] .theme-pulse {
+  animation-name: pulse-psionic;
+}
+
+@keyframes pulse-psionic {
+  0% { box-shadow: 0 0 5px rgba(255, 218, 123, 0.4); }
+  50% { box-shadow: 0 0 15px rgba(255, 218, 123, 0.7), 0 0 25px rgba(189, 147, 249, 0.3); }
+  100% { box-shadow: 0 0 5px rgba(255, 218, 123, 0.4); }
+}
+
+/* Panel styles */
+[data-theme="protoss"] .bg-panel-gradient {
+  background: linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card), transparent 20%));
+  border: 1px solid rgba(255, 218, 123, 0.2);
+}
+
+/* Card styling */
+[data-theme="protoss"] .theme-card {
+  background-color: var(--card);
+  border: 1px solid rgba(77, 66, 115, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+[data-theme="protoss"] .theme-card:hover {
+  box-shadow: 0 0 5px rgba(255, 218, 123, 0.3), 0 0 10px rgba(255, 218, 123, 0.1);
+  transform: var(--card-hover-transform);
+}
+
+/* Progress bar styling */
+[data-theme="protoss"] .theme-progress-primary {
+  background: linear-gradient(to right, rgba(189, 147, 249, 0.7), rgba(189, 147, 249, 0.9));
+}
+
+[data-theme="protoss"] .theme-progress-secondary {
+  background: linear-gradient(to right, rgba(255, 218, 123, 0.7), rgba(255, 218, 123, 0.9));
+}
+
+[data-theme="protoss"] .theme-progress-danger {
+  background: linear-gradient(to right, rgba(255, 121, 198, 0.7), rgba(255, 121, 198, 0.9));
+}
+
+/* Protoss-specific animations */
+@keyframes psi-charge {
+  0% {
+    box-shadow: 0 0 5px hsl(var(--psi-gold) / 0.4), 0 0 10px hsl(var(--psi-gold) / 0.3);
+    border-color: hsl(var(--psi-gold) / 0.7);
+    filter: brightness(1);
+  }
+  25% {
+    box-shadow: 0 0 15px hsl(var(--psi-gold) / 0.6), 0 0 30px hsl(var(--psi-gold) / 0.4);
+    border-color: hsl(var(--psi-gold));
+    filter: brightness(1.3) saturate(1.2);
+  }
+  50% {
+    box-shadow: 0 0 15px hsl(var(--psi-blade) / 0.6), 0 0 30px hsl(var(--psi-blade) / 0.4);
+    border-color: hsl(var(--psi-blade));
+    filter: brightness(1.2) saturate(1.3);
+  }
+  75% {
+    box-shadow: 0 0 15px hsl(var(--shield-aura) / 0.6), 0 0 30px hsl(var(--shield-aura) / 0.4);
+    border-color: hsl(var(--shield-aura));
+    filter: brightness(1.3) saturate(1.2);
+  }
+  100% {
+    box-shadow: 0 0 5px hsl(var(--psi-gold) / 0.4), 0 0 10px hsl(var(--psi-gold) / 0.3);
+    border-color: hsl(var(--psi-gold) / 0.7);
+    filter: brightness(1);
+  }
+}
+
+/* Loading icon animation for Protoss */
+[data-theme="protoss"] .loading-icon {
+  filter: drop-shadow(0 0 3px hsl(var(--psi-gold)));
+  animation: psi-spin 1s linear infinite, psi-glow 3s ease infinite;
+}
+
+@keyframes psi-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes psi-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px hsl(var(--psi-gold))); }
+  33% { filter: drop-shadow(0 0 3px hsl(var(--psi-blade))); }
+  66% { filter: drop-shadow(0 0 3px hsl(var(--shield-aura))); }
+}
+
+/* Protoss button hover effect */
+[data-theme="protoss"] .themed-button {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s var(--ease-spring), box-shadow 0.3s ease;
+  box-shadow: inset 0 0 0 1px hsl(var(--psi-gold) / 0.3);
+}
+
+[data-theme="protoss"] .themed-button:hover {
+  transform: scale(var(--button-hover-scale));
+  box-shadow: inset 0 0 0 1px hsl(var(--psi-gold)), 0 0 10px hsl(var(--psi-gold) / 0.4);
+}
+
+[data-theme="protoss"] .themed-button::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, hsl(var(--psi-gold) / 0.3) 0%, transparent 60%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+[data-theme="protoss"] .themed-button:hover::after {
+  opacity: 0.4;
+  transform: scale(1);
+}
+
+/* Protoss form input styling */
+[data-theme="protoss"] .themed-input {
+  border-color: rgba(77, 66, 115, 0.5);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="protoss"] .themed-input:focus {
+  border-color: hsl(var(--psi-gold));
+  box-shadow: 0 0 0 1px hsl(var(--psi-gold) / 0.5), 0 0 10px hsl(var(--psi-gold) / 0.3);
+}
+
+/* Apply psi-charge to selected buttons */
+[data-theme="protoss"] .bg-secondary {
+  animation: psi-charge 3s infinite;
+}
+
+/* Protoss crystalline highlights - enhanced */
+[data-theme="protoss"] .crystal-highlight {
+  position: relative;
+  overflow: visible;
+}
+
+[data-theme="protoss"] .crystal-highlight::before,
+[data-theme="protoss"] .crystal-highlight::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--psi-blade) / 0.1) 0%,
+    hsl(var(--psi-gold) / 0.2) 50%,
+    hsl(var(--psi-energy) / 0.1) 100%
+  );
+  border: 2px solid transparent;
+  border-image: linear-gradient(
+    135deg,
+    hsl(var(--psi-blade) / 0.7) 0%,
+    hsl(var(--psi-gold) / 0.8) 50%,
+    hsl(var(--psi-energy) / 0.7) 100%
+  ) 1;
+  clip-path: polygon(0% 20%, 20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%);
+  transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+[data-theme="protoss"] .crystal-highlight::after {
+  filter: blur(5px);
+}
+
+[data-theme="protoss"] .crystal-highlight:hover::before,
+[data-theme="protoss"] .crystal-highlight:hover::after {
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 
+    0 0 10px hsl(var(--psi-gold) / 0.5), 
+    0 0 20px hsl(var(--psi-gold) / 0.3),
+    0 0 30px hsl(var(--psi-gold) / 0.2);
+}
+
+/* Enhanced Psionic energy effects */
+[data-theme="protoss"] .psi-particles {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Multiple particle effects using pseudo-elements and custom properties */
+[data-theme="protoss"] .psi-particles::before,
+[data-theme="protoss"] .psi-particles::after,
+[data-theme="protoss"] .psi-particles span::before,
+[data-theme="protoss"] .psi-particles span::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Primary energy glow */
+[data-theme="protoss"] .psi-particles::before {
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--psi-gold) / 0) 30%,
+    hsl(var(--psi-gold) / 0.4) 70%,
+    hsl(var(--psi-gold) / 0) 100%
+  );
+  opacity: 0;
+  transform: scale(0.8);
+  animation: psi-energy-pulse 3s infinite;
+}
+
+/* Energy aura that appears on hover */
+[data-theme="protoss"] .psi-particles:hover::before {
+  opacity: 0.7;
+  transform: scale(1.2);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* Energy particles that rise from the button */
+[data-theme="protoss"] .psi-particles::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  z-index: -1;
+}
+
+[data-theme="protoss"] .psi-particles:hover::after {
+  opacity: 1;
+}
+
+/* Create individual particles with pseudo-elements */
+[data-theme="protoss"] .psi-particles:hover::before {
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--psi-gold) / 0.2) 0%,
+    hsl(var(--psi-gold) / 0.8) 30%,
+    hsl(var(--psi-gold) / 0.2) 70%,
+    transparent 100%
+  );
+  opacity: 0.8;
+  transform: scale(1.2);
+}
+
+/* Individual particles using box-shadow */
+[data-theme="protoss"] .psi-particles:hover span::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  box-shadow:
+    0 -10px 0 -5px hsl(var(--psi-blade) / 0.7),
+    5px -5px 0 -3px hsl(var(--psi-gold) / 0.7),
+    -5px -8px 0 -4px hsl(var(--psi-energy) / 0.7);
+  filter: blur(2px);
+  animation: psi-rising 3s ease-out infinite;
+  opacity: 0;
+}
+
+[data-theme="protoss"] .psi-particles:hover span::before {
+  opacity: 1;
+}
+
+@keyframes psi-energy-pulse {
+  0%, 100% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 0.3; transform: scale(1.2); }
+}
+
+@keyframes psi-rising {
+  0% { 
+    opacity: 0; 
+    transform: translateY(5px);
+  }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { 
+    opacity: 0; 
+    transform: translateY(-15px);
+  }
+}
