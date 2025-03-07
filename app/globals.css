@@ -3,49 +3,194 @@
 @tailwind utilities;
 
 @layer base {
+  /* Default theme variables - applied to all themes unless overridden */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 30 95% 55%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 226 71% 40%;
-    --secondary-foreground: 0 0% 98%;
-    --accent: 226 71% 40%;
-    --accent-foreground: 0 0% 98%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 30 95% 55%;
-    --radius: 0.5rem;
+    /* Default font configuration */
+    --font-primary: 'Inter', -apple-system, system-ui, sans-serif;
+    --font-display: 'Inter', -apple-system, system-ui, sans-serif; 
+    --font-mono: 'JetBrains Mono', monospace;
+    
+    /* Default theme (Cyberpunk) */
+    --space-black: 222 47% 2%;
+    --space-dark: 222 44% 7%;
+    --space-void: 222 33% 11%;
+    --cyber-blue: 183 95% 75%;
+    --neon-green: 135 86% 65%;
+    --neon-pink: 328 100% 74%;
+    --neon-red: 0 100% 67%;
+    --neon-purple: 265 83% 78%;
+    --neon-orange: 31 100% 71%; 
+    --white: 240 5% 96%;
+    --steel: 230 29% 51%;
+    --dark-steel: 231 14% 35%;
+    
+    /* Protoss colors (initialized but not used in default theme) */
+    --void-void: 260 80% 5%;
+    --void-dark: 260 60% 10%;
+    --void-medium: 260 50% 17%;
+    --psi-gold: 43 100% 74%;
+    --psi-energy: 167 80% 71%;
+    --psi-blade: 265 83% 78%;
+    --psi-storm: 330 100% 74%;
+    --warp-field: 150 100% 67%;
+    --shield-aura: 220 100% 74%;
+    --khala-light: 60 30% 96%;
+    --khala-medium: 260 45% 70%;
+    --khala-dark: 260 27% 35%;
+    
+    /* Default theme assignments (Cyberpunk) */
+    --background: hsl(222, 47%, 2%);
+    --foreground: hsl(240, 5%, 96%);
+    --card: hsl(222, 44%, 7%);
+    --card-foreground: hsl(240, 5%, 96%);
+    --popover: hsl(222, 44%, 7%);
+    --popover-foreground: hsl(240, 5%, 96%);
+    --primary: hsl(183, 95%, 75%);
+    --primary-foreground: hsl(0, 0%, 0%);
+    --secondary: hsl(265, 83%, 78%);
+    --secondary-foreground: hsl(0, 0%, 0%);
+    --accent: hsl(328, 100%, 74%);
+    --accent-foreground: hsl(0, 0%, 0%);
+    --muted: hsl(222, 33%, 11%);
+    --muted-foreground: hsl(230, 29%, 51%);
+    --destructive: hsl(0, 100%, 67%);
+    --destructive-foreground: hsl(0, 0%, 100%);
+    --border: hsl(231, 14%, 35%);
+    --input: hsl(231, 14%, 35%);
+    --ring: hsl(183, 95%, 75%);
+    
+    /* Common/shared variables for all themes */
+    /* Border Radius */
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius: var(--radius-md);
+
+    /* Animation */
+    --duration-fast: 0.2s;
+    --duration-medium: 0.4s;
+    --duration-slow: 0.8s;
+    --ease-standard: cubic-bezier(0.36, 0.66, 0.04, 1);
+    --ease-spring: cubic-bezier(0.43, 0.13, 0.23, 0.96);
+    
+    /* Spacing */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 32px;
+    --space-6: 64px;
+    
+    /* Default theme (Cyberpunk) */
+    --space-black: 222 47% 2%;
+    --space-dark: 222 44% 7%;
+    --space-void: 222 33% 11%;
+    --cyber-blue: 183 95% 75%;
+    --neon-green: 135 86% 65%;
+    --neon-pink: 328 100% 74%;
+    --neon-red: 0 100% 67%;
+    --neon-purple: 265 83% 78%;
+    --neon-orange: 31 100% 71%; 
+    --white: 240 5% 96%;
+    --steel: 230 29% 51%;
+    --dark-steel: 231 14% 35%;
+    
+    /* Tailwind CSS vars - mapping to Cyberpunk colors */
+    --background: hsl(var(--space-black));
+    --foreground: hsl(var(--white));
+    --card: hsl(var(--space-dark));
+    --card-foreground: hsl(var(--white));
+    --popover: hsl(var(--space-dark));
+    --popover-foreground: hsl(var(--white));
+    --primary: hsl(var(--cyber-blue));
+    --primary-foreground: #000;
+    --secondary: hsl(var(--neon-purple));
+    --secondary-foreground: #000;
+    --accent: hsl(var(--neon-pink));
+    --accent-foreground: #000;
+    --muted: hsl(var(--space-void));
+    --muted-foreground: hsl(var(--steel));
+    --destructive: hsl(var(--neon-red));
+    --destructive-foreground: #fff;
+    --border: hsl(var(--dark-steel));
+    --input: hsl(var(--dark-steel));
+    --ring: hsl(var(--cyber-blue));
+    
+    /* Initialize Protoss colors for compatibility even in default theme */
+    --void-void: 260 80% 5%;
+    --void-dark: 260 60% 10%;
+    --void-medium: 260 50% 17%;
+    --psi-gold: 43 100% 74%;
+    --psi-energy: 167 80% 71%;
+    --psi-blade: 265 83% 78%;
+    --psi-storm: 330 100% 74%;
+    --warp-field: 150 100% 67%;
+    --shield-aura: 220 100% 74%;
+    --khala-light: 60 30% 96%;
+    --khala-medium: 260 45% 70%;
+    --khala-dark: 260 27% 35%;
   }
 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 30 95% 55%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 226 71% 40%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 226 71% 40%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 50.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 30 95% 55%;
+  /* Cyberpunk Theme - explicit redeclarations for clarity */
+  [data-theme="cyberpunk"] {
+    /* Cyberpunk color palette */
+    --space-black: 222 47% 2%;
+    --space-dark: 222 44% 7%;
+    --space-void: 222 33% 11%;
+    --cyber-blue: 183 95% 75%;
+    --neon-green: 135 86% 65%;
+    --neon-pink: 328 100% 74%;
+    --neon-red: 0 100% 67%;
+    --neon-purple: 265 83% 78%;
+    --neon-orange: 31 100% 71%; 
+    --white: 240 5% 96%;
+    --steel: 230 29% 51%;
+    --dark-steel: 231 14% 35%;
+
+    /* Tailwind CSS vars - EXPLICITLY mapping to Cyberpunk colors */
+    --background: hsl(var(--space-black));
+    --foreground: hsl(var(--white));
+    --card: hsl(var(--space-dark));
+    --card-foreground: hsl(var(--white));
+    --popover: hsl(var(--space-dark));
+    --popover-foreground: hsl(var(--white));
+    --primary: hsl(var(--cyber-blue));
+    --primary-foreground: #000;
+    --secondary: hsl(var(--neon-purple));
+    --secondary-foreground: #000;
+    --accent: hsl(var(--neon-pink));
+    --accent-foreground: #000;
+    --muted: hsl(var(--space-void));
+    --muted-foreground: hsl(var(--steel));
+    --destructive: hsl(var(--neon-red));
+    --destructive-foreground: #fff;
+    --border: hsl(var(--dark-steel));
+    --input: hsl(var(--dark-steel));
+    --ring: hsl(var(--cyber-blue));
+  }
+
+  /* Protoss Nexus Theme */
+  [data-theme="protoss"] {
+    /* Override Tailwind CSS vars with Protoss colors */
+    --background: hsl(var(--void-void));
+    --foreground: hsl(var(--khala-light));
+    --card: hsl(var(--void-dark));
+    --card-foreground: hsl(var(--khala-light));
+    --popover: hsl(var(--void-dark));
+    --popover-foreground: hsl(var(--khala-light));
+    --primary: hsl(var(--psi-blade));
+    --primary-foreground: #000;
+    --secondary: hsl(var(--psi-gold));
+    --secondary-foreground: #000;
+    --accent: hsl(var(--psi-energy));
+    --accent-foreground: #000;
+    --muted: hsl(var(--void-medium));
+    --muted-foreground: hsl(var(--khala-medium));
+    --destructive: hsl(var(--psi-storm));
+    --destructive-foreground: #fff;
+    --border: hsl(var(--khala-dark));
+    --input: hsl(var(--khala-dark));
+    --ring: hsl(var(--psi-blade));
   }
 }
 
@@ -55,56 +200,216 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Custom gradient classes */
-.bg-secondary-gradient {
-  @apply bg-gradient-to-r from-slate-900 to-blue-900 border-blue-800;
+/* Cyberpunk-inspired gradients */
+.bg-cyber-gradient {
+  @apply bg-gradient-to-r from-cyan-500/10 via-cyan-400/5 to-cyan-500/10;
+  @apply border border-cyan-500/30;
 }
 
-.text-on-secondary-gradient {
-  @apply text-white;
+.bg-panel-gradient {
+  background: linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card), transparent 20%));
+  @apply border border-cyan-500/20;
 }
 
-/* For buttons with gradient background */
-.button-secondary-gradient {
-  @apply bg-gradient-to-r from-slate-900 to-blue-900 
-         border border-blue-800 text-white
-         hover:brightness-110 transition-all;
+/* 3D tilt effect */
+.tilt-card {
+  @apply transition-transform duration-300;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 }
 
-/* For hover effects */
-.hover-secondary-gradient:hover {
-  @apply bg-gradient-to-r from-slate-900 to-blue-900;
+.tilt-card:hover {
+  @apply shadow-lg shadow-cyan-500/20;
+  transform: translateY(-5px) rotateX(2deg) rotateY(-2deg);
 }
 
-/* Custom gradient classes for primary */
-.bg-primary-gradient {
-  @apply bg-gradient-to-r from-amber-600 via-orange-500 to-amber-400 border-amber-500;
+/* Glow effects */
+.glow-effect {
+  @apply relative overflow-hidden;
 }
 
-.text-on-primary-gradient {
-  @apply text-white;
+.glow-effect::before {
+  content: "";
+  @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
+  box-shadow: 0 0 15px theme('colors.cyan.400'), 0 0 30px theme('colors.cyan.300/20');
 }
 
-.button-primary-gradient {
-  @apply bg-gradient-to-r from-amber-600 via-orange-500 to-amber-400
-         border border-amber-500 text-white
-         hover:brightness-110 transition-all;
+.glow-effect:hover::before {
+  @apply opacity-100;
 }
 
-.hover-primary-gradient:hover {
-  @apply bg-gradient-to-r from-amber-600 via-orange-500 to-amber-400;
+/* Button variants */
+.cyber-button {
+  @apply relative overflow-hidden bg-transparent text-cyan-400 font-medium
+         border border-cyan-500/50 px-4 py-2 rounded-md
+         hover:shadow-md hover:shadow-cyan-500/20
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
-/* Additional gradient class for a more vibrant primary option */
-.bg-primary-vibrant-gradient {
-  @apply bg-gradient-to-r from-orange-600 via-orange-500 to-yellow-400 border-orange-500;
+.cyber-button-success {
+  @apply relative overflow-hidden bg-transparent text-green-400 font-medium
+         border border-green-500/50 px-4 py-2 rounded-md
+         hover:shadow-md hover:shadow-green-500/20
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
-.button-primary-vibrant-gradient {
-  @apply bg-gradient-to-r from-orange-600 via-orange-500 to-yellow-400
-         border border-orange-500 text-white
-         hover:brightness-110 transition-all;
+.cyber-button-danger {
+  @apply relative overflow-hidden bg-transparent text-red-400 font-medium
+         border border-red-500/50 px-4 py-2 rounded-md
+         hover:shadow-md hover:shadow-red-500/20
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
+
+/* Shimmer and glow effects are now defined in tailwind.config.ts */
+
+/* Glowing text */
+.text-glow {
+  text-shadow: 0 0 5px theme('colors.cyan.400/30'), 0 0 10px theme('colors.cyan.300/20');
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 5px theme('colors.purple.400/30'), 0 0 10px theme('colors.purple.300/20');
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 5px theme('colors.pink.400/30'), 0 0 10px theme('colors.pink.300/20');
+}
+
+/* Protoss Theme Specific Styles */
+[data-theme="protoss"] .text-glow {
+  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.3), 0 0 10px hsl(var(--psi-gold) / 0.2);
+}
+
+[data-theme="protoss"] .text-glow-purple {
+  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.3), 0 0 10px hsl(var(--psi-blade) / 0.2);
+}
+
+[data-theme="protoss"] .text-glow-pink {
+  text-shadow: 0 0 5px hsl(var(--psi-storm) / 0.3), 0 0 10px hsl(var(--psi-storm) / 0.2);
+}
+
+/* Protoss specific utilities */
+.text-psionic {
+  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.3), 0 0 10px hsl(var(--psi-gold) / 0.2);
+}
+
+.text-psionic-energy {
+  text-shadow: 0 0 5px hsl(var(--psi-energy) / 0.3), 0 0 10px hsl(var(--psi-energy) / 0.2);
+}
+
+.text-psionic-blade {
+  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.3), 0 0 10px hsl(var(--psi-blade) / 0.2);
+}
+
+/* Glow pulse animation */
+.pulse-glow {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 5px theme('colors.cyan.400/40'); }
+  50% { box-shadow: 0 0 15px theme('colors.cyan.400/70'); }
+  100% { box-shadow: 0 0 5px theme('colors.cyan.400/40'); }
+}
+
+/* Theme-agnostic base utility classes */
+
+/* Corner accents base structure */
+.corner-accents {
+  @apply relative;
+}
+
+.corner-accents::before,
+.corner-accents::after {
+  content: "";
+  @apply absolute w-3 h-3 pointer-events-none;
+}
+
+.corner-accents::before {
+  @apply top-0 left-0 border-t border-l;
+}
+
+.corner-accents::after {
+  @apply bottom-0 right-0 border-b border-r;
+}
+
+/* Crystal accents base structure */
+.crystal-accents {
+  @apply relative;
+}
+
+.crystal-accents::before,
+.crystal-accents::after {
+  content: "";
+  @apply absolute w-4 h-4 pointer-events-none;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.crystal-accents::before {
+  @apply top-0 left-0 border-t border-l;
+}
+
+.crystal-accents::after {
+  @apply bottom-0 right-0 border-b border-r;
+}
+
+/* Crystal glow base structure */
+.crystal-glow {
+  @apply relative overflow-hidden;
+}
+
+.crystal-glow::before {
+  content: "";
+  @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
+}
+
+.crystal-glow:hover::before {
+  @apply opacity-70;
+}
+
+/* Energy wave base structure */
+.energy-wave {
+  @apply absolute h-0.5 w-full pointer-events-none;
+  animation: energyWave 3s infinite cubic-bezier(0.43, 0.13, 0.23, 0.96);
+}
+
+@keyframes energyWave {
+  0% { transform: translateY(-100%) scaleX(0.8); opacity: 0.7; }
+  50% { transform: translateY(0) scaleX(1); opacity: 1; }
+  100% { transform: translateY(100%) scaleX(0.8); opacity: 0.7; }
+}
+
+/* Theme button base structure */
+.theme-button {
+  @apply relative overflow-hidden bg-transparent font-medium
+         border px-4 py-2 rounded-md
+         transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+/* Pulse animation base structure */
+.theme-pulse {
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Theme-specific font classes */
+.font-theme {
+  font-family: var(--font-primary);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-theme {
+  font-family: var(--font-mono);
+}
+
+/* Import theme stylesheets */
+@import './styles/cyberpunk.css';
+@import './styles/protoss.css';
