@@ -44,7 +44,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import { createMarket, CreateMarketFormData, MARKET_CATEGORIES } from "@/app/actions/market-actions";
+import { createMarket, CreateMarketFormData } from "@/app/actions/market-actions";
 
 // Define market types
 const marketTypes = [
@@ -75,9 +75,7 @@ const marketFormSchema = z.object({
     }).max(500, {
         message: "Description must not exceed 500 characters."
     }),
-    category: z.enum(MARKET_CATEGORIES, {
-        errorMap: () => ({ message: "Please select a valid category" })
-    }).default("general"),
+    category: z.string().default("general"),
     endDate: z.string().min(1, {
         message: "Voting deadline is required"
     }),
@@ -161,27 +159,15 @@ export default function CreateMarketPage() {
             const result = await createMarket(data as CreateMarketFormData);
 
             if (result.success) {
-                toast.success("Market created successfully!", {
-                    description: `Your prediction market "${data.name}" has been created.`,
-                    duration: 5000,
-                });
 
                 // Redirect to the markets page instead of a specific market
                 setTimeout(() => {
                     router.push('/markets');
                 }, 1500);
             } else {
-                toast.error("Failed to create market", {
-                    description: result.error || "An unexpected error occurred.",
-                    duration: 5000,
-                });
             }
         } catch (error) {
             console.error("Error creating market:", error);
-            toast.error("Something went wrong", {
-                description: "Failed to create your market. Please try again.",
-                duration: 5000,
-            });
         } finally {
             setIsSubmitting(false);
         }
@@ -207,10 +193,6 @@ export default function CreateMarketPage() {
                 currentOutcomes.filter((outcome) => outcome.id !== id)
             );
         } else {
-            toast.error("Cannot remove outcome", {
-                description: "At least two outcomes are required.",
-                duration: 3000,
-            });
         }
     };
 
@@ -439,8 +421,8 @@ export default function CreateMarketPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="text-base">Category</FormLabel>
-                                                <Select 
-                                                    onValueChange={field.onChange} 
+                                                <Select
+                                                    onValueChange={field.onChange}
                                                     defaultValue={field.value}
                                                 >
                                                     <FormControl>
@@ -449,7 +431,7 @@ export default function CreateMarketPage() {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {MARKET_CATEGORIES.map((category) => (
+                                                        {['stacks', 'bitcoin', 'general', 'politics'].map((category) => (
                                                             <SelectItem key={category} value={category}>
                                                                 {category.charAt(0).toUpperCase() + category.slice(1)}
                                                             </SelectItem>
@@ -487,7 +469,7 @@ export default function CreateMarketPage() {
                                                             </TooltipTrigger>
                                                             <TooltipContent className="p-3 max-w-xs">
                                                                 <p>
-                                                                    After this date, no new predictions can be made on this market. 
+                                                                    After this date, no new predictions can be made on this market.
                                                                     Markets can still be resolved after this deadline.
                                                                 </p>
                                                             </TooltipContent>
@@ -615,8 +597,8 @@ export default function CreateMarketPage() {
                                         <div className="p-4 rounded-lg border bg-muted/30">
                                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Voting Deadline</h3>
                                             <p className="text-base font-medium">{new Date(form.getValues("endDate")).toLocaleDateString('en-US', {
-                                                month: 'long', 
-                                                day: 'numeric', 
+                                                month: 'long',
+                                                day: 'numeric',
                                                 year: 'numeric'
                                             })}</p>
                                         </div>
