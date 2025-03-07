@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import type { Market, MarketOutcome, PredictionNFTReceipt } from "wisdom-sdk";
+// Define types locally
+type Market = any;
+type MarketOutcome = any;
+type PredictionNFTReceipt = any;
 import { createPrediction } from "@/app/actions/prediction-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { cn } from "@/lib/utils";
@@ -36,9 +39,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
     const [nftReceipt, setNftReceipt] = useState<PredictionNFTReceipt | null>(null);
-    
+
     // Use the Signet context
-    const { isExtensionInstalled, triggerPredictionEvent } = useSignet();
+    const signet = useSignet();
 
     // Predefined amounts for quick selection
     const predefinedAmounts = [5, 10, 25, 50];
@@ -60,7 +63,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
 
         // For very small percentages (< 0.1%), use a minimum value to avoid extremely high multipliers
         const safePercentage = Math.max(outcome.percentage, 0.1);
-        
+
         // Simplified payout calculation based on odds
         // Formula: amount * (100/outcome_percentage)
         // Higher percentage = lower payout, Lower percentage = higher payout
@@ -90,12 +93,30 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
         setIsSubmitting(true);
 
         try {
+
             // Get the selected outcome details
             const selectedOutcomeData = outcomes.find(o => o.id === selectedOutcome);
             if (!selectedOutcomeData) {
                 throw new Error("Selected outcome not found");
             }
+
+            // Notify Signet extension about the prediction and wait for confirmation
+            const signetResponse = await signet.createMarketPrediction({
+                marketId: market.id,
+                marketName: market.name,
+                outcomeId: selectedOutcome,
+                outcomeName: selectedOutcomeData.name,
+                amount
+            });
             
+            // If user rejected the prediction in Signet, abort
+            if (!signetResponse.approved) {
+                toast.error("Prediction rejected", {
+                    description: "You cancelled the prediction in Signet extension."
+                });
+                return;
+            }
+
             // Call the server action to create a prediction
             const result = await createPrediction({
                 marketId: market.id,
@@ -104,21 +125,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 userId
             });
 
+
             if (result.success && result.prediction) {
                 toast.success("Prediction placed successfully!");
-
-                // Trigger Signet prediction event if extension is installed
-                if (isExtensionInstalled) {
-                    // Trigger the prediction event in Signet
-                    await triggerPredictionEvent({
-                        marketId: market.id,
-                        marketName: market.name,
-                        outcomeId: selectedOutcome,
-                        outcomeName: selectedOutcomeData.name,
-                        amount
-                    });
-                    // Notification is handled in the context
-                }
 
                 // Set the NFT receipt to show in the dialog
                 setNftReceipt(result.prediction.nftReceipt);
@@ -150,7 +159,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
     return (
         <div className="space-y-4">
             {/* Signet extension status indicator */}
-            {isExtensionInstalled ? (
+            {signet.isAvailable ? (
                 <div className="flex items-center gap-2 justify-end mb-2">
                     <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
                     <span className="text-xs text-muted-foreground">Signet Extension Connected</span>
@@ -161,14 +170,14 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                     <span className="text-xs text-muted-foreground">Signet Extension Not Detected</span>
                 </div>
             )}
-            
+
             {/* Explanation of how predictions work */}
             <div className="text-right">
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
                         <div className="inline-flex items-center text-xs text-muted-foreground cursor-help">
                             <InfoIcon className="h-3 w-3 mr-1" />
-                            <span>How do predictions work?</span>
+                            <span className="text-glow">How do predictions work?</span>
                         </div>
                     </TooltipTrigger>
                     <TooltipContent
@@ -202,20 +211,20 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                             key={outcome.id}
                             variant="outline"
                             className={cn(
-                                "w-full justify-between min-h-[60px] py-3 px-4 transition-colors border-2 group",
+                                "w-full justify-between min-h-[60px] py-3 px-4 transition-all duration-300 border-2 group crystal-highlight",
                                 // Base styles that don't change between states
                                 {
                                     // Yes button styling (binary market)
-                                    "border-primary/50 hover:border-primary hover:bg-primary/5": isBinary && isYes && !isSelected,
+                                    "border-primary/50 hover:border-primary hover:bg-primary/10": isBinary && isYes && !isSelected,
                                     "bg-primary text-primary-foreground border-primary": isBinary && isYes && isSelected,
 
                                     // No button styling (binary market)
-                                    "border-destructive/50 hover:border-destructive hover:bg-destructive/5": isBinary && isNo && !isSelected,
+                                    "border-destructive/50 hover:border-destructive hover:bg-destructive/10": isBinary && isNo && !isSelected,
                                     "bg-destructive text-destructive-foreground border-destructive": isBinary && isNo && isSelected,
 
                                     // Multiple choice styling
-                                    "border-muted hover:border-primary/50 hover:bg-primary/5": !isBinary && !isSelected,
-                                    "bg-secondary border-secondary/80 text-secondary-foreground": !isBinary && isSelected,
+                                    "border-muted hover:border-primary/60 hover:bg-primary/10": !isBinary && !isSelected,
+                                    "bg-secondary border-secondary text-secondary-foreground": !isBinary && isSelected,
                                 }
                             )}
                             onClick={() => handleOutcomeSelect(outcome.id)}
@@ -304,15 +313,15 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                 key={predefinedAmount}
                                 variant="outline"
                                 className={cn(
-                                    "font-medium h-9 border-2 transition-colors items-center justify-center",
+                                    "font-medium h-9 border-2 transition-all duration-300 items-center justify-center psi-particles",
                                     {
-                                        "border-muted hover:border-primary/50 hover:bg-primary/5": !isSelected,
-                                        "bg-secondary border-secondary/80 text-secondary-foreground": isSelected,
+                                        "border-muted hover:border-primary/60 hover:bg-primary/10": !isSelected,
+                                        "bg-secondary border-secondary text-secondary-foreground": isSelected,
                                     }
                                 )}
                                 onClick={() => handleAmountSelect(predefinedAmount)}
                             >
-                                ${predefinedAmount}
+                                <span>${predefinedAmount}</span>
                             </Button>
                         );
                     })}
@@ -322,7 +331,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 <div className="pt-2">
                     <Button
                         className={cn(
-                            "w-full h-12 items-center justify-center",
+                            "w-full h-12 items-center justify-center themed-button",
                             {
                                 "opacity-70": !selectedOutcome || amount <= 0 || isSubmitting
                             }
@@ -332,21 +341,25 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                     >
                         {isSubmitting ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Processing...
+                                <div className="flex items-center">
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white loading-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Processing...</span>
+                                </div>
                             </>
                         ) : (
                             <>
-                                {isExtensionInstalled && (
-                                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                        <path d="m9 12 2 2 4-4" />
-                                    </svg>
-                                )}
-                                Place ${amount} Prediction {isExtensionInstalled && ' with Signet'}
+                                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    <path d="m9 12 2 2 4-4" />
+                                </svg>
+                                <span className="text-glow">
+                                    {signet.isAvailable 
+                                        ? `Place $${amount} Prediction via Signet` 
+                                        : `Place $${amount} Prediction`}
+                                </span>
                             </>
                         )}
                     </Button>
