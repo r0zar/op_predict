@@ -63,31 +63,31 @@ export function PredictionCard({
     const getDimensions = () => {
         const amount = prediction.amount;
         // Base dimensions - minimum is 24x32px
-        let baseWidth = 24;
-        let baseHeight = 32;
-        
+        const baseWidth = 24;
+        const baseHeight = 32;
+
         // Scale factor based on amount - grows faster for larger bets
         const scaleFactor = Math.sqrt(amount) / 3;
-        
+
         // Add some randomness to aspect ratio for more visual variety
         // This creates a mix of horizontal and vertical rectangles
-        const aspectRatio = prediction.id.charCodeAt(0) % 3 === 0 ? 
+        const aspectRatio = prediction.id.charCodeAt(0) % 3 === 0 ?
             0.75 : // vertical rectangle
-            (prediction.id.charCodeAt(0) % 3 === 1 ? 
+            (prediction.id.charCodeAt(0) % 3 === 1 ?
                 1.33 : // horizontal rectangle
                 1.0); // square
-        
+
         // Calculate dimensions with aspect ratio
         let width = Math.max(baseWidth, Math.min(160, baseWidth * scaleFactor * Math.sqrt(aspectRatio)));
         let height = Math.max(baseHeight, Math.min(160, baseHeight * scaleFactor / Math.sqrt(aspectRatio)));
-        
+
         // Round to nearest multiple of 4 for cleaner appearance
         width = Math.round(width / 4) * 4;
         height = Math.round(height / 4) * 4;
-        
+
         return { width, height };
     };
-    
+
     // Get the actual dimensions in pixels
     const { width, height } = getDimensions();
 
@@ -96,7 +96,7 @@ export function PredictionCard({
     const isRedeemed = prediction.status === 'redeemed';
     const isWinner = prediction.status === 'won';
     const isActive = prediction.status === 'active';
-    
+
     // Potential payout
     const potentialPayout = isResolved && prediction.potentialPayout !== undefined
         ? prediction.potentialPayout
@@ -135,17 +135,9 @@ export function PredictionCard({
         try {
             const result = await deletePrediction(prediction.id);
             if (result.success) {
-                toast.success("Prediction deleted successfully");
                 router.refresh();
-            } else {
-                toast.error("Failed to delete prediction", {
-                    description: result.error || "An unexpected error occurred",
-                });
             }
         } catch (error) {
-            toast.error("Something went wrong", {
-                description: "Failed to delete prediction. Please try again.",
-            });
         } finally {
             setIsDeleting(false);
             setDeleteDialogOpen(false);
@@ -180,7 +172,7 @@ export function PredictionCard({
                     justifyContent: 'center',
                     fontSize: `${Math.min(width, height) / 4}px`,
                 }}
-                className={`
+                    className={`
                     ${getOutcomeColorClass()}
                     ${getStatusColorClass(prediction.status)}
                     border
@@ -215,7 +207,7 @@ export function PredictionCard({
                                     )}
                                     {isAdmin && (
                                         <Button
-                                            variant="ghost" 
+                                            variant="ghost"
                                             size="sm"
                                             className="h-5 w-full mt-1 text-[10px] text-destructive"
                                             onClick={handleDeleteClick}
@@ -227,7 +219,7 @@ export function PredictionCard({
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    
+
                     {/* Redeem button overlay for resolved predictions */}
                     {isResolved && !isRedeemed && (
                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center">

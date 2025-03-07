@@ -168,7 +168,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                 action: 'dismiss'
                             }
                         ]
-                    }).then((response) => {
+                    })?.then((response: any) => {
                         // Check if the user clicked on the "View Portfolio" button
                         if (response && response.result && response.result.actionId === 'view-portfolio') {
                             // Navigate to the portfolio page
@@ -186,7 +186,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
             }
         } catch (error) {
             console.error("Error making prediction:", error);
-            
+
             // Show error notification with Signet for uncaught errors
             if (error instanceof Error) {
                 // Check if it's an insufficient balance error
@@ -209,7 +209,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                 action: 'dismiss'
                             }
                         ]
-                    }).then((response) => {
+                    })?.then((response: any) => {
                         if (response && response.result && response.result.actionId === 'view-portfolio') {
                             router.push('/portfolio');
                         }
