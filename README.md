@@ -31,6 +31,32 @@ OP_PREDICT is a decentralized prediction market platform built on blockchain tec
 - **Icons**: Lucide React
 - **Testing**: Vitest, Testing Library
 
+## Theming System
+
+OP_PREDICT features a robust dual-theme system with carefully crafted aesthetics:
+
+### Cyberpunk Theme
+
+A dark, neon-inspired theme with a technical, digital feel.
+
+- **Primary Font**: Source Code Pro - Technical monospace with excellent readability
+- **Display Font**: Syncopate - Angular, futuristic headings with uppercase styling
+- **Mono Font**: JetBrains Mono - Clean monospace with coding ligatures
+- **OpenType Features**: Contextual alternates, standard ligatures, tabular numbers, zero with slash
+- **Color Palette**: Deep spaces with vibrant neon accents (cyan, purple, pink)
+- **Visual Effects**: Neon glow, shimmer effects, digital noise
+
+### Protoss Nexus Theme 
+
+An alien, crystalline theme inspired by the Protoss civilization.
+
+- **Primary Font**: Exo 2 - Geometric, alien feel with excellent readability
+- **Display Font**: Orbitron - Sci-fi, angular display font for headings
+- **Mono Font**: Fira Code - Clean monospace with distinctive coding ligatures
+- **OpenType Features**: Stylistic alternates, contextual ligatures, discretionary ligatures
+- **Color Palette**: Deep purples with gold, teal and magenta energy accents
+- **Visual Effects**: Crystalline highlights, energy auras, psionic particle effects
+
 ## Getting Started
 
 ### Prerequisites

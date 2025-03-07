@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { kv } from '@vercel/kv';
 import { currentUser } from '@clerk/nextjs/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,17 +6,26 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, XCircle, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 import PredictionShare from '@/components/prediction-share';
-import { type Prediction } from 'wisdom-sdk';
-import { type Market, type MarketOutcome } from 'wisdom-sdk';
+// Use any type instead of defining explicit types
 import { calculateOutcomePercentages } from "@/lib/utils";
+import { marketStore, predictionStore } from 'wisdom-sdk';
 
 // Dynamic metadata for the page
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
     const { id } = params;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oppredict.com';
 
-    // Fetch prediction and market data
-    const prediction = await kv.get<Prediction>(`prediction:${id}`);
+    // Fetch prediction and market data using wisdom-sdk
+    let prediction;
+    try {
+        prediction = await predictionStore.getPrediction(id);
+    } catch (error) {
+        console.error('Error fetching prediction:', error);
+        return {
+            title: 'Prediction Not Found',
+            description: 'The requested prediction could not be found.',
+        };
+    }
 
     if (!prediction) {
         return {
@@ -27,9 +35,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     }
 
     // Get market details
-    const market = prediction.marketId ?
-        await kv.get<Market>(`market:${prediction.marketId}`) :
-        null;
+    let market;
+    try {
+        if (prediction.marketId) {
+            market = await marketStore.getMarket(prediction.marketId);
+        }
+    } catch (error) {
+        console.error('Error fetching market:', error);
+        return {
+            title: 'Market Not Found | OP_PREDICT',
+        };
+    }
 
     if (!market) {
         return {
@@ -84,8 +100,33 @@ export default async function PredictionPage({ params }: { params: { id: string 
     const id = params.id;
     const user = await currentUser();
 
-    // Fetch prediction data
-    const prediction = await kv.get<Prediction>(`prediction:${id}`);
+    // Fetch prediction data using wisdom-sdk
+    let prediction;
+    try {
+        prediction = await predictionStore.getPrediction(id);
+    } catch (error) {
+        console.error('Error fetching prediction:', error);
+        return (
+            <div className="container mx-auto py-10">
+                <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-slate-100">Prediction Not Found</CardTitle>
+                        <CardDescription className="text-slate-400">
+                            This prediction might have been deleted or does not exist.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Link href="/">
+                            <Button variant="outline" className="gap-2">
+                                <ArrowLeft className="h-4 w-4" />
+                                Back to Home
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     if (!prediction) {
         return (
@@ -110,10 +151,35 @@ export default async function PredictionPage({ params }: { params: { id: string 
         );
     }
 
-    // Fetch market data
-    const market = prediction.marketId ?
-        await kv.get<Market>(`market:${prediction.marketId}`) :
-        null;
+    // Fetch market data using wisdom-sdk
+    let market;
+    try {
+        if (prediction.marketId) {
+            market = await marketStore.getMarket(prediction.marketId);
+        }
+    } catch (error) {
+        console.error('Error fetching market:', error);
+        return (
+            <div className="container mx-auto py-10">
+                <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                        <CardTitle className="text-xl text-slate-100">Market Not Found</CardTitle>
+                        <CardDescription className="text-slate-400">
+                            The market for this prediction might have been deleted or does not exist.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Link href="/">
+                            <Button variant="outline" className="gap-2">
+                                <ArrowLeft className="h-4 w-4" />
+                                Back to Home
+                            </Button>
+                        </Link>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     if (!market) {
         return (
@@ -150,7 +216,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
         : Number(prediction.amount);
 
     // Get outcomes with proper type handling
-    const outcomes: MarketOutcome[] = Array.isArray(market.outcomes)
+    const outcomes: any[] = Array.isArray(market.outcomes)
         ? market.outcomes
         : JSON.parse(typeof market.outcomes === 'string' ? market.outcomes : '[]');
 

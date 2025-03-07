@@ -24,12 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { getUserPredictions, getAllPredictions } from "../actions/prediction-actions";
-import { PredictionCard } from "@/components/prediction-card";
 import { isAdmin } from "@/lib/utils";
-import { getUserBalanceStore } from "wisdom-sdk";
-
-// Get store instance
-const userBalanceStore = getUserBalanceStore();
+import { userBalanceStore } from "wisdom-sdk";
+import { PredictionsTable } from "@/components/predictions-table";
 
 // Mock data - used only for transactions and active markets until we implement those fully
 const mockPortfolioData = {
@@ -93,11 +90,11 @@ export default async function PortfolioPage() {
         : [];
 
     // Get user balance data
-    const userBalance = await userBalanceStore.getUserBalance(user.id);
+    const userBalance: any = await userBalanceStore.getUserBalance(user.id);
 
     // Set default values if balance doesn't exist (should never happen since we initialize on get)
-    const availableBalance = userBalance?.availableBalance || 1000;
-    const inPredictions = userBalance?.inPredictions || 0;
+    const availableBalance = (userBalance && userBalance.availableBalance) || 1000;
+    const inPredictions = (userBalance && userBalance.inPredictions) || 0;
     const totalBalance = availableBalance + inPredictions;
 
     // Calculate portfolio metrics
@@ -216,20 +213,10 @@ export default async function PortfolioPage() {
                         </CardHeader>
                         <CardContent>
                             {userPredictionsWithCreatorNames.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {userPredictionsWithCreatorNames.map((prediction) => (
-                                        <PredictionCard
-                                            key={prediction.id}
-                                            prediction={prediction}
-                                            isAdmin={isUserAdmin}
-                                            marketOdds={{
-                                                [prediction.outcomeId]: prediction.outcomeName === 'Yes' ? 65 :
-                                                    prediction.outcomeName === 'No' ? 35 : 50
-                                            }}
-                                            creatorName={prediction.creatorName}
-                                        />
-                                    ))}
-                                </div>
+                                <PredictionsTable 
+                                    predictions={userPredictionsWithCreatorNames}
+                                    isAdmin={isUserAdmin}
+                                />
                             ) : (
                                 <div className="text-center py-10">
                                     <p className="text-muted-foreground mb-4">You don't have any prediction receipts yet</p>
@@ -256,20 +243,10 @@ export default async function PortfolioPage() {
                                         <div className="text-sm text-muted-foreground mb-4">
                                             Showing {allPredictions.length} prediction receipts from all users
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {allPredictionsWithCreatorNames.map((prediction) => (
-                                                <PredictionCard
-                                                    key={prediction.id}
-                                                    prediction={prediction}
-                                                    isAdmin={true}
-                                                    marketOdds={{
-                                                        [prediction.outcomeId]: prediction.outcomeName === 'Yes' ? 65 :
-                                                            prediction.outcomeName === 'No' ? 35 : 50
-                                                    }}
-                                                    creatorName={prediction.creatorName}
-                                                />
-                                            ))}
-                                        </div>
+                                        <PredictionsTable 
+                                            predictions={allPredictionsWithCreatorNames}
+                                            isAdmin={true}
+                                        />
                                     </div>
                                 ) : (
                                     <div className="text-center py-10">

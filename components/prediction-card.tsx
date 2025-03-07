@@ -2,13 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,9 +15,10 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { ChevronRight, Trash2, Trophy, Ticket, PercentIcon, CoinsIcon, ShieldAlert, User } from "lucide-react";
-import type { Prediction } from "wisdom-sdk";
+import { toast } from "@/lib/utils";
+import { Trash2, Trophy, User } from "lucide-react";
+// Define Prediction type locally
+type Prediction = any;
 import { deletePrediction } from "@/app/actions/prediction-actions";
 import { useRouter } from "next/navigation";
 import { RedeemPredictionButton } from "./redeem-prediction-button";
@@ -50,8 +46,6 @@ export function PredictionCard({
     const [displayCreator, setDisplayCreator] = useState<string>("");
 
     useEffect(() => {
-        // If creatorName is provided as prop, use it
-        // Otherwise use a truncated version of the userId
         if (creatorName) {
             setDisplayCreator(truncateUserId(prediction.userId));
         } else {
@@ -62,42 +56,76 @@ export function PredictionCard({
     // Format date to display
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: '2-digit'
-        });
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
-    // Calculate potential profit based on status
+    // Calculate dimensions proportional to bid amount (more precise)
+    const getDimensions = () => {
+        const amount = prediction.amount;
+        // Base dimensions - minimum is 24x32px
+        let baseWidth = 24;
+        let baseHeight = 32;
+        
+        // Scale factor based on amount - grows faster for larger bets
+        const scaleFactor = Math.sqrt(amount) / 3;
+        
+        // Add some randomness to aspect ratio for more visual variety
+        // This creates a mix of horizontal and vertical rectangles
+        const aspectRatio = prediction.id.charCodeAt(0) % 3 === 0 ? 
+            0.75 : // vertical rectangle
+            (prediction.id.charCodeAt(0) % 3 === 1 ? 
+                1.33 : // horizontal rectangle
+                1.0); // square
+        
+        // Calculate dimensions with aspect ratio
+        let width = Math.max(baseWidth, Math.min(160, baseWidth * scaleFactor * Math.sqrt(aspectRatio)));
+        let height = Math.max(baseHeight, Math.min(160, baseHeight * scaleFactor / Math.sqrt(aspectRatio)));
+        
+        // Round to nearest multiple of 4 for cleaner appearance
+        width = Math.round(width / 4) * 4;
+        height = Math.round(height / 4) * 4;
+        
+        return { width, height };
+    };
+    
+    // Get the actual dimensions in pixels
+    const { width, height } = getDimensions();
+
+    // Status checks
     const isResolved = prediction.status === 'won' || prediction.status === 'lost';
     const isRedeemed = prediction.status === 'redeemed';
     const isWinner = prediction.status === 'won';
-
-    // Use calculated potential payout for resolved predictions, otherwise estimate
+    const isActive = prediction.status === 'active';
+    
+    // Potential payout
     const potentialPayout = isResolved && prediction.potentialPayout !== undefined
         ? prediction.potentialPayout
         : 0;
 
-    // For active predictions, show estimated potential profit based on odds
-    const oddsPercentage = marketOdds?.[prediction.outcomeId] ||
-        (prediction.outcomeName === 'Yes' ? 60 : prediction.outcomeName === 'No' ? 40 : 50); // Fallback
+    // Get color based on outcome and theme
+    const getOutcomeColorClass = () => {
+        if (prediction.outcomeName === 'Yes') {
+            return 'bg-primary/10 hover:bg-primary/20';
+        } else if (prediction.outcomeName === 'No') {
+            return 'bg-destructive/10 hover:bg-destructive/20';
+        } else {
+            return 'bg-secondary/10 hover:bg-secondary/20';
+        }
+    };
 
-    const estimatedProfit = (prediction.amount / (oddsPercentage / 100)) - prediction.amount;
-
-    // Get status badge styling
-    const getStatusBadgeClass = (status: string) => {
+    // Get status color
+    const getStatusColorClass = (status: string) => {
         switch (status) {
             case 'active':
-                return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+                return 'border-blue-500/30';
             case 'won':
-                return 'bg-green-500/10 text-green-500 border-green-500/20';
+                return 'border-green-500/30';
             case 'lost':
-                return 'bg-red-500/10 text-red-500 border-red-500/20';
+                return 'border-red-500/30';
             case 'redeemed':
-                return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+                return 'border-purple-500/30';
             default:
-                return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+                return 'border-yellow-500/30';
         }
     };
 
@@ -106,7 +134,6 @@ export function PredictionCard({
         setIsDeleting(true);
         try {
             const result = await deletePrediction(prediction.id);
-
             if (result.success) {
                 toast.success("Prediction deleted successfully");
                 router.refresh();
@@ -132,123 +159,87 @@ export function PredictionCard({
         setDeleteDialogOpen(true);
     };
 
-    // Disable link if prediction is resolved
+    // Wrapper to determine if card should be clickable
     const cardWrapper = (children: React.ReactNode) => {
         if (isResolved && !isRedeemed) {
-            return (
-                <div>{children}</div>
-            );
+            return (<div>{children}</div>);
         }
-        return (
-            <Link href={`/prediction/${prediction.id}`}>
-                {children}
-            </Link>
-        );
+        return (<Link href={`/prediction/${prediction.id}`}>{children}</Link>);
     };
 
     return (
         <>
             {cardWrapper(
-                <Card className={`h-full hover:border-primary/50 transition-colors ${isResolved && !isRedeemed ? 'cursor-default' : 'cursor-pointer'} overflow-hidden ${compact ? 'shadow-sm' : 'shadow-md'} border-dashed relative`}>
-                    {/* Ticket-style header */}
-                    <div className="bg-muted/60 border-b px-3 pt-2 pb-1 flex justify-between items-center">
-                        <div className="flex items-center gap-1">
-                            <Ticket className="h-3.5 w-3.5 opacity-70" />
-                            <span className="text-xs font-medium truncate max-w-[80px]">
-                                #{prediction.nftReceipt.id.substring(0, 4)}
-                            </span>
-                        </div>
-
-                        {/* Creator info in header */}
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Badge variant="secondary" className="text-xs px-2 py-0 h-5 items-center">
-                                        <User className="h-3 w-3 mr-1 opacity-80" />
-                                        {displayCreator}
-                                    </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="bg-background border">
-                                    <div className="px-1 py-1">
-                                        <p className="font-medium">Prediction Owner</p>
-                                        <p className="text-xs text-muted-foreground">ID: {prediction.userId}</p>
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-
-                        <span className="text-xs opacity-70">{formatDate(prediction.createdAt)}</span>
-                    </div>
-
-                    <CardContent className={`${compact ? 'pt-3 pb-2 px-3' : 'p-3'} space-y-2`}>
-                        {/* Market name - secondary info */}
-                        <h3 className={`text-md text-foreground line-clamp-1 mb-1`}>
-                            {prediction.nftReceipt.marketName}
-                        </h3>
-
-
-                        {/* Primary info - bold section with outcome and amount */}
-                        <div className="rounded-md p-0 flex items-center justify-between">
-                            <div className="flex items-center text-xl">
-                                <Badge
-                                    variant={prediction.outcomeName === 'Yes' ? 'default' :
-                                        prediction.outcomeName === 'No' ? 'destructive' : 'secondary'}
-                                    className="text-sm py-1 px-3 h-6 items-center"
-                                >
+                <Card style={{
+                    width: `${width}px`,
+                    height: `${height}px`,
+                    padding: '1px',
+                    margin: '0px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: `${Math.min(width, height) / 4}px`,
+                }}
+                className={`
+                    ${getOutcomeColorClass()}
+                    ${getStatusColorClass(prediction.status)}
+                    border
+                    transition-colors duration-150
+                    ${isResolved && !isRedeemed ? 'cursor-default' : 'cursor-pointer'}
+                    relative overflow-hidden
+                    prediction-card
+                `}>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger className="w-full h-full flex items-center justify-center">
+                                <div className="font-bold text-center" style={{ fontSize: 'inherit' }}>
                                     {prediction.outcomeName}
-                                </Badge>
-                            </div>
-
-                            <div className="text-right">
-                                <span className="text-2xl font-extralight">${prediction.amount.toFixed(2)}</span>
-                                {isResolved && isWinner && (
-                                    <span className="text-xs text-green-600 block mt-1">
-                                        <Trophy className="h-3 w-3 inline mr-0.5" />
-                                        +${potentialPayout.toFixed(2)}
-                                    </span>
-                                )}
-                            </div>
+                                    {width >= 60 && <span className="block font-light opacity-80">${prediction.amount}</span>}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="p-2 max-w-[200px] text-xs">
+                                <div className="space-y-1">
+                                    <div className="font-semibold">${prediction.amount.toFixed(0)}</div>
+                                    <div className="text-[10px] opacity-80">{prediction.nftReceipt.marketName}</div>
+                                    <div className="flex justify-between items-center pt-1 text-[10px]">
+                                        <span>{formatDate(prediction.createdAt)}</span>
+                                        <Badge variant="outline" className="text-[8px] py-0 h-3">
+                                            {prediction.status.charAt(0).toUpperCase() + prediction.status.slice(1)}
+                                        </Badge>
+                                    </div>
+                                    {isWinner && (
+                                        <div className="text-[10px] text-green-600 flex items-center">
+                                            <Trophy className="h-3 w-3 mr-0.5" />
+                                            +${potentialPayout.toFixed(0)}
+                                        </div>
+                                    )}
+                                    {isAdmin && (
+                                        <Button
+                                            variant="ghost" 
+                                            size="sm"
+                                            className="h-5 w-full mt-1 text-[10px] text-destructive"
+                                            onClick={handleDeleteClick}
+                                        >
+                                            <Trash2 className="h-2.5 w-2.5 mr-1" /> Delete
+                                        </Button>
+                                    )}
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    
+                    {/* Redeem button overlay for resolved predictions */}
+                    {isResolved && !isRedeemed && (
+                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                            <RedeemPredictionButton
+                                predictionId={prediction.id}
+                                predictionStatus={prediction.status}
+                                marketName={prediction.nftReceipt.marketName}
+                                outcomeName={prediction.outcomeName}
+                                potentialPayout={potentialPayout}
+                            />
                         </div>
-
-                        {/* Redeem button for resolved predictions */}
-                        {isResolved && !isRedeemed && (
-                            <div className="pt-1">
-                                <RedeemPredictionButton
-                                    predictionId={prediction.id}
-                                    predictionStatus={prediction.status}
-                                    marketName={prediction.nftReceipt.marketName}
-                                    outcomeName={prediction.outcomeName}
-                                    potentialPayout={potentialPayout}
-                                />
-                            </div>
-                        )}
-
-                        {/* Faux ticket stub perforation */}
-                        <div className="absolute -left-1 top-1/2 w-2 h-4 bg-background rounded-r-full border-t border-r border-b"></div>
-                        <div className="absolute -right-1 top-1/2 w-2 h-4 bg-background rounded-l-full border-t border-l border-b"></div>
-                        <div className="absolute -left-1 top-1/4 w-2 h-4 bg-background rounded-r-full border-t border-r border-b"></div>
-                        <div className="absolute -right-1 top-1/4 w-2 h-4 bg-background rounded-l-full border-t border-l border-b"></div>
-                    </CardContent>
-
-                    <CardFooter className={`pt-1 ${compact ? 'pb-2 px-3' : 'pb-1 px-3'} flex justify-between items-center border-t bg-muted/30`}>
-                        <Badge variant="outline" className={`${getStatusBadgeClass(prediction.status)} text-[10px] py-0 h-4`}>
-                            {prediction.status.charAt(0).toUpperCase() + prediction.status.slice(1)}
-                        </Badge>
-
-                        {/* Admin Delete Button */}
-                        {isAdmin ? (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 items-center"
-                                onClick={handleDeleteClick}
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                        ) : (
-                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                    </CardFooter>
+                    )}
                 </Card>
             )}
 

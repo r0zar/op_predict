@@ -1,12 +1,8 @@
 'use server';
 
 import { currentUser } from "@clerk/nextjs/server";
-import { getBugReportStore, getUserBalanceStore } from "wisdom-sdk";
-import type { BugReport } from "wisdom-sdk";
+import { bugReportStore, userBalanceStore } from "wisdom-sdk";
 
-// Get store instances
-const bugReportStore = getBugReportStore();
-const userBalanceStore = getUserBalanceStore();
 import { isAdmin } from "@/lib/utils";
 
 export interface BugReportFormData {
@@ -28,23 +24,23 @@ async function processRewardPayment(userId: string, amount: number, reportId: st
             console.error(`User ${userId} not found for processing payment`);
             return false;
         }
-        
+
         // Generate a reason based on the amount (initial vs confirmation)
-        const reason = amount === 10 
-            ? `Initial bug report reward for report ${reportId}` 
+        const reason = amount === 10
+            ? `Initial bug report reward for report ${reportId}`
             : `Confirmation reward for verified bug report ${reportId}`;
-            
+
         // Update the user's balance with the reward amount
         const updatedBalance = await userBalanceStore.addFunds(userId, amount);
-        
+
         if (!updatedBalance) {
             console.error(`Failed to update balance for user ${userId}`);
             return false;
         }
-        
+
         console.log(`Processed payment of $${amount} to user ${userId} for report ${reportId}. New balance: $${updatedBalance.availableBalance}`);
         return true;
-        
+
     } catch (error) {
         console.error(`Error processing reward payment for user ${userId}, report ${reportId}:`, error);
         return false;
@@ -164,7 +160,7 @@ export async function updateBugReportStatus(reportId: string, status: BugReportS
         const isUserAdmin = isAdmin(user.id);
 
         // Prepare update data
-        const updateData: Partial<BugReport> = {
+        const updateData: any = {
             status,
             updatedBy: user.id,
             updatedAt: new Date().toISOString()

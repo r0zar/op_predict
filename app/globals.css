@@ -2,13 +2,295 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Toast animation effects */
+/* CYBERPUNK TOAST STYLING */
+[data-theme="cyberpunk"] .custom-toast {
+  background: linear-gradient(135deg, 
+    rgba(30, 30, 40, 0.85) 0%, 
+    rgba(22, 22, 30, 0.9) 100%
+  );
+  border: 1px solid rgba(125, 249, 255, 0.2);
+  box-shadow: 
+    0 0 0 1px rgba(125, 249, 255, 0.1),
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(0, 0, 0, 0.2),
+    inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="cyberpunk"] .custom-toast::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  /* Subtle digital circuitry pattern */
+  background-image: 
+    linear-gradient(0deg, transparent 24%, rgba(125, 249, 255, 0.2) 25%, rgba(125, 249, 255, 0.2) 26%, transparent 27%, transparent 74%, rgba(125, 249, 255, 0.2) 75%, rgba(125, 249, 255, 0.2) 76%, transparent 77%, transparent),
+    linear-gradient(90deg, transparent 24%, rgba(125, 249, 255, 0.2) 25%, rgba(125, 249, 255, 0.2) 26%, transparent 27%, transparent 74%, rgba(125, 249, 255, 0.2) 75%, rgba(125, 249, 255, 0.2) 76%, transparent 77%, transparent);
+  background-size: 30px 30px;
+  z-index: -1;
+}
+
+[data-theme="cyberpunk"] .custom-toast::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, hsl(var(--cyber-blue)), transparent);
+  animation: neon-flicker 3s infinite, toast-progress 5s linear forwards;
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-success::after {
+  background: linear-gradient(to right, transparent, hsl(var(--neon-green)), transparent);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-error::after {
+  background: linear-gradient(to right, transparent, hsl(var(--neon-red)), transparent);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-warning::after {
+  background: linear-gradient(to right, transparent, hsl(var(--neon-orange)), transparent);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-info::after {
+  background: linear-gradient(to right, transparent, hsl(var(--cyber-blue)), transparent);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-loading::after {
+  background: linear-gradient(to right, transparent, hsl(var(--steel)), transparent);
+  animation: toast-progress 3s linear infinite;
+}
+
+/* Corner accents for cyberpunk toast */
+[data-theme="cyberpunk"] .custom-toast.corner-accents::before,
+[data-theme="cyberpunk"] .custom-toast.corner-accents::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+[data-theme="cyberpunk"] .custom-toast.corner-accents::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid rgba(125, 249, 255, 0.7);
+  border-left: 2px solid rgba(125, 249, 255, 0.7);
+}
+
+[data-theme="cyberpunk"] .custom-toast.corner-accents::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid rgba(125, 249, 255, 0.7);
+  border-right: 2px solid rgba(125, 249, 255, 0.7);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-success.corner-accents::before,
+[data-theme="cyberpunk"] .custom-toast.toast-success.corner-accents::after {
+  border-color: rgba(135, 219, 165, 0.7);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-error.corner-accents::before,
+[data-theme="cyberpunk"] .custom-toast.toast-error.corner-accents::after {
+  border-color: rgba(255, 102, 102, 0.7);
+}
+
+[data-theme="cyberpunk"] .custom-toast.toast-warning.corner-accents::before,
+[data-theme="cyberpunk"] .custom-toast.toast-warning.corner-accents::after {
+  border-color: rgba(255, 153, 51, 0.7);
+}
+
+/* Digital distortion effect on hover */
+[data-theme="cyberpunk"] .custom-toast:hover::before {
+  animation: digital-distortion 1s infinite;
+}
+
+@keyframes digital-distortion {
+  0%, 100% {
+    opacity: 0.05;
+    transform: translateX(0);
+  }
+  25% {
+    opacity: 0.07;
+    transform: translateX(-1px);
+  }
+  75% {
+    opacity: 0.06;
+    transform: translateX(1px);
+  }
+}
+
+/* PROTOSS TOAST STYLING */
+[data-theme="protoss"] .custom-toast {
+  background: linear-gradient(135deg, 
+    rgba(27, 20, 41, 0.9) 0%,
+    rgba(30, 24, 53, 0.85) 50%,
+    rgba(36, 30, 60, 0.9) 100%
+  );
+  box-shadow: 
+    0 0 0 1px rgba(255, 218, 123, 0.2),
+    0 0 0 2px rgba(126, 166, 160, 0.1),
+    0 0 0 3px rgba(189, 147, 249, 0.05),
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    inset 0 0 20px rgba(255, 218, 123, 0.05);
+  border: none;
+}
+
+[data-theme="protoss"] .custom-toast::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  pointer-events: none;
+  /* Crystal lattice pattern */
+  background-image: 
+    linear-gradient(120deg, transparent 45%, rgba(255, 218, 123, 0.15) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(189, 147, 249, 0.15) 50%, transparent 55%);
+  background-size: 60px 60px;
+  z-index: -1;
+}
+
+[data-theme="protoss"] .custom-toast::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(to right, transparent, hsl(var(--psi-blade)), transparent);
+  animation: psi-charge 3s infinite, toast-progress 5s linear forwards;
+}
+
+[data-theme="protoss"] .custom-toast.toast-success::after {
+  background: linear-gradient(to right, transparent, hsl(var(--psi-energy)), transparent);
+}
+
+[data-theme="protoss"] .custom-toast.toast-error::after {
+  background: linear-gradient(to right, transparent, hsl(var(--psi-storm)), transparent);
+}
+
+[data-theme="protoss"] .custom-toast.toast-warning::after {
+  background: linear-gradient(to right, transparent, hsl(var(--psi-gold)), transparent);
+}
+
+[data-theme="protoss"] .custom-toast.toast-info::after {
+  background: linear-gradient(to right, transparent, hsl(var(--shield-aura)), transparent);
+}
+
+[data-theme="protoss"] .custom-toast.toast-loading::after {
+  background: linear-gradient(to right, transparent, hsl(var(--khala-medium)), transparent);
+  animation: toast-progress 3s linear infinite;
+}
+
+/* Corner accents for protoss toast */
+[data-theme="protoss"] .custom-toast.corner-accents::before,
+[data-theme="protoss"] .custom-toast.corner-accents::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+
+[data-theme="protoss"] .custom-toast.corner-accents::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid rgba(255, 218, 123, 0.7);
+  border-left: 2px solid rgba(255, 218, 123, 0.7);
+}
+
+[data-theme="protoss"] .custom-toast.corner-accents::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid rgba(255, 218, 123, 0.7);
+  border-right: 2px solid rgba(255, 218, 123, 0.7);
+}
+
+[data-theme="protoss"] .custom-toast.toast-success.corner-accents::before,
+[data-theme="protoss"] .custom-toast.toast-success.corner-accents::after {
+  border-color: rgba(126, 166, 160, 0.7);
+}
+
+[data-theme="protoss"] .custom-toast.toast-error.corner-accents::before,
+[data-theme="protoss"] .custom-toast.toast-error.corner-accents::after {
+  border-color: rgba(255, 121, 198, 0.7);
+}
+
+[data-theme="protoss"] .custom-toast.toast-warning.corner-accents::before,
+[data-theme="protoss"] .custom-toast.toast-warning.corner-accents::after {
+  border-color: rgba(255, 218, 123, 0.7);
+}
+
+/* Crystal energy effect on hover */
+[data-theme="protoss"] .custom-toast:hover {
+  box-shadow: 
+    0 0 0 1px rgba(255, 218, 123, 0.3),
+    0 0 0 2px rgba(126, 166, 160, 0.15),
+    0 0 0 3px rgba(189, 147, 249, 0.1),
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    inset 0 0 20px rgba(255, 218, 123, 0.1);
+}
+
+[data-theme="protoss"] .custom-toast:hover::before {
+  animation: crystal-pulse 3s infinite;
+}
+
+@keyframes crystal-pulse {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.02);
+  }
+}
+
+/* Custom styles for masonry prediction layout */
+.my-masonry-grid {
+  display: flex;
+  width: auto;
+  margin-left: 0 !important;
+  gap: 1px !important;
+}
+
+.my-masonry-grid_column {
+  padding-left: 1px !important; /* Creates small gaps between items */
+  background-clip: padding-box;
+}
+
+/* Style your items */
+.my-masonry-grid_column > div {
+  margin-bottom: 1px;
+}
+
+/* Animation for prediction cards hover */
+@keyframes card-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Apply the animation on hover */
+.prediction-card:hover {
+  animation: card-pulse 1s ease-in-out infinite;
+  z-index: 10;
+}
+
 @layer base {
   /* Default theme variables - applied to all themes unless overridden */
   :root {
-    /* Default font configuration */
-    --font-primary: 'Inter', -apple-system, system-ui, sans-serif;
-    --font-display: 'Inter', -apple-system, system-ui, sans-serif; 
-    --font-mono: 'JetBrains Mono', monospace;
+    /* Default font configuration - these will be overridden by theme settings */
+    --font-primary: var(--font-source-code-pro, 'Source Code Pro'), -apple-system, system-ui, monospace;
+    --font-display: var(--font-syncopate, 'Syncopate'), -apple-system, system-ui, sans-serif; 
+    --font-mono: var(--font-jetbrains-mono, 'JetBrains Mono'), monospace;
     
     /* Default theme (Cyberpunk) */
     --space-black: 222 47% 2%;
@@ -137,7 +419,7 @@
     --space-black: 222 47% 2%;
     --space-dark: 222 44% 7%;
     --space-void: 222 33% 11%;
-    --cyber-blue: 183 95% 75%;
+    --cyber-blue: 183 95% 25%;
     --neon-green: 135 86% 65%;
     --neon-pink: 328 100% 74%;
     --neon-red: 0 100% 67%;
@@ -201,6 +483,66 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Important: Force data-theme root to set the global font, not just body */
+  [data-theme="cyberpunk"] {
+    font-family: var(--applied-font-family);
+    font-feature-settings: var(--font-feature-default, "calt" 1, "liga" 1);
+  }
+  
+  [data-theme="protoss"] {
+    font-family: var(--applied-font-family);
+    font-feature-settings: var(--font-feature-default, "calt" 1, "liga" 1);
+  }
+
+  /* Font feature settings for each theme */
+  /* Base (theme-agnostic) settings */
+  .font-theme {
+    font-family: var(--font-primary);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  .font-display {
+    font-family: var(--font-display);
+  }
+  
+  .font-mono-theme {
+    font-family: var(--font-mono);
+  }
+
+  /* Theme-specific font feature settings */
+  [data-theme="cyberpunk"] .font-theme {
+    font-family: var(--applied-font-family);
+    font-feature-settings: var(--font-feature-default);
+  }
+  
+  [data-theme="cyberpunk"] .font-display {
+    font-family: var(--applied-font-family-display);
+    font-feature-settings: var(--font-feature-display);
+    letter-spacing: 0.05em;
+  }
+  
+  [data-theme="cyberpunk"] .font-mono-theme {
+    font-family: var(--applied-font-family-mono);
+    font-feature-settings: var(--font-feature-mono);
+  }
+  
+  [data-theme="protoss"] .font-theme {
+    font-family: var(--applied-font-family);
+    font-feature-settings: var(--font-feature-default);
+    letter-spacing: 0.025em;
+  }
+  
+  [data-theme="protoss"] .font-display {
+    font-family: var(--applied-font-family-display);
+    font-feature-settings: var(--font-feature-display);
+    letter-spacing: 0.1em;
+  }
+  
+  [data-theme="protoss"] .font-mono-theme {
+    font-family: var(--applied-font-family-mono);
+    font-feature-settings: var(--font-feature-mono);
   }
 }
 
@@ -266,43 +608,43 @@
 
 /* Shimmer and glow effects are now defined in tailwind.config.ts */
 
-/* Glowing text */
+/* Glowing text - reduced intensity */
 .text-glow {
-  text-shadow: 0 0 5px theme('colors.cyan.400/30'), 0 0 10px theme('colors.cyan.300/20');
+  text-shadow: 0 0 5px theme('colors.cyan.400/15'), 0 0 10px theme('colors.cyan.300/10');
 }
 
 .text-glow-purple {
-  text-shadow: 0 0 5px theme('colors.purple.400/30'), 0 0 10px theme('colors.purple.300/20');
+  text-shadow: 0 0 5px theme('colors.purple.400/15'), 0 0 10px theme('colors.purple.300/10');
 }
 
 .text-glow-pink {
-  text-shadow: 0 0 5px theme('colors.pink.400/30'), 0 0 10px theme('colors.pink.300/20');
+  text-shadow: 0 0 5px theme('colors.pink.400/15'), 0 0 10px theme('colors.pink.300/10');
 }
 
-/* Protoss Theme Specific Styles */
+/* Protoss Theme Specific Styles - reduced intensity */
 [data-theme="protoss"] .text-glow {
-  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.3), 0 0 10px hsl(var(--psi-gold) / 0.2);
+  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.15), 0 0 10px hsl(var(--psi-gold) / 0.1);
 }
 
 [data-theme="protoss"] .text-glow-purple {
-  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.3), 0 0 10px hsl(var(--psi-blade) / 0.2);
+  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.15), 0 0 10px hsl(var(--psi-blade) / 0.1);
 }
 
 [data-theme="protoss"] .text-glow-pink {
-  text-shadow: 0 0 5px hsl(var(--psi-storm) / 0.3), 0 0 10px hsl(var(--psi-storm) / 0.2);
+  text-shadow: 0 0 5px hsl(var(--psi-storm) / 0.15), 0 0 10px hsl(var(--psi-storm) / 0.1);
 }
 
-/* Protoss specific utilities */
+/* Protoss specific utilities - reduced intensity */
 .text-psionic {
-  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.3), 0 0 10px hsl(var(--psi-gold) / 0.2);
+  text-shadow: 0 0 5px hsl(var(--psi-gold) / 0.15), 0 0 10px hsl(var(--psi-gold) / 0.1);
 }
 
 .text-psionic-energy {
-  text-shadow: 0 0 5px hsl(var(--psi-energy) / 0.3), 0 0 10px hsl(var(--psi-energy) / 0.2);
+  text-shadow: 0 0 5px hsl(var(--psi-energy) / 0.15), 0 0 10px hsl(var(--psi-energy) / 0.1);
 }
 
 .text-psionic-blade {
-  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.3), 0 0 10px hsl(var(--psi-blade) / 0.2);
+  text-shadow: 0 0 5px hsl(var(--psi-blade) / 0.15), 0 0 10px hsl(var(--psi-blade) / 0.1);
 }
 
 /* Glow pulse animation */
@@ -311,9 +653,9 @@
 }
 
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 5px theme('colors.cyan.400/40'); }
-  50% { box-shadow: 0 0 15px theme('colors.cyan.400/70'); }
-  100% { box-shadow: 0 0 5px theme('colors.cyan.400/40'); }
+  0% { box-shadow: 0 0 5px theme('colors.cyan.400/20'); }
+  50% { box-shadow: 0 0 15px theme('colors.cyan.400/30'); }
+  100% { box-shadow: 0 0 5px theme('colors.cyan.400/20'); }
 }
 
 /* Theme-agnostic base utility classes */
@@ -397,17 +739,145 @@
   animation-iteration-count: infinite;
 }
 
-/* Theme-specific font classes */
-.font-theme {
-  font-family: var(--font-primary);
+/* Font utility classes for common text styles across themes */
+.text-balance {
+  text-wrap: balance;
 }
 
-.font-display {
-  font-family: var(--font-display);
+.text-pretty {
+  text-wrap: pretty;
 }
 
-.font-mono-theme {
-  font-family: var(--font-mono);
+/* Font utility class for setting OpenType features and styling */
+.ligatures-on {
+  font-feature-settings: "liga" 1, "calt" 1, "dlig" 1;
+}
+
+.small-caps {
+  font-variant-caps: small-caps;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Direct element styling for themes to ensure proper font inheritance */
+[data-theme="cyberpunk"] h1,
+[data-theme="cyberpunk"] h2,
+[data-theme="cyberpunk"] h3 {
+  font-family: var(--applied-font-family-display, var(--font-syncopate)), 'Syncopate', sans-serif !important;
+}
+
+[data-theme="cyberpunk"] h4,
+[data-theme="cyberpunk"] h5,
+[data-theme="cyberpunk"] h6,
+[data-theme="cyberpunk"] p,
+[data-theme="cyberpunk"] span,
+[data-theme="cyberpunk"] div,
+[data-theme="cyberpunk"] a {
+  font-family: var(--applied-font-family, var(--font-source-code-pro)), 'Source Code Pro', monospace !important;
+}
+
+[data-theme="cyberpunk"] code,
+[data-theme="cyberpunk"] pre {
+  font-family: var(--applied-font-family-mono, var(--font-jetbrains-mono)), 'JetBrains Mono', monospace !important;
+}
+
+[data-theme="protoss"] h1,
+[data-theme="protoss"] h2,
+[data-theme="protoss"] h3 {
+  font-family: var(--applied-font-family-display, var(--font-orbitron)), 'Orbitron', sans-serif !important;
+}
+
+[data-theme="protoss"] h4,
+[data-theme="protoss"] h5,
+[data-theme="protoss"] h6,
+[data-theme="protoss"] p,
+[data-theme="protoss"] span,
+[data-theme="protoss"] div,
+[data-theme="protoss"] a {
+  font-family: var(--applied-font-family, var(--font-exo-2)), 'Exo 2', sans-serif !important;
+}
+
+[data-theme="protoss"] code,
+[data-theme="protoss"] pre {
+  font-family: var(--applied-font-family-mono, var(--font-fira-code)), 'Fira Code', monospace !important;
+}
+
+/* Global Scrollbar Resets */
+html {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+* {
+  /* Firefox support */
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Base scrollbar variables */
+:root {
+  --scrollbar-width: 10px;
+  --scrollbar-height: 10px;
+  --scrollbar-track: hsl(222, 33%, 11%);
+  --scrollbar-thumb: hsl(222, 44%, 19%);
+  --scrollbar-thumb-hover: hsl(222, 44%, 25%);
+}
+
+/* Cyberpunk theme scrollbar overrides */
+[data-theme="cyberpunk"] {
+  --scrollbar-track: hsl(var(--space-void));
+  --scrollbar-thumb: hsl(var(--space-dark));
+  --scrollbar-thumb-hover: hsl(var(--cyber-blue)); 
+}
+
+/* Protoss theme scrollbar overrides */
+[data-theme="protoss"] {
+  --scrollbar-track: hsl(var(--void-dark));
+  --scrollbar-thumb: hsl(var(--void-medium));
+  --scrollbar-thumb-hover: hsl(var(--psi-gold));
+}
+
+/* Override the default Cyberpunk and Protoss styles to make them visible */
+:root {
+  /* Increase size for better visibility */
+  --scrollbar-width: 14px;
+  --scrollbar-height: 14px;
+}
+
+/* Make sure HTML and body allow for custom scrollbar styling */
+html, body {
+  scrollbar-width: auto !important;
+}
+
+/* Force webkit scrollbar visibility on all elements */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-height);
+  background-color: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Ensure main HTML element gets the theme scrollbars */
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar,
+main::-webkit-scrollbar,
+div::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-height);
 }
 
 /* Import theme stylesheets */

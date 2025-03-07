@@ -3,9 +3,14 @@
 /* Core theme variables */
 [data-theme="protoss"] {
   /* Font configuration */
-  --font-primary: 'Inter', -apple-system, system-ui, sans-serif;
-  --font-display: 'JetBrains Mono', monospace; /* Use JetBrains Mono as display font for Protoss */
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-primary: var(--font-exo-2), 'Exo 2', sans-serif;
+  --font-display: var(--font-orbitron), 'Orbitron', sans-serif;
+  --font-mono: var(--font-fira-code), 'Fira Code', monospace;
+  
+  /* Font feature settings for alien look with sophisticated features */
+  --font-feature-default: "calt" 1, "liga" 1, "salt" 1, "ss03" 1, "kern" 1;
+  --font-feature-display: "case" 1, "salt" 1, "ss01" 1, "ss02" 1, "kern" 1, "cpsp" 1;
+  --font-feature-mono: "calt" 1, "liga" 1, "dlig" 1, "zero" 1, "ss01" 1, "ss04" 1, "tnum" 1;
   
   /* Theme colors - Enhanced with more alien feel */
   --void-void: 260 80% 5%;
@@ -266,6 +271,386 @@
 /* Apply psi-charge to selected buttons */
 [data-theme="protoss"] .bg-secondary {
   animation: psi-charge 3s infinite;
+}
+
+/* Apply primary font to the body and all elements by default */
+[data-theme="protoss"] body {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+}
+
+/* Protoss font styling for specific UI elements */
+[data-theme="protoss"] h1,
+[data-theme="protoss"] h2,
+[data-theme="protoss"] h3 {
+  font-family: var(--font-display);
+  font-feature-settings: var(--font-feature-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-theme="protoss"] h4,
+[data-theme="protoss"] h5,
+[data-theme="protoss"] h6 {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+  letter-spacing: 0.03em;
+}
+
+/* Code and data displays */
+[data-theme="protoss"] code,
+[data-theme="protoss"] pre,
+[data-theme="protoss"] .technical-text {
+  font-family: var(--font-mono);
+  font-feature-settings: var(--font-feature-mono);
+}
+
+/* Buttons with alien aesthetic */
+[data-theme="protoss"] button,
+[data-theme="protoss"] .button,
+[data-theme="protoss"] .btn {
+  font-family: var(--font-display);
+  font-feature-settings: var(--font-feature-display);
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+/* Navigation with geometric alien script look */
+[data-theme="protoss"] nav,
+[data-theme="protoss"] nav a {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default), "ss01" 1, "ss03" 1;
+  letter-spacing: 0.045em;
+}
+
+/* Form elements with alien precision */
+[data-theme="protoss"] input,
+[data-theme="protoss"] textarea,
+[data-theme="protoss"] select {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+  letter-spacing: 0.03em;
+}
+
+/* All paragraphs and text elements */
+[data-theme="protoss"] p,
+[data-theme="protoss"] span,
+[data-theme="protoss"] div,
+[data-theme="protoss"] li,
+[data-theme="protoss"] td,
+[data-theme="protoss"] th,
+[data-theme="protoss"] label {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+}
+
+/* Protoss Themed Market Card - "PSIONIC CRYSTAL" */
+[data-theme="protoss"] .theme-market-card {
+  /* Consistent border radius */
+  border-radius: 8px;
+  
+  /* Crystal-like backdrop */
+  background: linear-gradient(135deg, 
+    rgba(27, 20, 41, 0.95) 0%,
+    rgba(30, 24, 53, 0.9) 50%,
+    rgba(36, 30, 60, 0.95) 100%
+  );
+  
+  /* Faceted border effect - updated to work with border radius */
+  border: 1px solid rgba(255, 218, 123, 0.15);
+  
+  /* Create a pseudo-border with gradient that respects border-radius */
+  position: relative;
+  z-index: 0;
+  
+  /* Combined box shadow for both border effect and inner glow */
+  box-shadow: 
+    /* Border effect layers */
+    0 0 0 1px rgba(255, 218, 123, 0.1),
+    0 0 0 2px rgba(126, 166, 160, 0.05),
+    0 0 0 3px rgba(189, 147, 249, 0.05),
+    /* Inner glow layers */
+    inset 0 0 20px rgba(255, 218, 123, 0.05),
+    inset 0 0 40px rgba(36, 30, 60, 0.3),
+    /* Outer shadow */
+    0 4px 8px rgba(0, 0, 0, 0.2);
+  
+  /* Give a subtle raised crystal look */
+  transform: perspective(1000px) translateZ(0);
+  
+  /* Crystal facet effect */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fix for consistent border radius in Card component */
+[data-theme="protoss"] .card {
+  border-radius: 8px;
+}
+
+/* Crystal energy effect */
+[data-theme="protoss"] .theme-market-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(
+      circle at 30% 20%, 
+      rgba(255, 218, 123, 0.1) 0%, 
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 80%, 
+      rgba(189, 147, 249, 0.1) 0%, 
+      transparent 50%
+    );
+  
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.4;
+  transition: opacity 0.4s ease-in-out;
+}
+
+/* Subtle crystal lattice pattern */
+[data-theme="protoss"] .theme-market-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(120deg, transparent 45%, rgba(255, 218, 123, 0.03) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(189, 147, 249, 0.03) 50%, transparent 55%);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+[data-theme="protoss"] .theme-market-card:hover {
+  border-color: rgba(255, 218, 123, 0.3);
+  
+  /* Enhanced box-shadow for hover state that works with border-radius */
+  box-shadow: 
+    /* Border glow effect */
+    0 0 0 1px rgba(255, 218, 123, 0.3),
+    0 0 0 2px rgba(126, 166, 160, 0.15),
+    0 0 0 3px rgba(189, 147, 249, 0.1),
+    /* Inner glow */
+    inset 0 0 20px rgba(255, 218, 123, 0.1),
+    inset 0 0 40px rgba(36, 30, 60, 0.3),
+    /* Outer glow */
+    0 5px 15px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(255, 218, 123, 0.1);
+  
+  /* Crystal rise effect on hover */
+  transform: perspective(1000px) translateZ(2px) translateY(-3px);
+}
+
+[data-theme="protoss"] .theme-market-card:hover::before {
+  opacity: 0.8;
+}
+
+/* PROTOSS SCROLLBAR - Specifically targeting html and body */
+html[data-theme="protoss"]::-webkit-scrollbar,
+body[data-theme="protoss"]::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  background-color: hsl(var(--void-dark));
+}
+
+/* Crystal segment track with very prominent effects */
+html[data-theme="protoss"]::-webkit-scrollbar-track,
+body[data-theme="protoss"]::-webkit-scrollbar-track {
+  background-color: hsl(var(--void-dark));
+  /* Crystal facet pattern with larger size */
+  background-image: 
+    linear-gradient(
+      -45deg,
+      hsl(var(--void-void)) 25%,
+      hsl(var(--void-dark)) 25%,
+      hsl(var(--void-dark)) 50%,
+      hsl(var(--void-void)) 50%,
+      hsl(var(--void-void)) 75%,
+      hsl(var(--void-dark)) 75%
+    );
+  background-size: 20px 20px; /* Larger pattern */
+  
+  /* Enhance with a gold border */
+  border-left: 1px solid hsl(var(--psi-gold) / 0.3);
+  
+  /* Add 3D depth effect */
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+  
+  /* Set up for energy pulse */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Energy pulse animation - make it much more visible */
+html[data-theme="protoss"]::-webkit-scrollbar-track::after,
+body[data-theme="protoss"]::-webkit-scrollbar-track::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Gold energy wave */
+  background: linear-gradient(
+    to bottom,
+    transparent 20%,
+    hsl(var(--psi-gold) / 0.4) 50%,
+    transparent 80%
+  );
+  
+  opacity: 0.6; /* Higher opacity */
+  
+  /* Faster pulse animation */
+  animation: protoss-energy-pulse 2s ease-in-out infinite;
+}
+
+@keyframes protoss-energy-pulse {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: translateY(-100%);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: translateY(100%);
+  }
+}
+
+/* Crystalline thumb with dramatic energy glow */
+html[data-theme="protoss"]::-webkit-scrollbar-thumb,
+body[data-theme="protoss"]::-webkit-scrollbar-thumb {
+  /* Exotic gradient blend */
+  background: linear-gradient(
+    to bottom, 
+    hsl(var(--psi-gold)) 0%,
+    hsl(var(--psi-blade)) 50%,
+    hsl(var(--psi-energy)) 100%
+  );
+  
+  /* Diamond crystal shape with pointed corners */
+  border-radius: 0;
+  clip-path: polygon(
+    3px 50%, 
+    50% 3px, 
+    calc(100% - 3px) 50%, 
+    50% calc(100% - 3px)
+  );
+  
+  /* Crystal with intense glow */
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 0 15px rgba(255, 218, 123, 0.5),
+    0 0 20px rgba(255, 218, 123, 0.5);
+  
+  /* Position for energy effect */
+  position: relative;
+  overflow: visible; /* Let the glow extend outside */
+  
+  /* Dramatic energy pulse */
+  animation: crystal-energy 2s infinite ease-in-out;
+}
+
+/* Much more intense energy animation */
+@keyframes crystal-energy {
+  0%, 100% {
+    box-shadow: 
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+      inset 0 0 15px rgba(255, 218, 123, 0.7),
+      0 0 20px rgba(255, 218, 123, 0.7);
+  }
+  
+  33% {
+    box-shadow: 
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+      inset 0 0 15px rgba(189, 147, 249, 0.7),
+      0 0 20px rgba(189, 147, 249, 0.7);
+  }
+  
+  66% {
+    box-shadow: 
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+      inset 0 0 15px rgba(126, 166, 160, 0.7),
+      0 0 20px rgba(126, 166, 160, 0.7);
+  }
+}
+
+/* Sparkling crystal effect */
+html[data-theme="protoss"]::-webkit-scrollbar-thumb::before,
+body[data-theme="protoss"]::-webkit-scrollbar-thumb::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--psi-gold)) 0%,
+    transparent 70%
+  );
+  opacity: 0.6;
+  z-index: -1;
+  animation: crystal-sparkle 3s infinite ease-in-out;
+}
+
+@keyframes crystal-sparkle {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.5); 
+  }
+}
+
+/* Hover effect with blinding energy glow */
+html[data-theme="protoss"]::-webkit-scrollbar-thumb:hover,
+body[data-theme="protoss"]::-webkit-scrollbar-thumb:hover {
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--psi-gold)) 0%,
+    hsl(var(--psi-blade)) 50%,
+    hsl(var(--psi-energy)) 100%
+  );
+  
+  /* Explosive energy surge */
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 0 20px rgba(255, 218, 123, 0.9),
+    0 0 25px rgba(255, 218, 123, 0.8),
+    0 0 40px rgba(255, 218, 123, 0.4);
+    
+  /* Stop the animation for steady glow */
+  animation: none;
+}
+
+/* Ornate crystalline buttons */
+html[data-theme="protoss"]::-webkit-scrollbar-button,
+body[data-theme="protoss"]::-webkit-scrollbar-button {
+  height: 6px;
+  background-color: hsl(var(--void-dark));
+  
+  /* Diamond shape */
+  background-image: linear-gradient(
+    45deg,
+    transparent 40%,
+    hsl(var(--psi-gold)) 40%,
+    hsl(var(--psi-gold)) 60%,
+    transparent 60%
+  );
+  
+  /* Crystal glow */
+  box-shadow: 0 0 10px hsl(var(--psi-gold) / 0.4);
 }
 
 /* Protoss crystalline highlights - enhanced */

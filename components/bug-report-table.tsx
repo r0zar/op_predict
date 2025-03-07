@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import React from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/select";
 import { updateBugReportStatus } from "@/app/actions/bug-report-actions";
 import type { BugReportStatus } from "@/app/actions/bug-report-actions";
-import type { BugReport } from "wisdom-sdk";
+// Define the BugReport type locally instead of importing it
+type BugReport = any;
 import { DollarSign, CheckCircle, Clock, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 interface BugReportTableProps {

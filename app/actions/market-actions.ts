@@ -2,16 +2,20 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getMarketStore, getPredictionStore, getUserBalanceStore, getUserStatsStore } from 'wisdom-sdk';
-import type { Market } from "wisdom-sdk";
+import {
+    marketStore,
+    predictionStore,
+    userBalanceStore,
+    userStatsStore,
+    MarketQueryOptions,
+    PaginatedResult,
+    Market,
+    SortField,
+    SortDirection
+} from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
-
-// Get store instances
-const marketStore = getMarketStore();
-const predictionStore = getPredictionStore();
-const userBalanceStore = getUserBalanceStore();
-const userStatsStore = getUserStatsStore();
+import { MARKET_CATEGORIES } from '../components/markets-table';
 
 // Define the validation schema for market creation
 const marketFormSchema = z.object({
@@ -29,6 +33,9 @@ const marketFormSchema = z.object({
     endDate: z.string().min(1, {
         message: "Voting deadline is required"
     }),
+    category: z.enum(MARKET_CATEGORIES, {
+        errorMap: () => ({ message: "Please select a valid category" })
+    }).default('general'),
     outcomes: z.array(
         z.object({
             id: z.number(),
@@ -39,11 +46,12 @@ const marketFormSchema = z.object({
     }).max(15, {
         message: "Maximum 15 outcomes allowed."
     }),
+    imageUrl: z.string().optional(),
 });
 
 export type CreateMarketFormData = z.infer<typeof marketFormSchema>;
 
-export async function createMarket(formData: CreateMarketFormData): Promise<{ success: boolean; market?: Market; error?: string }> {
+export async function createMarket(formData: CreateMarketFormData) {
     try {
         // Validate the input data
         const validatedData = marketFormSchema.parse(formData);
@@ -55,9 +63,9 @@ export async function createMarket(formData: CreateMarketFormData): Promise<{ su
             description: validatedData.description,
             outcomes: validatedData.outcomes,
             createdBy: (await currentUser())?.id || '',
-            category: 'general',
+            category: validatedData.category,
             endDate: new Date(validatedData.endDate).toISOString(),
-            imageUrl: '',
+            imageUrl: validatedData.imageUrl || '',
         });
 
         // Revalidate the markets page to show the new market
@@ -85,18 +93,160 @@ export async function createMarket(formData: CreateMarketFormData): Promise<{ su
     }
 }
 
-// Get all markets
-export async function getMarkets(): Promise<Market[]> {
-    return marketStore.getMarkets();
+/**
+ * Query parameters for fetching markets
+ */
+export interface MarketQueryParams {
+    status?: 'active' | 'resolved' | 'cancelled' | 'all';
+    category?: string;
+    search?: string;
+    sortBy?: SortField;
+    sortDirection?: SortDirection;
+    limit?: number;
+    cursor?: string;
+    creatorId?: string;
 }
 
-// Alias for getMarkets for consistency
-export const getAllMarkets = getMarkets;
+/**
+ * Get markets with pagination and filtering
+ */
+export async function getMarkets(params: MarketQueryParams = {}): Promise<PaginatedResult<Market>> {
+    // First, ensure indexes are built
+    try {
+        await marketStore.buildMarketIndexes();
+    } catch (e) {
+        console.error("Error building market indexes:", e);
+    }
 
-// Get a specific market
-export async function getMarket(id: string): Promise<Market | undefined> {
+    const queryOptions: MarketQueryOptions = {
+        status: params.status || 'active',
+        category: params.category,
+        search: params.search,
+        sortBy: params.sortBy || 'createdAt',
+        sortDirection: params.sortDirection || 'desc',
+        limit: params.limit || 20,
+        cursor: params.cursor,
+        creatorId: params.creatorId
+    };
+
+    console.log("Fetching markets with options:", JSON.stringify(queryOptions));
+    
+    // Try to get markets with the new method
+    let result;
+    
+    try {
+        result = await marketStore.getMarkets(queryOptions);
+        console.log(`Found ${result.items.length} markets of ${result.total} total`);
+        
+        // If no results found, try getting all markets without filters as fallback
+        if (result.items.length === 0 && (params.category || params.status)) {
+            console.log("No markets found with filters, trying without filters");
+            const allMarkets = await marketStore.getMarkets({
+                limit: params.limit || 20
+            });
+            console.log(`Found ${allMarkets.items.length} markets without filters`);
+            if (allMarkets.items.length > 0) {
+                return allMarkets;
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching markets:", error);
+        
+        // Return empty result on error
+        return {
+            items: [],
+            total: 0,
+            hasMore: false
+        };
+    }
+
+    return result || { items: [], total: 0, hasMore: false };
+}
+
+/**
+ * Legacy alias for getMarkets with no parameters
+ * @deprecated Use getMarkets() with explicit parameters instead
+ */
+export async function getAllMarkets(): Promise<PaginatedResult<Market>> {
+    return getMarkets({ limit: 100 });
+}
+
+/**
+ * Get a specific market by ID
+ */
+export async function getMarket(id: string): Promise<any> {
     return marketStore.getMarket(id);
 }
+
+/**
+ * Search for markets containing specific text
+ */
+export async function searchMarkets(searchText: string, params: Omit<MarketQueryParams, 'search'> = {}): Promise<PaginatedResult<Market>> {
+    return marketStore.searchMarkets(searchText, {
+        status: params.status || 'active',
+        sortBy: params.sortBy || 'createdAt',
+        sortDirection: params.sortDirection || 'desc',
+        limit: params.limit || 20,
+        cursor: params.cursor
+    });
+}
+
+/**
+ * Get markets by category
+ */
+export async function getMarketsByCategory(category: string, params: Omit<MarketQueryParams, 'category'> = {}): Promise<PaginatedResult<Market>> {
+    return marketStore.getMarketsByCategory(category, {
+        status: params.status || 'active',
+        sortBy: params.sortBy || 'createdAt',
+        sortDirection: params.sortDirection || 'desc',
+        limit: params.limit || 20,
+        cursor: params.cursor
+    });
+}
+
+/**
+ * Get trending markets (markets with highest pool amount)
+ */
+export async function getTrendingMarkets(limit: number = 5): Promise<Market[]> {
+    return marketStore.getTrendingMarkets(limit);
+}
+
+/**
+ * Get markets created by a specific user
+ */
+export async function getUserCreatedMarkets(userId: string, params: Omit<MarketQueryParams, 'creatorId'> = {}): Promise<PaginatedResult<Market>> {
+    return getMarkets({
+        ...params,
+        creatorId: userId
+    });
+}
+
+/**
+ * Get related markets similar to the specified market
+ */
+export async function getRelatedMarkets(marketId: string, limit: number = 3): Promise<Market[]> {
+    return marketStore.getRelatedMarkets(marketId, limit);
+}
+
+/**
+ * Load the next page of markets using cursor-based pagination
+ * Useful for "Load More" functionality in UIs
+ */
+export async function loadMoreMarkets(currentResult: PaginatedResult<Market>, params: MarketQueryParams = {}): Promise<PaginatedResult<Market>> {
+    if (!currentResult.hasMore || !currentResult.nextCursor) {
+        // No more results to load
+        return currentResult;
+    }
+
+    // Get next page using the cursor
+    return getMarkets({
+        ...params,
+        cursor: currentResult.nextCursor
+    });
+}
+
+// The mergeMarketResults function is now moved to lib/market-utils.ts since
+// server actions must be async functions
 
 // Delete a market (admin only)
 export async function deleteMarket(marketId: string): Promise<{
@@ -155,7 +305,7 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
         }
 
         // Get the market
-        const market = await marketStore.getMarket(validatedData.marketId);
+        const market: any = await marketStore.getMarket(validatedData.marketId);
         if (!market) {
             return { success: false, error: 'Market not found' };
         }
@@ -166,31 +316,31 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
         }
 
         // Find the winning outcome
-        const winningOutcome = market.outcomes.find(o => o.id === validatedData.winningOutcomeId);
+        const winningOutcome = market.outcomes.find((o: any) => o.id === validatedData.winningOutcomeId);
         if (!winningOutcome) {
             return { success: false, error: 'Winning outcome not found' };
         }
 
         // Get all predictions for this market
-        const marketPredictions = await predictionStore.getMarketPredictions(market.id);
+        const marketPredictions: any[] = await predictionStore.getMarketPredictions(market.id);
 
         if (marketPredictions.length === 0) {
             return { success: false, error: 'No predictions found for this market' };
         }
 
         // Calculate total pot and admin fee (5%)
-        const totalPot = marketPredictions.reduce((sum, prediction) => sum + prediction.amount, 0);
+        const totalPot: any = marketPredictions.reduce((sum, prediction: any) => sum + prediction.amount, 0);
         const adminFee = totalPot * 0.05; // 5% of the total pot
         const remainingPot = totalPot - adminFee;
 
         // Find winning predictions
         const winningPredictions = marketPredictions.filter(
-            p => p.outcomeId === validatedData.winningOutcomeId
+            (p: any) => p.outcomeId === validatedData.winningOutcomeId
         );
 
         // Calculate total winning amount
         const totalWinningAmount = winningPredictions.reduce(
-            (sum, prediction) => sum + prediction.amount,
+            (sum, prediction: any) => sum + prediction.amount,
             0
         );
 

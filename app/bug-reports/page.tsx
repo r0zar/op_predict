@@ -6,11 +6,8 @@ import { getBugReports } from "@/app/actions/bug-report-actions";
 import { BugReportForm } from "@/components/bug-report-form";
 import { BugReportTable } from "@/components/bug-report-table";
 import { DollarSign, AlertTriangle } from "lucide-react";
-import { getUserBalanceStore } from "wisdom-sdk";
-import type { BugReport } from "wisdom-sdk";
+import { userBalanceStore } from "wisdom-sdk";
 
-// Get store instance
-const userBalanceStore = getUserBalanceStore();
 import { isAdmin } from "@/lib/utils";
 
 export default async function BugReportPage() {
@@ -24,7 +21,7 @@ export default async function BugReportPage() {
     const isUserAdmin = isAdmin(user.id);
 
     // Fetch bug reports and user balance in parallel
-    const [reportsResult, userBalance] = await Promise.all([
+    const [reportsResult, userBalance]: any = await Promise.all([
         getBugReports(),
         userBalanceStore.getUserBalance(user.id)
     ]);
@@ -47,13 +44,13 @@ export default async function BugReportPage() {
     const allReports = reportsResult.data || [];
 
     // Filter reports for the current user (if not admin)
-    const userReports = allReports.filter((report: BugReport) => report.createdBy === user.id);
+    const userReports = allReports.filter((report: any) => report.createdBy === user.id);
 
     // Calculate reported earnings from bug reports for display purposes
-    const totalInitialRewards = userReports.filter(report => report.initialRewardPaid).length * 10;
-    const totalConfirmationRewards = userReports.filter(report => report.confirmationRewardPaid).length * 90;
+    const totalInitialRewards = userReports.filter((report: any) => report.initialRewardPaid).length * 10;
+    const totalConfirmationRewards = userReports.filter((report: any) => report.confirmationRewardPaid).length * 90;
     const totalReportedEarnings = totalInitialRewards + totalConfirmationRewards;
-    
+
     // Get actual user balance for the most accurate information
     const actualUserBalance = userBalance?.availableBalance || 0;
 

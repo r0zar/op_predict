@@ -5,7 +5,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger, 
+  SheetClose 
+} from "@/components/ui/sheet"
 import {
   Menu,
   Home,
@@ -49,11 +54,12 @@ export function AppSidebar({ className }: SidebarProps) {
     { href: "/settings", icon: Settings, text: "Settings" },
   ]
 
+  // Shared sidebar content to maintain consistency between mobile and desktop
   const SidebarContent = () => (
     <ScrollArea className="h-full py-4">
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
-          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+          <h2 className="mb-2 px-4 text-sm font-medium tracking-tight text-muted-foreground uppercase">
             Navigation
           </h2>
           <div className="space-y-1">
@@ -63,13 +69,13 @@ export function AppSidebar({ className }: SidebarProps) {
                 href={item.href}
                 icon={item.icon}
                 text={item.text}
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href !== "/" || pathname === "/")}
               />
             ))}
           </div>
         </div>
         <div className="px-3 py-2">
-          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+          <h2 className="mb-2 px-4 text-sm font-medium tracking-tight text-muted-foreground uppercase">
             Your Account
           </h2>
           <div className="space-y-1">
@@ -79,7 +85,7 @@ export function AppSidebar({ className }: SidebarProps) {
                 href={item.href}
                 icon={item.icon}
                 text={item.text}
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)}
               />
             ))}
           </div>
@@ -97,18 +103,31 @@ export function AppSidebar({ className }: SidebarProps) {
             variant="ghost"
             size="icon"
             className="md:hidden fixed left-4 top-3 z-40 items-center"
+            aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+        <SheetContent 
+          side="left" 
+          className="w-[280px] sm:w-[320px] p-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative overflow-hidden"
+        >
+          <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close navigation menu</span>
+          </SheetClose>
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyber-blue/15 to-transparent bg-[length:200%_100%] animate-nav-shimmer"></div>
           <SidebarContent />
         </SheetContent>
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <aside className={cn("hidden md:block border-r", className)}>
-        <div className="h-screen w-64">
+      <aside 
+        className={cn("hidden md:block", className)}
+        aria-label="Main navigation"
+      >
+        <div className="h-full min-h-screen w-64 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-r relative overflow-hidden">
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyber-blue/15 to-transparent bg-[length:200%_100%] animate-nav-shimmer"></div>
           <SidebarContent />
         </div>
       </aside>
@@ -118,7 +137,7 @@ export function AppSidebar({ className }: SidebarProps) {
 
 interface NavItemProps {
   href: string
-  icon: any
+  icon: React.ElementType
   text: string
   isActive?: boolean
 }
@@ -126,15 +145,26 @@ interface NavItemProps {
 function NavItem({ href, icon: Icon, text, isActive }: NavItemProps) {
   return (
     <Button
-      variant={isActive ? "secondary" : "ghost"}
+      variant="ghost"
       asChild
-      className="w-full justify-start"
+      className={cn(
+        "w-full justify-start transition-transform duration-medium",
+        "hover:bg-cyber-blue/5",
+        "focus-visible:bg-cyber-blue/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyber-blue/30",
+        isActive && "bg-cyber-blue/5 border-l border-cyber-blue/50 font-medium"
+      )}
     >
       <Link href={href}>
-        <Icon className="mr-2 h-4 w-4" />
-        <span>{text}</span>
+        <span className="flex items-center w-full">
+          <Icon className={cn(
+            "mr-2 h-4 w-4 transition-colors duration-medium", 
+            isActive ? "text-cyber-blue/80" : "text-muted-foreground"
+          )} />
+          <span className={cn("transition-colors duration-medium")}>
+            {text}
+          </span>
+        </span>
       </Link>
     </Button>
   )
 }
-

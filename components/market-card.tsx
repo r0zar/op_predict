@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock, Users, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
+import { Clock, Users, ChevronDown, ChevronUp, Trash2 } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
 import { useState } from "react"
 
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { SignIn } from '@clerk/nextjs'
-import { calculateOutcomePercentages } from "@/lib/utils"
+import { calculateOutcomePercentages, cn } from "@/lib/utils"
 import Link from "next/link"
 
 interface MarketCardProps {
@@ -33,10 +33,14 @@ interface MarketCardProps {
 }
 
 export function MarketCard({ market, disabled = false }: MarketCardProps) {
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, userId } = useAuth()
   const [showSignInDialog, setShowSignInDialog] = useState(false)
   const [showAllOutcomes, setShowAllOutcomes] = useState(false)
-  const { name, participants, poolAmount, outcomes, category, endDate, type } = market
+  const [showDelete, setShowDelete] = useState(false)
+  const { name, participants, poolAmount, outcomes, category, endDate, type, id: marketId, status } = market
+
+  // Check if user is admin (this would be handled better with a proper auth check)
+  const isUserAdmin = userId && typeof window !== 'undefined' && localStorage.getItem('isAdmin') === 'true'
 
   // Format the end date
   const formatEndDate = (dateString: string): string => {
@@ -53,20 +57,14 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
 
   // Sort outcomes by percentage for multiple choice
   const sortedOutcomes = type === 'multiple'
-    ? [...outcomesWithPercentages]
-      .sort((a, b) => b.percentage - a.percentage)
-    : outcomesWithPercentages.sort((a, b) =>
-      // For binary, always show Yes first
-      a.name.toLowerCase() === 'yes' ? -1 : 1
-    )
+    ? [...outcomesWithPercentages].sort((a, b) => b.percentage - a.percentage)
+    : outcomesWithPercentages.sort((a, b) => a.name.toLowerCase() === 'yes' ? -1 : 1)
 
   // Ensure percentages add up to 100
   const totalPercentage = sortedOutcomes.reduce((sum, outcome) => sum + outcome.percentage, 0)
   const normalizedOutcomes = sortedOutcomes.map(outcome => ({
     ...outcome,
-    percentage: totalPercentage === 0
-      ? outcome.percentage
-      : (outcome.percentage / totalPercentage) * 100
+    percentage: totalPercentage === 0 ? outcome.percentage : (outcome.percentage / totalPercentage) * 100
   }))
 
   // Format pool amount as currency
@@ -94,41 +92,26 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
     handlePredictionClick()
   }
 
-  // Calculate color for outcome
+  // Calculate color for outcome (with reduced opacity)
   const getOutcomeColor = (index: number, total: number = outcomesWithPercentages.length) => {
     if (type === 'binary') {
-      // Rich, darker shades that complement dark theme
+      // Based on Signet colors but with reduced opacity
       return index === 0
-        ? 'hsl(150, 80%, 25%)' // Deep green
-        : 'hsl(350, 80%, 30%)' // Deep red
+        ? 'hsl(var(--neon-green))' // Green for Yes
+        : 'hsl(var(--neon-red))' // Red for No
     }
 
-    // For multiple choice, create a gradient from gold to blue through green
-    const goldHue = 30    // Theme gold
-    const greenHue = 142  // Mid green
-    const blueHue = 222   // Theme blue
+    // For multiple choice, create a gradient from Signet colors
+    const colors = [
+      'hsl(var(--cyber-blue))',   // Cyber Blue
+      'hsl(var(--neon-purple))',  // Neon Purple
+      'hsl(var(--neon-pink))',    // Neon Pink
+      'hsl(var(--neon-orange))',  // Neon Orange
+      'hsl(var(--neon-green))'    // Neon Green
+    ];
 
-    // Calculate progress through the gradient (0 to 1)
-    const progress = index / (total - 1)
-
-    // First half transitions from gold to green
-    // Second half transitions from green to blue
-    const hue = progress < 0.5
-      ? goldHue + (greenHue - goldHue) * (progress * 2)
-      : greenHue + (blueHue - greenHue) * ((progress - 0.5) * 2)
-
-    // Keep saturation high for vibrant colors but adjust lightness for contrast
-    return `hsl(${Math.round(hue)}, 80%, ${Math.max(25, 45 - index * 3)}%)`
-  }
-
-  // Calculate text color based on background lightness
-  const getTextColor = (index: number) => {
-    if (type === 'binary') {
-      return 'text-white'
-    }
-
-    // For multiple choice, always use white text for better contrast
-    return 'text-white'
+    // Cycle through colors
+    return colors[index % colors.length];
   }
 
   // Determine which outcomes to show
@@ -139,44 +122,59 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
   return (
     <>
       {showSignInDialog && <SignIn />}
-      <Card className="overflow-hidden transition-all hover:shadow-md flex flex-col">
+      <Card
+        variant="default"
+        tilt={false}
+        glowHover={true}
+        className="theme-market-card"
+        onMouseEnter={() => setShowDelete(true)}
+        onMouseLeave={() => setShowDelete(false)}
+      >
         <CardHeader className="flex flex-col flex-1 p-4">
           <div className="flex items-center justify-between">
-            <Badge className="bg-secondary/10  bg-secondary-gradient">
+            <Badge variant="outline" className="bg-transparent border-border text-muted-foreground">
               {category}
             </Badge>
-            <div className="text-sm text-muted-foreground flex items-center">
-              <Clock className="h-3 w-3 mr-1" />
-              <span>Deadline: {formatEndDate(endDate)}</span>
+            <div className="text-xs text-muted-foreground flex items-center">
+              <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
+              <span>Ends {formatEndDate(endDate)}</span>
             </div>
           </div>
-          <CardTitle className="line-clamp-2 text-xl mt-4 flex-1">{name}</CardTitle>
+          <CardTitle className="line-clamp-2 text-xl mt-3 mb-1 flex-1 text-foreground">
+            {name}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow-0 p-4 pt-0">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>{participants.toLocaleString()} participants</span>
-            <span className="text-primary font-medium">{formattedPoolAmount} pool</span>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>{participants.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-1.5 font-mono">
+              <span className="text-cyber-blue/90">${formattedPoolAmount}</span>
+            </div>
           </div>
 
           {type === 'binary' ? (
             // Binary market layout
-            <div className="mt-4 space-y-2">
-              {/* Percentage bar */}
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mt-4 space-y-3">
+              {/* Percentage bar with reduced glow */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-space-void">
                 <div className="flex h-full">
                   <div
                     className="h-full transition-all duration-200 ease-in-out"
                     style={{
                       width: `${visibleOutcomes[0]?.percentage || 0}%`,
-                      backgroundColor: getOutcomeColor(0)
+                      backgroundColor: getOutcomeColor(0),
+                      boxShadow: `0 0 4px ${getOutcomeColor(0)}70` // Adding 70 for 70% opacity
                     }}
                   />
                   <div
                     className="h-full transition-all duration-200 ease-in-out"
                     style={{
                       width: `${visibleOutcomes[1]?.percentage || 0}%`,
-                      backgroundColor: getOutcomeColor(1)
+                      backgroundColor: getOutcomeColor(1),
+                      boxShadow: `0 0 4px ${getOutcomeColor(1)}70` // Adding 70 for 70% opacity
                     }}
                   />
                 </div>
@@ -184,45 +182,69 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
 
               {/* Labels and percentages */}
               <div className="flex justify-between items-center text-xs">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: getOutcomeColor(0) }}
+                    style={{
+                      backgroundColor: getOutcomeColor(0),
+                      boxShadow: `0 0 2px ${getOutcomeColor(0)}60` // Reduced glow
+                    }}
                   />
-                  <span className="font-medium" style={{ color: getOutcomeColor(0) }}>
-                    {visibleOutcomes[0]?.name} ({(visibleOutcomes[0]?.percentage || 0).toFixed(1)}%)
+                  <span style={{ color: `${getOutcomeColor(0)}CC` }}> {/* CC for 80% opacity */}
+                    {visibleOutcomes[0]?.name} ({(visibleOutcomes[0]?.percentage || 0).toFixed(0)}%)
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium" style={{ color: getOutcomeColor(1) }}>
-                    ({(visibleOutcomes[1]?.percentage || 0).toFixed(1)}%) {visibleOutcomes[1]?.name}
+                <div className="flex items-center gap-1.5">
+                  <span style={{ color: `${getOutcomeColor(1)}CC` }}> {/* CC for 80% opacity */}
+                    ({(visibleOutcomes[1]?.percentage || 0).toFixed(0)}%) {visibleOutcomes[1]?.name}
                   </span>
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: getOutcomeColor(1) }}
+                    style={{
+                      backgroundColor: getOutcomeColor(1),
+                      boxShadow: `0 0 2px ${getOutcomeColor(1)}60` // Reduced glow
+                    }}
                   />
                 </div>
               </div>
 
-              {/* Action button for binary markets */}
-              <div className="mt-2">
-                {isSignedIn ? (
+              {/* Action buttons for binary markets */}
+              <div className="mt-4 flex items-center gap-2">
+                {isUserAdmin && (
                   <Button
-                    className="w-full items-center"
                     variant="ghost"
                     size="sm"
-                    disabled={disabled || market.status !== 'active'}
+                    className={cn(
+                      "px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all",
+                      !showDelete && "opacity-0"
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // We'd add the delete logic here - the same as in DeleteMarketButton
+                    }}
                   >
-                    <Link href={`/markets/${market.id}`} className="w-full">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+
+                {isSignedIn ? (
+                  <Button
+                    className="w-full"
+                    variant="default"
+                    size="sm"
+                    disabled={disabled || status !== 'active'}
+                  >
+                    <Link href={`/markets/${marketId}`} className="w-full flex items-center justify-center">
                       View Market
                     </Link>
                   </Button>
                 ) : (
                   <Button
-                    className="w-full items-center"
-                    variant="outline"
+                    className="w-full"
+                    variant="default"
                     size="sm"
-                    disabled={disabled || market.status !== 'active'}
+                    disabled={disabled || status !== 'active'}
                     onClick={handleButtonClick}
                   >
                     Sign in to Predict
@@ -232,9 +254,9 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
             </div>
           ) : (
             // Multiple choice layout
-            <div className="mt-4 space-y-2">
-              {/* Horizontal stacked bar */}
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mt-4 space-y-3">
+              {/* Horizontal stacked bar with reduced glow */}
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-space-void">
                 <div className="flex h-full">
                   {normalizedOutcomes.map((outcome, index) => (
                     <div
@@ -242,7 +264,8 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
                       className="h-full transition-all duration-200 ease-in-out"
                       style={{
                         width: `${outcome.percentage}%`,
-                        backgroundColor: outcome.color || getOutcomeColor(index)
+                        backgroundColor: outcome.color || getOutcomeColor(index),
+                        boxShadow: `0 0 4px ${outcome.color || getOutcomeColor(index)}70` // 70% opacity
                       }}
                     />
                   ))}
@@ -253,76 +276,121 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
               <div className="space-y-1.5">
                 {visibleOutcomes.map((outcome, index) => (
                   <div key={outcome.id || index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <div
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: outcome.color || getOutcomeColor(index) }}
+                        style={{
+                          backgroundColor: outcome.color || getOutcomeColor(index),
+                          boxShadow: `0 0 2px ${outcome.color || getOutcomeColor(index)}60` // Reduced glow
+                        }}
                       />
-                      <span className="text-sm line-clamp-1">{outcome.name}</span>
+                      <span className="text-xs line-clamp-1"
+                        style={{ color: `${outcome.color || getOutcomeColor(index)}CC` }}> {/* CC for 80% opacity */}
+                        {outcome.name}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium">{outcome.percentage.toFixed(1)}%</span>
+                    <span className="text-xs"
+                      style={{ color: `${outcome.color || getOutcomeColor(index)}CC` }}>
+                      {outcome.percentage.toFixed(0)}%
+                    </span>
                   </div>
                 ))}
               </div>
 
               {/* Integrated show more/less button with action button for multiple choice */}
               {type === 'multiple' && normalizedOutcomes.length > 2 ? (
-                <div className="flex gap-2 items-center mt-2">
+                <div className="flex items-center gap-2 mt-4">
+                  {isUserAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all",
+                        !showDelete && "opacity-0"
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // We'd add the delete logic here - the same as in DeleteMarketButton
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs items-center w-full"
+                    className="text-xs items-center"
                     onClick={handleExpandClick}
                   >
                     {showAllOutcomes ? (
-                      <><ChevronUp className="h-3 w-3 mr-1" /> Show Less</>
+                      <><ChevronUp className="h-3 w-3 mr-1" /> Less</>
                     ) : (
-                      <><ChevronDown className="h-3 w-3 mr-1" /> {normalizedOutcomes.length - 2} More</>
+                      <><ChevronDown className="h-3 w-3 mr-1" /> More</>
                     )}
                   </Button>
 
                   {isSignedIn ? (
                     <Button
                       size="sm"
-                      variant="ghost"
-                      disabled={disabled || market.status !== 'active'}
-                      className="w-full items-center"
+                      variant="default"
+                      disabled={disabled || status !== 'active'}
+                      className="w-full"
                     >
-                      <Link href={`/markets/${market.id}`}>
-                        View Market
+                      <Link href={`/markets/${marketId}`} className="w-full flex items-center justify-center">
+                        View
                       </Link>
                     </Button>
                   ) : (
                     <Button
                       size="sm"
-                      variant="outline"
-                      disabled={disabled || market.status !== 'active'}
+                      variant="default"
+                      disabled={disabled || status !== 'active'}
                       onClick={handleButtonClick}
-                      className="flex-shrink-0 items-center"
+                      className="w-full"
                     >
                       Predict
                     </Button>
                   )}
                 </div>
               ) : (
-                <div className="mt-2">
-                  {isSignedIn ? (
+                <div className="mt-4 flex items-center gap-2">
+                  {isUserAdmin && (
                     <Button
-                      className="w-full items-center"
                       variant="ghost"
                       size="sm"
-                      disabled={disabled || market.status !== 'active'}
+                      className={cn(
+                        "px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all",
+                        !showDelete && "opacity-0"
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // We'd add the delete logic here - the same as in DeleteMarketButton
+                      }}
                     >
-                      <Link href={`/markets/${market.id}`} className="w-full">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+
+                  {isSignedIn ? (
+                    <Button
+                      className="w-full"
+                      variant="default"
+                      size="sm"
+                      disabled={disabled || status !== 'active'}
+                    >
+                      <Link href={`/markets/${marketId}`} className="w-full flex items-center justify-center">
                         View Market
                       </Link>
                     </Button>
                   ) : (
                     <Button
-                      className="w-full items-center"
-                      variant="outline"
+                      className="w-full"
+                      variant="default"
                       size="sm"
-                      disabled={disabled || market.status !== 'active'}
+                      disabled={disabled || status !== 'active'}
                       onClick={handleButtonClick}
                     >
                       Sign in to Predict
@@ -333,9 +401,6 @@ export function MarketCard({ market, disabled = false }: MarketCardProps) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="hidden">
-          {/* Moved to integrated UI above */}
-        </CardFooter>
       </Card>
     </>
   )

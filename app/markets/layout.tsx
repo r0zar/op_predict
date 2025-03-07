@@ -12,7 +12,7 @@ export default async function MarketsLayout({
     return (
         <div className="flex min-h-screen">
             <AppSidebar />
-            <div className="flex-1 container mx-auto px-4 overflow-scroll sm:overflow-auto">
+            <div className="flex-1 container mx-auto px-4">
                 {children}
             </div>
         </div>

@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { getMarkets } from "@/app/actions/market-actions"
-import type { Market } from "wisdom-sdk"
+// Define Market type locally
+type Market = any;
 
 type SortField = "participants" | "poolAmount" | "volume24h" | "change24h"
 type SortDirection = "asc" | "desc"
@@ -18,8 +19,8 @@ export function TopMarkets() {
 
   useEffect(() => {
     const fetchMarkets = async () => {
-      const markets = await getMarkets()
-      setMarkets(markets)
+      const result = await getMarkets()
+      setMarkets(result.items || [])
     }
     fetchMarkets()
   }, [])

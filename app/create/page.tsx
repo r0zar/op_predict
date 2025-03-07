@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Check, ChevronRight, HelpCircle, Info, Plus, Trash2, X, CheckCircle2, ListFilter } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,13 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Form,
     FormControl,
@@ -37,7 +44,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import { createMarket, CreateMarketFormData } from "@/app/actions/market-actions";
+import { createMarket, CreateMarketFormData, MARKET_CATEGORIES } from "@/app/actions/market-actions";
 
 // Define market types
 const marketTypes = [
@@ -68,6 +75,9 @@ const marketFormSchema = z.object({
     }).max(500, {
         message: "Description must not exceed 500 characters."
     }),
+    category: z.enum(MARKET_CATEGORIES, {
+        errorMap: () => ({ message: "Please select a valid category" })
+    }).default("general"),
     endDate: z.string().min(1, {
         message: "Voting deadline is required"
     }),
@@ -112,6 +122,7 @@ export default function CreateMarketPage() {
             type: "binary",
             name: "",
             description: "",
+            category: "general",
             endDate: getDefaultEndDate(),
             outcomes: [
                 { id: 1, name: "Yes" },
@@ -424,6 +435,37 @@ export default function CreateMarketPage() {
 
                                     <FormField
                                         control={form.control}
+                                        name="category"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-base">Category</FormLabel>
+                                                <Select 
+                                                    onValueChange={field.onChange} 
+                                                    defaultValue={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-12">
+                                                            <SelectValue placeholder="Select a category" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {MARKET_CATEGORIES.map((category) => (
+                                                            <SelectItem key={category} value={category}>
+                                                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription className="text-sm">
+                                                    Choose the category that best describes your market
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
                                         name="endDate"
                                         render={({ field }) => (
                                             <FormItem>
@@ -563,6 +605,11 @@ export default function CreateMarketPage() {
                                         <div className="p-4 rounded-lg border bg-muted/30">
                                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Description</h3>
                                             <p className="text-base whitespace-pre-wrap">{form.getValues("description")}</p>
+                                        </div>
+
+                                        <div className="p-4 rounded-lg border bg-muted/30">
+                                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Category</h3>
+                                            <p className="text-base font-medium capitalize">{form.getValues("category")}</p>
                                         </div>
 
                                         <div className="p-4 rounded-lg border bg-muted/30">

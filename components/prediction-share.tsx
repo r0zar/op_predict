@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
 import { Share, Twitter, Copy, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -94,7 +93,6 @@ export default function PredictionShare({
     // Handle copy link to clipboard
     const handleCopyLink = () => {
         navigator.clipboard.writeText(predictionUrl);
-        toast.success('Link copied to clipboard');
     };
 
     // Handle X (Twitter) share
@@ -149,7 +147,6 @@ export default function PredictionShare({
     const handleImageError = () => {
         setPreviewError('Error loading preview image');
         console.error('Error loading preview image. Using fallback:', fallbackImageUrl);
-        toast.error('Error loading preview image. Using fallback.');
     };
 
     // Handle image load success
@@ -162,10 +159,11 @@ export default function PredictionShare({
         <>
             <Button
                 onClick={handleDirectShare}
-                className="gap-2 bg-blue-600 hover:bg-blue-700"
+                className="gap-2 bg-blue-600 hover:bg-blue-700 relative overflow-hidden group"
             >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
                 <Share className="h-4 w-4" />
-                Share Prediction
+                Share Your Prediction
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -184,7 +182,6 @@ export default function PredictionShare({
                                     onLoad={() => console.log("Fallback image loaded")}
                                     onError={() => {
                                         console.error("Even fallback image failed to load");
-                                        toast.error("Failed to load any preview image");
                                     }}
                                 />
                             ) : (

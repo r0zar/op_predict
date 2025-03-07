@@ -10,12 +10,23 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        // Base fonts
         sans: ["var(--font-inter)", "Inter", "-apple-system", "system-ui", "sans-serif"],
         mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "monospace"],
-        // Theme-specific font families
+
+        // Theme-specific dynamic font families
         theme: ["var(--font-primary)"],
         display: ["var(--font-display)"],
         "mono-theme": ["var(--font-mono)"],
+
+        // Cyberpunk theme fonts
+        "source-code": ["var(--font-source-code-pro)", "Source Code Pro", "monospace"],
+        syncopate: ["var(--font-syncopate)", "Syncopate", "sans-serif"],
+
+        // Protoss theme fonts
+        exo: ["var(--font-exo-2)", "Exo 2", "sans-serif"],
+        orbitron: ["var(--font-orbitron)", "Orbitron", "sans-serif"],
+        "fira-code": ["var(--font-fira-code)", "Fira Code", "monospace"],
       },
       colors: {
         // Standard Tailwind CSS variables
@@ -65,7 +76,7 @@ const config: Config = {
         'neon-orange': 'hsl(var(--neon-orange))',
         'steel': 'hsl(var(--steel))',
         'dark-steel': 'hsl(var(--dark-steel))',
-        
+
         // Protoss Theme Colors
         'void-void': 'hsl(var(--void-void))',
         'void-dark': 'hsl(var(--void-dark))',
@@ -90,25 +101,29 @@ const config: Config = {
         // UI Component animations
         'accordion-down': 'accordion-down var(--duration-fast) var(--ease-standard)',
         'accordion-up': 'accordion-up var(--duration-fast) var(--ease-standard)',
-        
+
         // Cyberpunk effect animations
         'nav-shimmer': 'navShimmer 12s var(--ease-standard) infinite',
         'shimmer': 'shimmer 3s infinite',
         'pulse-glow': 'pulseGlow 2s infinite',
         'border-pulse': 'borderPulse 2s infinite',
         'neon-pulse': 'neonPulse 2s infinite',
-        
+
         // Motion animations
         'fade-in': 'fadeIn var(--duration-medium) var(--ease-standard)',
         'slide-in-up': 'slideInUp var(--duration-medium) var(--ease-spring)',
         'float': 'float 6s var(--ease-spring) infinite',
-        
+
         // Effect animations
         'shake': 'shake var(--duration-fast) var(--ease-standard)',
         'ping-slow': 'pingSlow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
         'bounce-slow': 'bounceSlow 2s infinite',
         'cyber-glitch': 'cyberGlitch 1s var(--ease-standard) infinite',
         'particle': 'particle 1s var(--ease-standard) forwards',
+      },
+      scale: {
+        '98': '0.98',
+        '102': '1.02',
       },
       keyframes: {
         'accordion-down': {
@@ -120,13 +135,13 @@ const config: Config = {
           to: { height: '0' }
         },
         navShimmer: {
-          '0%': { 
+          '0%': {
             backgroundPosition: '-100% 0',
             opacity: '0',
           },
           '20%': { opacity: '0.6' },
           '80%': { opacity: '0.6' },
-          '100%': { 
+          '100%': {
             backgroundPosition: '200% 0',
             opacity: '0',
           },
@@ -210,16 +225,16 @@ const config: Config = {
         'cyber': '0 0 15px hsl(var(--cyber-blue) / 0.4), 0 0 30px hsl(var(--cyber-blue) / 0.2)',
         'cyber-sm': '0 0 5px hsl(var(--cyber-blue) / 0.3), 0 0 10px hsl(var(--cyber-blue) / 0.1)',
         'cyber-lg': '0 0 25px hsl(var(--cyber-blue) / 0.5), 0 0 50px hsl(var(--cyber-blue) / 0.3)',
-        
+
         // Glow effects
         'glow': '0 0 15px hsl(var(--cyber-blue) / 0.7), 0 0 30px hsl(var(--cyber-blue) / 0.4)',
         'glow-sm': '0 0 10px hsl(var(--cyber-blue) / 0.5), 0 0 20px hsl(var(--cyber-blue) / 0.3)',
-        
+
         // Neon effects
         'neon': '0 0 5px hsl(var(--cyber-blue) / 0.7), 0 0 10px hsl(var(--cyber-blue) / 0.5), 0 0 15px hsl(var(--cyber-blue) / 0.3)',
         'neon-strong': '0 0 10px hsl(var(--cyber-blue) / 0.8), 0 0 20px hsl(var(--cyber-blue) / 0.6), 0 0 30px hsl(var(--cyber-blue) / 0.4)',
         'inner-neon': 'inset 0 0 5px hsl(var(--cyber-blue) / 0.7), inset 0 0 10px hsl(var(--cyber-blue) / 0.3)',
-        
+
         // Color variants
         'neon-purple': '0 0 5px hsl(var(--neon-purple) / 0.7), 0 0 10px hsl(var(--neon-purple) / 0.5), 0 0 15px hsl(var(--neon-purple) / 0.3)',
         'neon-pink': '0 0 5px hsl(var(--neon-pink) / 0.7), 0 0 10px hsl(var(--neon-pink) / 0.5), 0 0 15px hsl(var(--neon-pink) / 0.3)',
@@ -229,24 +244,24 @@ const config: Config = {
         // Basic gradients
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'space-gradient': 'linear-gradient(to bottom, hsl(var(--space-black)), hsl(var(--space-dark)))',
-        
+
         // Cyberpunk-themed patterns
         'cyber-grid': 'linear-gradient(to right, hsl(var(--cyber-blue) / 0.1) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--cyber-blue) / 0.1) 1px, transparent 1px)',
         'cyber-glow': 'radial-gradient(circle at center, hsl(var(--cyber-blue) / 0.2) 0%, transparent 70%)',
         'cyber-lines': 'repeating-linear-gradient(90deg, hsl(var(--cyber-blue) / 0.03) 0px, hsl(var(--cyber-blue) / 0.03) 1px, transparent 1px, transparent 20px)',
-        
+
         // Asset-based backgrounds
         'hero-pattern': "url('/hero-pattern.svg')",
         'blaze-pattern': "url('/images/blaze-pattern.jpg')",
       },
-      
+
       // Transition durations using CSS variables
       transitionDuration: {
         'fast': 'var(--duration-fast)',
         'medium': 'var(--duration-medium)',
         'slow': 'var(--duration-slow)',
       },
-      
+
       // Transition timing functions using CSS variables
       transitionTimingFunction: {
         'standard': 'var(--ease-standard)',

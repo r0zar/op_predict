@@ -1,10 +1,7 @@
 'use server'
 
 import { currentUser } from "@clerk/nextjs/server";
-import { getMarketStore } from "wisdom-sdk";
-
-// Get store instance
-const marketStore = getMarketStore();
+import { marketStore } from "wisdom-sdk";
 
 // Types for our data
 export type TopVault = {
@@ -43,8 +40,8 @@ export async function getTopVaults(): Promise<TopVault[]> {
         }>();
 
         // Create simulated vaults based on market creators
-        markets.forEach(market => {
-            const creatorId = market.createdBy || 'anonymous';
+        markets.forEach((market: any) => {
+            const creatorId = market?.createdBy || 'anonymous';
             if (!vaultMap.has(creatorId)) {
                 // Initialize a new vault
                 vaultMap.set(creatorId, {
@@ -69,7 +66,7 @@ export async function getTopVaults(): Promise<TopVault[]> {
             engagement: data.engagement,
             fairResolution: data.fairResolution,
             markets: data.markets.length,
-            totalValue: data.markets.reduce((sum, market) => sum + (market.poolAmount || 0), 0)
+            totalValue: data.markets.reduce((sum: number, market: any) => sum + (typeof market?.poolAmount === 'number' ? market.poolAmount : 0), 0)
         }));
 
         // Sort by engagement and take top 3
@@ -163,8 +160,8 @@ export async function getPlatformStats(): Promise<{
 
         // Calculate actual stats based on markets
         const activePredictions = markets.length;
-        const totalValueLocked = markets.reduce((sum, market) => sum + (market.poolAmount || 0), 0);
-        const upcomingResolutions = markets.filter(m => m.status === 'active').length;
+        const totalValueLocked = markets.reduce((sum: number, market: any) => sum + (typeof market?.poolAmount === 'number' ? market.poolAmount : 0), 0);
+        const upcomingResolutions = markets.filter((m: any) => m?.status === 'active').length;
 
         return {
             activePredictions,

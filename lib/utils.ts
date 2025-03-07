@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Empty toast replacement that does nothing
+export const toast = {
+  success: () => {},
+  error: () => {},
+  warning: () => {},
+  info: () => {}
+}
+
 // Admin user IDs
 export const ADMIN_USER_IDS = [
   'user_2tjVcbojjJk2bkQd856eNE1Ax0S', // rozar

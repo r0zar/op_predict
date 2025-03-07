@@ -1,7 +1,11 @@
 import { ShieldAlert, TrendingUp, Star, Zap } from "lucide-react"
 import { currentUser } from "@clerk/nextjs/server"
 import { isAdmin } from "@/lib/utils"
-import { getAllMarkets } from "@/app/actions/market-actions"
+import { 
+  getMarkets, 
+  getTrendingMarkets, 
+  MARKET_CATEGORIES 
+} from "@/app/actions/market-actions"
 
 // Import all section components
 import { VaultsSection } from "./explore/vaults-section"
@@ -13,17 +17,27 @@ import { MarketsSection } from "./explore/markets-section"
 export async function ExploreContent() {
   const user = await currentUser()
   const isUserAdmin = isAdmin(user?.id || '')
-  const markets = await getAllMarkets()
-
-  // Filter functions for different sections
-  const getTrendingMarkets = (markets: any[]) =>
-    [...markets].sort((a, b) => (b.participants || 0) - (a.participants || 0)).slice(0, 4)
-
-  const getPersonalizedMarkets = (markets: any[]) =>
-    markets.slice(0, 4)
-
-  const getNewestMarkets = (markets: any[]) =>
-    [...markets].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 4)
+  
+  // Get markets with our new paginated API
+  const marketsResult = await getMarkets({
+    status: 'active',
+    limit: 20
+  })
+  
+  // Get trending markets with optimized function
+  const trendingMarkets = await getTrendingMarkets(4)
+  
+  // Get markets sorted by creation date
+  const newestMarketsResult = await getMarkets({
+    status: 'active',
+    sortBy: 'createdAt',
+    sortDirection: 'desc',
+    limit: 4
+  })
+  
+  // For personalized markets, we'll just use a slice of the main markets for now
+  // In a real implementation, this would use user preferences or history
+  const personalizedMarkets = marketsResult.items.slice(0, 4)
 
   return (
     <div className="mx-auto px-4">
@@ -41,22 +55,22 @@ export async function ExploreContent() {
       <MarketsSection
         title="Trending Markets"
         icon={TrendingUp}
-        markets={getTrendingMarkets(markets)}
-        viewAllHref="/markets?sort=trending"
+        markets={trendingMarkets}
+        viewAllHref="/markets?sort=poolAmount&direction=desc"
       />
 
       <MarketsSection
         title="Personalized For You"
         icon={Star}
-        markets={getPersonalizedMarkets(markets)}
+        markets={personalizedMarkets}
         viewAllHref="/markets?sort=personalized"
       />
 
       <MarketsSection
         title="New & Notable"
         icon={Zap}
-        markets={getNewestMarkets(markets)}
-        viewAllHref="/markets?sort=newest"
+        markets={newestMarketsResult.items}
+        viewAllHref="/markets?sort=createdAt&direction=desc"
       />
 
       {/* Admin notice */}

@@ -14,7 +14,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteMarket } from "@/app/actions/market-actions";
-import { toast } from "sonner";
+import { toast } from "@/lib/utils";
 
 interface DeleteMarketButtonProps {
     marketId: string;

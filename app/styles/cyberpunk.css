@@ -3,9 +3,14 @@
 /* Core theme variables */
 [data-theme="cyberpunk"] {
   /* Font configuration */
-  --font-primary: 'Inter', -apple-system, system-ui, sans-serif;
-  --font-display: 'Inter', -apple-system, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-primary: var(--font-source-code-pro), 'Source Code Pro', monospace;
+  --font-display: var(--font-syncopate), 'Syncopate', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  
+  /* Font feature settings for technical look with coding ligatures */
+  --font-feature-default: "calt" 1, "liga" 1, "clig" 1, "kern" 1;
+  --font-feature-display: "calt" 1, "case" 1, "ss01" 1, "ss03" 1, "kern" 1;
+  --font-feature-mono: "calt" 1, "liga" 1, "zero" 1, "ss01" 1, "ss02" 1, "onum" 0, "tnum" 1;
   
   /* Theme colors */
   --space-black: 222 47% 2%;
@@ -39,6 +44,7 @@
   --destructive: hsl(var(--neon-red));
   --destructive-foreground: #fff;
   --border: hsl(var(--dark-steel));
+  --cyber-border: hsl(var(--cyber-blue) / 0.2);
   --input: hsl(var(--dark-steel));
   --ring: hsl(var(--cyber-blue));
   
@@ -60,6 +66,19 @@
 
 [data-theme="cyberpunk"] .theme-button-danger {
   @apply text-neon-red border-neon-red/50 hover:shadow-md hover:shadow-neon-red/20;
+}
+
+/* Selected button styles for Cyberpunk theme */
+[data-theme="cyberpunk"] .btn-outline[aria-pressed="true"],
+[data-theme="cyberpunk"] .btn-outline[data-state="checked"],
+[data-theme="cyberpunk"] button[aria-pressed="true"],
+[data-theme="cyberpunk"] button[data-state="checked"],
+[data-theme="cyberpunk"] .bg-secondary,
+[data-theme="cyberpunk"] button[variant="outline"].bg-secondary {
+  background-color: rgba(125, 249, 255, 0.15) !important;
+  border-color: rgba(125, 249, 255, 0.6) !important;
+  color: hsl(var(--cyber-blue)) !important;
+  box-shadow: 0 0 10px rgba(125, 249, 255, 0.15) !important;
 }
 
 /* Legacy cyber buttons */
@@ -126,14 +145,14 @@
 
 @keyframes pulse-cyber {
   0% { box-shadow: 0 0 5px rgba(125, 249, 255, 0.4); }
-  50% { box-shadow: 0 0 15px rgba(125, 249, 255, 0.7), 0 0 25px rgba(189, 147, 249, 0.3); }
+  50% { box-shadow: 0 0 15px rgba(125, 249, 255, 0.1), 0 0 25px rgba(189, 147, 249, 0.3); }
   100% { box-shadow: 0 0 5px rgba(125, 249, 255, 0.4); }
 }
 
 /* Panel styles */
 [data-theme="cyberpunk"] .bg-panel-gradient {
   background: linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card), transparent 20%));
-  border: 1px solid rgba(0, 255, 255, 0.2);
+  border: 1px solid var(--cyber-border);
 }
 
 /* Card styling */
@@ -268,4 +287,305 @@
   50% {
     text-shadow: 0 0 10px rgba(125, 249, 255, 1), 0 0 20px rgba(125, 249, 255, 0.7), 0 0 30px rgba(125, 249, 255, 0.5);
   }
+}
+
+/* Cyberpunk Themed Market Card - "DIAGNOSTIC INTERFACE" */
+[data-theme="cyberpunk"] .theme-market-card {
+  /* Consistent border radius */
+  border-radius: 8px;
+  border-color: rgba(125, 249, 255, 0.05);
+  
+  /* Subtle inner glow to give a screen-like appearance */
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(125, 249, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  
+  /* Subtle circuit-board pattern background */
+  background-image: 
+    linear-gradient(to bottom, 
+      rgba(30, 30, 40, 0.8), 
+      rgba(22, 22, 30, 0.9)
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent 50px,
+      rgba(125, 249, 255, 0.03) 50px,
+      rgba(125, 249, 255, 0.03) 51px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 50px,
+      rgba(125, 249, 255, 0.03) 50px,
+      rgba(125, 249, 255, 0.03) 51px
+    );
+  
+  /* Remove 3D transform to avoid glitching */
+  transform: translateZ(0);
+  
+  /* Clean transitions for hover effects */
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+  
+  /* Contained effects */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Static digital noise texture - no animation */
+[data-theme="cyberpunk"] .theme-market-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  background-image: 
+    radial-gradient(rgba(125, 249, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 4px 4px, 3px 3px;
+  background-position: 0 0, 2px 2px;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Static highlight effect instead of sliding animation */
+[data-theme="cyberpunk"] .theme-market-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(125, 249, 255, 0.15) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme="cyberpunk"] .theme-market-card:hover {
+  border-color: rgba(125, 249, 255, 0.2);
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(125, 249, 255, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(125, 249, 255, 0.15);
+  
+  /* Add subtle raise effect */
+  transform: translateY(-2px);
+}
+
+[data-theme="cyberpunk"] .theme-market-card:hover::before {
+  opacity: 1;
+}
+
+/* Fix for consistent border radius in Card component */
+[data-theme="cyberpunk"] .card {
+  border-radius: 8px;
+}
+
+/* CYBERPUNK SCROLLBAR - The styling applies specifically to html and body */
+html[data-theme="cyberpunk"]::-webkit-scrollbar,
+body[data-theme="cyberpunk"]::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  background-color: hsl(var(--space-void));
+}
+
+html[data-theme="cyberpunk"]::-webkit-scrollbar-track,
+body[data-theme="cyberpunk"]::-webkit-scrollbar-track {
+  background-color: hsl(var(--space-void));
+  border-radius: 0;
+  /* Bolder data stream lines */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 4px,
+    rgba(125, 249, 255, 0.15) 4px, 
+    rgba(125, 249, 255, 0.15) 6px
+  );
+  /* Faster animation */
+  animation: cyber-data-stream 2s linear infinite;
+}
+
+@keyframes cyber-data-stream {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 50px;
+  }
+}
+
+/* Much more visible scrollbar thumb */
+html[data-theme="cyberpunk"]::-webkit-scrollbar-thumb,
+body[data-theme="cyberpunk"]::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--cyber-blue));
+  border-radius: 0;
+  
+  /* Bold cyber design */
+  background-image: 
+    linear-gradient(
+      to right,
+      rgba(125, 249, 255, 0.7),
+      rgba(189, 147, 249, 0.7)
+    ),
+    repeating-linear-gradient(
+      45deg, 
+      transparent,
+      transparent 5px,
+      rgba(0, 0, 0, 0.3) 5px,
+      rgba(0, 0, 0, 0.3) 10px
+    );
+  
+  /* Bright neon border */
+  border-top: 2px solid rgba(125, 249, 255, 0.9);
+  border-bottom: 2px solid rgba(125, 249, 255, 0.9);
+  
+  /* Strong glow effect */
+  box-shadow: 
+    0 0 10px rgba(125, 249, 255, 0.8),
+    inset 0 0 5px rgba(125, 249, 255, 0.5);
+    
+  /* More obvious pulse animation */
+  animation: neon-thumb-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes neon-thumb-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 10px rgba(125, 249, 255, 0.8),
+      inset 0 0 5px rgba(125, 249, 255, 0.5);
+  }
+  50% {
+    box-shadow: 
+      0 0 15px rgba(125, 249, 255, 1),
+      inset 0 0 10px rgba(125, 249, 255, 0.8);
+  }
+}
+
+/* Dramatic hover effect */
+html[data-theme="cyberpunk"]::-webkit-scrollbar-thumb:hover,
+body[data-theme="cyberpunk"]::-webkit-scrollbar-thumb:hover {
+  background-image: 
+    linear-gradient(
+      to right,
+      rgba(189, 147, 249, 0.8),
+      rgba(125, 249, 255, 0.8)
+    ),
+    repeating-linear-gradient(
+      -45deg, 
+      transparent,
+      transparent 5px,
+      rgba(0, 0, 0, 0.3) 5px,
+      rgba(0, 0, 0, 0.3) 10px
+    );
+    
+  /* Brighter borders */
+  border-top: 2px solid rgba(189, 147, 249, 1);
+  border-bottom: 2px solid rgba(125, 249, 255, 1);
+  
+  /* Intense neon glow */
+  box-shadow: 
+    0 0 20px rgba(125, 249, 255, 1),
+    0 0 30px rgba(125, 249, 255, 0.5),
+    inset 0 0 10px rgba(125, 249, 255, 0.8);
+  
+  /* Stop animation for solid glow */
+  animation: none !important;
+}
+
+/* Distinct scrollbar corner */
+html[data-theme="cyberpunk"]::-webkit-scrollbar-corner,
+body[data-theme="cyberpunk"]::-webkit-scrollbar-corner {
+  background-color: hsl(var(--space-dark));
+  background-image: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(125, 249, 255, 0.5) 40%,
+    rgba(125, 249, 255, 0.5) 60%,
+    transparent 60%
+  );
+  border-radius: 0;
+}
+
+/* Apply primary font to the body and all elements by default */
+[data-theme="cyberpunk"] body {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+}
+
+/* Cyberpunk font styling for specific UI elements */
+[data-theme="cyberpunk"] h1,
+[data-theme="cyberpunk"] h2,
+[data-theme="cyberpunk"] h3 {
+  font-family: var(--font-display);
+  font-feature-settings: var(--font-feature-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+[data-theme="cyberpunk"] h4,
+[data-theme="cyberpunk"] h5,
+[data-theme="cyberpunk"] h6 {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+  letter-spacing: 0.03em;
+}
+
+/* Code and technical text */
+[data-theme="cyberpunk"] code,
+[data-theme="cyberpunk"] pre,
+[data-theme="cyberpunk"] .technical-text {
+  font-family: var(--font-mono);
+  font-feature-settings: var(--font-feature-mono);
+}
+
+/* Buttons with technical aesthetic */
+[data-theme="cyberpunk"] button,
+[data-theme="cyberpunk"] .button,
+[data-theme="cyberpunk"] .btn {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Navigation with monospaced look */
+[data-theme="cyberpunk"] nav,
+[data-theme="cyberpunk"] nav a {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
+  letter-spacing: 0.02em;
+}
+
+/* Form elements with technical look */
+[data-theme="cyberpunk"] input,
+[data-theme="cyberpunk"] textarea,
+[data-theme="cyberpunk"] select {
+  font-family: var(--font-mono);
+  font-feature-settings: var(--font-feature-mono);
+}
+
+/* All paragraphs and text elements */
+[data-theme="cyberpunk"] p,
+[data-theme="cyberpunk"] span,
+[data-theme="cyberpunk"] div,
+[data-theme="cyberpunk"] li,
+[data-theme="cyberpunk"] td,
+[data-theme="cyberpunk"] th,
+[data-theme="cyberpunk"] label {
+  font-family: var(--font-primary);
+  font-feature-settings: var(--font-feature-default);
 }

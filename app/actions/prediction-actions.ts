@@ -2,16 +2,9 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { getMarketStore, getPredictionStore, getUserBalanceStore, getUserStatsStore } from 'wisdom-sdk';
-import type { Prediction, Market } from 'wisdom-sdk';
+import { marketStore, predictionStore, userBalanceStore, userStatsStore } from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
-
-// Get store instances
-const marketStore = getMarketStore();
-const predictionStore = getPredictionStore();
-const userBalanceStore = getUserBalanceStore();
-const userStatsStore = getUserStatsStore();
 
 // Define the validation schema for prediction creation
 const predictionFormSchema = z.object({
@@ -23,7 +16,7 @@ const predictionFormSchema = z.object({
 
 export type CreatePredictionFormData = z.infer<typeof predictionFormSchema>;
 
-export async function getRelatedMarkets(marketId: string): Promise<Market[]> {
+export async function getRelatedMarkets(marketId: string): Promise<any[]> {
     const market = await marketStore.getMarket(marketId);
     if (!market) {
         return [];
@@ -36,7 +29,7 @@ export async function getRelatedMarkets(marketId: string): Promise<Market[]> {
  */
 export async function createPrediction(formData: CreatePredictionFormData): Promise<{
     success: boolean;
-    prediction?: Prediction;
+    prediction?: any;
     nftReceipt?: any;
     outcomeName?: string;
     error?: string;
@@ -46,11 +39,11 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
         const validatedData = predictionFormSchema.parse(formData);
 
         // Get the market to verify it exists and get outcome name
-        const market = await marketStore.getMarket(validatedData.marketId);
+        const market: any = await marketStore.getMarket(validatedData.marketId);
         if (!market) {
             return { success: false, error: 'Market not found' };
         }
-        
+
         // Check if the market has ended
         if (market.endDate) {
             const endDate = new Date(market.endDate);
@@ -61,7 +54,7 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
         }
 
         // Find the outcome
-        const outcome = market.outcomes.find(o => o.id === validatedData.outcomeId);
+        const outcome = market.outcomes?.find((o: any) => o.id === validatedData.outcomeId);
         if (!outcome) {
             return { success: false, error: 'Outcome not found' };
         }
@@ -87,7 +80,7 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
         });
 
         // Update the market outcome votes and pool amount
-        const updatedOutcomes = market.outcomes.map(o => {
+        const updatedOutcomes = market.outcomes.map((o: any) => {
             if (o.id === validatedData.outcomeId) {
                 return {
                     ...o,
@@ -149,7 +142,7 @@ export async function createPrediction(formData: CreatePredictionFormData): Prom
  */
 export async function getUserPredictions(): Promise<{
     success: boolean;
-    predictions?: Prediction[];
+    predictions?: any[];
     error?: string;
 }> {
     try {
@@ -180,7 +173,7 @@ export async function getUserPredictions(): Promise<{
  */
 export async function getMarketPredictions(marketId: string): Promise<{
     success: boolean;
-    predictions?: Prediction[];
+    predictions?: any[];
     error?: string;
 }> {
     try {
@@ -209,7 +202,7 @@ export async function getMarketPredictions(marketId: string): Promise<{
  */
 export async function getPrediction(id: string): Promise<{
     success: boolean;
-    prediction?: Prediction;
+    prediction?: any;
     error?: string;
 }> {
     try {
@@ -319,7 +312,7 @@ export async function deletePrediction(predictionId: string): Promise<{
  */
 export async function getAllPredictions(): Promise<{
     success: boolean;
-    predictions?: Prediction[];
+    predictions?: any[];
     error?: string;
 }> {
     try {
@@ -336,13 +329,16 @@ export async function getAllPredictions(): Promise<{
 
         // Get all market predictions to get all prediction IDs
         const markets = await marketStore.getMarkets();
-        const allPredictions: Prediction[] = [];
+        const allPredictions: any[] = [];
 
         // Gather all predictions from all markets
         for (const market of markets) {
-            const marketPredictions = await predictionStore.getMarketPredictions(market.id);
-            if (marketPredictions.length > 0) {
-                allPredictions.push(...marketPredictions);
+            const m = market as any;
+            if (m && m.id) {
+                const marketPredictions = await predictionStore.getMarketPredictions(m.id);
+                if (marketPredictions && marketPredictions.length > 0) {
+                    allPredictions.push(...marketPredictions);
+                }
             }
         }
 

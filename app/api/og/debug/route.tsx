@@ -3,19 +3,16 @@ import { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
 
-// Preload the font
-const interBold = fetch(
-    new URL('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-0.woff2', import.meta.url)
-).then((res) => res.arrayBuffer());
+// Disable caching to ensure fresh content on every request
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
     try {
         const url = new URL(req.url);
         const debugText = url.searchParams.get('text') || 'OG Image Debug';
 
-        const fontData = await interBold;
-
-        // Generate the debug image
+        // Simple debug image with system fonts only
         return new ImageResponse(
             (
                 <div
@@ -30,11 +27,11 @@ export async function GET(req: NextRequest) {
                         color: 'white',
                         padding: '40px 20px',
                         textAlign: 'center',
-                        fontFamily: 'Inter',
+                        fontFamily: 'system-ui, sans-serif',
                     }}
                 >
-                    <h1 style={{ fontSize: 60, margin: 0 }}>OG Debug Image</h1>
-                    <p style={{ fontSize: 30, margin: '20px 0 40px 0' }}>{debugText}</p>
+                    <h1 style={{ fontSize: 60, margin: 0, display: 'flex' }}>OG Debug Image</h1>
+                    <p style={{ fontSize: 30, margin: '20px 0 40px 0', display: 'flex' }}>{debugText}</p>
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -45,23 +42,15 @@ export async function GET(req: NextRequest) {
                         fontSize: 24,
                         width: '80%'
                     }}>
-                        <p style={{ margin: '5px 0' }}>Timestamp: {new Date().toISOString()}</p>
-                        <p style={{ margin: '5px 0' }}>URL: {req.url}</p>
-                        <p style={{ margin: '5px 0' }}>OG API is working!</p>
+                        <p style={{ margin: '5px 0', display: 'flex' }}>Timestamp: {new Date().toISOString()}</p>
+                        <p style={{ margin: '5px 0', display: 'flex' }}>URL: {req.url}</p>
+                        <p style={{ margin: '5px 0', display: 'flex' }}>OG API is working!</p>
                     </div>
                 </div>
             ),
             {
                 width: 1200,
-                height: 630,
-                fonts: [
-                    {
-                        name: 'Inter',
-                        data: fontData,
-                        style: 'normal',
-                        weight: 700,
-                    },
-                ],
+                height: 630
             }
         );
     } catch (error: any) {
@@ -70,4 +59,4 @@ export async function GET(req: NextRequest) {
             status: 500,
         });
     }
-} 
+}

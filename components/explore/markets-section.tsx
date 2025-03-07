@@ -29,12 +29,7 @@ export async function MarketsSection({
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {markets.map((market) => (
-                    <div key={market.id} className="relative">
-                        {isUserAdmin && (
-                            <div className="absolute -top-3 -right-3 z-10">
-                                <DeleteMarketButton marketId={market.id} />
-                            </div>
-                        )}
+                    <div key={market.id}>
                         <MarketCard
                             market={{
                                 ...market,

@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Check, Trophy } from 'lucide-react';
 import { resolveMarket } from '@/app/actions/market-actions';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from "@/components/ui/label";
@@ -29,6 +28,7 @@ type ResolveMarketButtonProps = {
     }[];
     isAdmin: boolean;
     className?: string;
+    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'success' | 'warning';
 };
 
 export function ResolveMarketButton({
@@ -36,7 +36,8 @@ export function ResolveMarketButton({
     marketName,
     outcomes,
     isAdmin,
-    className
+    className,
+    variant = 'default'
 }: ResolveMarketButtonProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -50,7 +51,6 @@ export function ResolveMarketButton({
 
     const handleResolveMarket = async () => {
         if (!selectedOutcome) {
-            toast.error('Please select a winning outcome');
             return;
         }
 
@@ -63,15 +63,12 @@ export function ResolveMarketButton({
             });
 
             if (result.success) {
-                toast.success(`Market resolved successfully! Admin fee: $${result.adminFee?.toFixed(2)}`);
                 setOpen(false);
                 router.refresh();
             } else {
-                toast.error(result.error || 'Failed to resolve market');
             }
         } catch (error) {
             console.error('Error resolving market:', error);
-            toast.error('An unexpected error occurred');
         } finally {
             setLoading(false);
         }
@@ -82,7 +79,7 @@ export function ResolveMarketButton({
             <Button
                 onClick={() => setOpen(true)}
                 className={cn("flex items-center justify-center gap-2 w-full", className)}
-                variant="default"
+                variant={variant}
                 size="lg"
             >
                 <Trophy className="h-5 w-5" />

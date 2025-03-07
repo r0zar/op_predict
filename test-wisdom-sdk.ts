@@ -3,9 +3,7 @@ import {
   marketStore,
   predictionStore,
   userStatsStore,
-  userBalanceStore,
-  type Market,
-  type Prediction
+  userBalanceStore
 } from 'wisdom-sdk';
 
 // Log package exports to verify they exist

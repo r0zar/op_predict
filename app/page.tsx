@@ -16,18 +16,40 @@ export default async function Home() {
   // Fetch real markets from the database
   const markets = await getAllMarkets();
 
+  // Define a more complete market type
+  type MarketType = {
+    id?: string;
+    name?: string;
+    description?: string;
+    status?: string;
+    participants?: number;
+    poolAmount?: number;
+    outcomes?: any[];
+    category?: string;
+    endDate?: string;
+    createdBy?: string;
+    createdAt?: string;
+    imageUrl?: string;
+    resolvedOutcomeId?: number;
+    resolvedAt?: string;
+  };
+
   // Get the most active market by participants count (or pool amount)
-  const featuredMarket = markets.length > 0
+  const featuredMarket: MarketType = markets.length > 0
     ? [...markets]
-      .filter(m => m.status === 'active')
-      .sort((a, b) => (b.participants || 0) - (a.participants || 0))[0]
-    : null;
+      .filter((m: any) => m?.status === 'active')
+      .sort((a: any, b: any) => (b?.participants || 0) - (a?.participants || 0))[0] || {}
+    : {};
 
   // Get trending markets (excluding the featured one and completed markets)
   const trendingMarkets = markets.length > 1
     ? [...markets]
-      .filter(m => m.id !== featuredMarket?.id && m.status === 'active')
-      .sort((a, b) => (b.participants || 0) - (a.participants || 0))
+      .filter((m: any) => {
+        // Safe comparison with featuredMarket
+        const isNotFeatured = featuredMarket ? m?.id !== featuredMarket.id : true;
+        return isNotFeatured && m?.status === 'active';
+      })
+      .sort((a: any, b: any) => (b?.participants || 0) - (a?.participants || 0))
       .slice(0, 6)
     : [];
 
@@ -75,10 +97,10 @@ export default async function Home() {
                           <span>{(featuredMarket.participants || 0).toLocaleString()} participants</span>
                           <span className="text-primary font-medium">${(featuredMarket.poolAmount || 0).toLocaleString()} pool</span>
                         </div>
-                        {featuredMarket.outcomes?.length > 0 && (
+                        {Array.isArray(featuredMarket.outcomes) && featuredMarket.outcomes.length > 0 && (
                           <>
                             <div className="mt-4 flex justify-items-center justify-between">
-                              {calculateOutcomePercentages(featuredMarket.outcomes.map(outcome => ({
+                              {calculateOutcomePercentages(featuredMarket.outcomes?.map((outcome: any) => ({
                                 id: String(outcome.id),
                                 name: outcome.name,
                                 votes: outcome.votes,
@@ -151,26 +173,26 @@ export default async function Home() {
             </div>
             <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
               {trendingMarkets.length > 0 ? (
-                trendingMarkets.map(market => (
-                  <Link href={`/markets/${market.id}`} key={market.id}>
+                trendingMarkets.map((market: any) => (
+                  <Link href={`/markets/${market?.id}`} key={market?.id}>
                     <MarketCard
                       market={{
-                        id: market.id,
-                        name: market.name,
-                        type: market.type,
-                        participants: market.participants || 0,
-                        poolAmount: market.poolAmount || 0,
-                        outcomes: (market.outcomes || []).map(outcome => ({
-                          id: String(outcome.id),
-                          name: outcome.name,
-                          votes: outcome.votes,
-                          amount: outcome.amount
+                        id: market?.id,
+                        name: market?.name,
+                        type: market?.type,
+                        participants: market?.participants || 0,
+                        poolAmount: market?.poolAmount || 0,
+                        outcomes: (market?.outcomes || []).map((outcome: any) => ({
+                          id: String(outcome?.id),
+                          name: outcome?.name,
+                          votes: outcome?.votes,
+                          amount: outcome?.amount
                         })),
-                        category: market.category || 'General',
-                        endDate: new Date(market.createdAt).toLocaleDateString(),
-                        status: market.status || 'inactive'
+                        category: market?.category || 'General',
+                        endDate: new Date(market?.createdAt || new Date()).toLocaleDateString(),
+                        status: market?.status || 'inactive'
                       }}
-                      disabled={market.status !== 'active'}
+                      disabled={market?.status !== 'active'}
                     />
                   </Link>
                 ))

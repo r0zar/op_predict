@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { toast } from "sonner";
 // Define types locally
 type Market = any;
 type MarketOutcome = any;
@@ -81,12 +80,10 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
     // Handle form submission
     const handleSubmit = async () => {
         if (!selectedOutcome) {
-            toast.error("Please select an outcome");
             return;
         }
 
         if (amount <= 0) {
-            toast.error("Please select an amount");
             return;
         }
 
@@ -108,12 +105,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 outcomeName: selectedOutcomeData.name,
                 amount
             });
-            
+
             // If user rejected the prediction in Signet, abort
             if (!signetResponse.approved) {
-                toast.error("Prediction rejected", {
-                    description: "You cancelled the prediction in Signet extension."
-                });
                 return;
             }
 
@@ -127,7 +121,6 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
 
 
             if (result.success && result.prediction) {
-                toast.success("Prediction placed successfully!");
 
                 // Set the NFT receipt to show in the dialog
                 setNftReceipt(result.prediction.nftReceipt);
@@ -142,15 +135,94 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 // Refresh the page data
                 router.refresh();
             } else {
-                toast.error("Failed to place prediction", {
-                    description: result.error || "An unexpected error occurred.",
-                });
+                // Show error notification with Signet
+                if (result.error && result.error.includes('Insufficient balance')) {
+                    signet.createRichNotification({
+                        title: 'Insufficient Balance',
+                        message: 'You do not have enough funds to make this prediction.',
+                        details: `You attempted to place a $${amount} prediction, but your account balance is too low.`,
+                        notificationType: 'ERROR',
+                        htmlContent: `
+                            <div style="text-align: center;">
+                                <div style="color: #ff5555; font-size: 18px; margin-bottom: 12px;">
+                                    Insufficient Balance
+                                </div>
+                                <div style="margin: 8px 0;">
+                                    You need at least <span style="color: #f1fa8c; font-weight: bold;">$${amount}</span> in your account.
+                                </div>
+                                <div style="margin: 12px 0; font-size: 12px; color: #6272a4;">
+                                    Visit your portfolio to add more funds.
+                                </div>
+                            </div>
+                        `,
+                        actions: [
+                            {
+                                id: 'view-portfolio',
+                                label: 'VIEW PORTFOLIO',
+                                action: 'custom',
+                                color: 'rgb(80, 250, 123)'
+                            },
+                            {
+                                id: 'dismiss',
+                                label: 'DISMISS',
+                                action: 'dismiss'
+                            }
+                        ]
+                    }).then((response) => {
+                        // Check if the user clicked on the "View Portfolio" button
+                        if (response && response.result && response.result.actionId === 'view-portfolio') {
+                            // Navigate to the portfolio page
+                            router.push('/portfolio');
+                        }
+                    });
+                } else if (result.error) {
+                    // Generic error notification
+                    signet.createRichNotification({
+                        title: 'Prediction Failed',
+                        message: result.error,
+                        notificationType: 'ERROR'
+                    });
+                }
             }
         } catch (error) {
             console.error("Error making prediction:", error);
-            toast.error("Something went wrong", {
-                description: "Failed to place your prediction. Please try again.",
-            });
+            
+            // Show error notification with Signet for uncaught errors
+            if (error instanceof Error) {
+                // Check if it's an insufficient balance error
+                if (error.message && error.message.includes('Insufficient balance')) {
+                    signet.createRichNotification({
+                        title: 'Insufficient Balance',
+                        message: 'You do not have enough funds to make this prediction.',
+                        details: `You attempted to place a $${amount} prediction, but your account balance is too low.`,
+                        notificationType: 'ERROR',
+                        actions: [
+                            {
+                                id: 'view-portfolio',
+                                label: 'VIEW PORTFOLIO',
+                                action: 'custom',
+                                color: 'rgb(80, 250, 123)'
+                            },
+                            {
+                                id: 'dismiss',
+                                label: 'DISMISS',
+                                action: 'dismiss'
+                            }
+                        ]
+                    }).then((response) => {
+                        if (response && response.result && response.result.actionId === 'view-portfolio') {
+                            router.push('/portfolio');
+                        }
+                    });
+                } else {
+                    // Generic error notification
+                    signet.createRichNotification({
+                        title: 'Prediction Failed',
+                        message: error.message || 'An unexpected error occurred',
+                        notificationType: 'ERROR'
+                    });
+                }
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -158,26 +230,16 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
 
     return (
         <div className="space-y-4">
-            {/* Signet extension status indicator */}
-            {signet.isAvailable ? (
-                <div className="flex items-center gap-2 justify-end mb-2">
-                    <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                    <span className="text-xs text-muted-foreground">Signet Extension Connected</span>
-                </div>
-            ) : (
-                <div className="flex items-center gap-2 justify-end mb-2">
-                    <span className="inline-block w-2 h-2 bg-muted rounded-full"></span>
-                    <span className="text-xs text-muted-foreground">Signet Extension Not Detected</span>
-                </div>
-            )}
-
             {/* Explanation of how predictions work */}
-            <div className="text-right">
+            <div className="lex items-center justify-between">
+                <h2 className="text-sm font-medium text-foreground uppercase tracking-wider mb-4">
+                    Make a Prediction
+                </h2>
                 <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
                         <div className="inline-flex items-center text-xs text-muted-foreground cursor-help">
                             <InfoIcon className="h-3 w-3 mr-1" />
-                            <span className="text-glow">How do predictions work?</span>
+                            <span className="">How do predictions work?</span>
                         </div>
                     </TooltipTrigger>
                     <TooltipContent
@@ -212,19 +274,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                             variant="outline"
                             className={cn(
                                 "w-full justify-between min-h-[60px] py-3 px-4 transition-all duration-300 border-2 group crystal-highlight",
-                                // Base styles that don't change between states
                                 {
-                                    // Yes button styling (binary market)
-                                    "border-primary/50 hover:border-primary hover:bg-primary/10": isBinary && isYes && !isSelected,
-                                    "bg-primary text-primary-foreground border-primary": isBinary && isYes && isSelected,
-
-                                    // No button styling (binary market)
-                                    "border-destructive/50 hover:border-destructive hover:bg-destructive/10": isBinary && isNo && !isSelected,
-                                    "bg-destructive text-destructive-foreground border-destructive": isBinary && isNo && isSelected,
-
-                                    // Multiple choice styling
-                                    "border-muted hover:border-primary/60 hover:bg-primary/10": !isBinary && !isSelected,
-                                    "bg-secondary border-secondary text-secondary-foreground": !isBinary && isSelected,
+                                    "border-muted hover:border-primary/60 hover:bg-primary/10": !isSelected,
+                                    "bg-secondary border-secondary text-secondary-foreground": isSelected,
                                 }
                             )}
                             onClick={() => handleOutcomeSelect(outcome.id)}
@@ -313,7 +365,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                 key={predefinedAmount}
                                 variant="outline"
                                 className={cn(
-                                    "font-medium h-9 border-2 transition-all duration-300 items-center justify-center psi-particles",
+                                    "font-medium h-9 border-2 transition-all duration-300 items-center justify-center",
                                     {
                                         "border-muted hover:border-primary/60 hover:bg-primary/10": !isSelected,
                                         "bg-secondary border-secondary text-secondary-foreground": isSelected,
@@ -355,9 +407,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                                     <path d="m9 12 2 2 4-4" />
                                 </svg>
-                                <span className="text-glow">
-                                    {signet.isAvailable 
-                                        ? `Place $${amount} Prediction via Signet` 
+                                <span>
+                                    {signet.isAvailable
+                                        ? `Place $${amount} Prediction via Signet`
                                         : `Place $${amount} Prediction`}
                                 </span>
                             </>

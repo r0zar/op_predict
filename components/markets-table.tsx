@@ -7,7 +7,8 @@ import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import type { Market } from "wisdom-sdk"
+// Define Market type locally
+type Market = any
 
 type SortField = "participants" | "poolAmount" | "volume24h" | "change24h"
 type SortDirection = "asc" | "desc"

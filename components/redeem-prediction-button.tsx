@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CoinsIcon, TrendingUp, AlertCircle } from 'lucide-react';
 import { redeemPredictionReceipt } from '@/app/actions/prediction-actions';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import {
     AlertDialog,
@@ -54,15 +53,12 @@ export function RedeemPredictionButton({
                     ? `Prediction redeemed! You received $${result.payout?.toFixed(2)}`
                     : 'Prediction redeemed. Better luck next time!';
 
-                toast.success(message);
                 setOpen(false);
                 router.refresh();
             } else {
-                toast.error(result.error || 'Failed to redeem prediction');
             }
         } catch (error) {
             console.error('Error redeeming prediction:', error);
-            toast.error('An unexpected error occurred');
         } finally {
             setLoading(false);
         }
