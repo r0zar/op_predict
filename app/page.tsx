@@ -35,15 +35,15 @@ export default async function Home() {
   };
 
   // Get the most active market by participants count (or pool amount)
-  const featuredMarket: MarketType = markets.length > 0
-    ? [...markets]
+  const featuredMarket: MarketType = markets.items.length > 0
+    ? [...markets.items]
       .filter((m: any) => m?.status === 'active')
       .sort((a: any, b: any) => (b?.participants || 0) - (a?.participants || 0))[0] || {}
     : {};
 
   // Get trending markets (excluding the featured one and completed markets)
-  const trendingMarkets = markets.length > 1
-    ? [...markets]
+  const trendingMarkets = markets.items.length > 1
+    ? [...markets.items]
       .filter((m: any) => {
         // Safe comparison with featuredMarket
         const isNotFeatured = featuredMarket ? m?.id !== featuredMarket.id : true;
