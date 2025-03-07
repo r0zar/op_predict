@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import React from "react";
-import { toast } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +34,7 @@ interface BugReportTableProps {
 export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
     const router = useRouter();
     const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
-    
+
     const toggleReportExpand = (reportId: string) => {
         setExpandedReportId(expandedReportId === reportId ? null : reportId);
     };
@@ -52,23 +51,11 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
                 if (result.confirmationRewardPaid) {
                     message = "Status updated and $90 reward was issued to the reporter";
                 }
-
-                toast.success(message, {
-                    duration: 3000,
-                });
                 router.refresh();
             } else {
-                toast.error("Failed to update status", {
-                    description: result.error || "An unexpected error occurred.",
-                    duration: 3000,
-                });
             }
         } catch (error) {
             console.error("Error updating bug report status:", error);
-            toast.error("Something went wrong", {
-                description: "Failed to update status. Please try again.",
-                duration: 3000,
-            });
         }
     }
 
@@ -160,14 +147,14 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
                 <TableBody>
                     {reports.map((report) => (
                         <React.Fragment key={report.id}>
-                            <TableRow 
+                            <TableRow
                                 className={`cursor-pointer hover:bg-muted/50 ${expandedReportId === report.id ? 'bg-muted/50' : ''}`}
                                 onClick={() => toggleReportExpand(report.id)}
                             >
                                 <TableCell className="font-medium">
                                     <div className="flex items-center">
-                                        {expandedReportId === report.id ? 
-                                            <ChevronUp className="h-4 w-4 mr-2 flex-shrink-0" /> : 
+                                        {expandedReportId === report.id ?
+                                            <ChevronUp className="h-4 w-4 mr-2 flex-shrink-0" /> :
                                             <ChevronDown className="h-4 w-4 mr-2 flex-shrink-0" />
                                         }
                                         {report.title}
@@ -196,7 +183,7 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
                                     </TableCell>
                                 )}
                             </TableRow>
-                            
+
                             {expandedReportId === report.id && (
                                 <TableRow className="border-0">
                                     <TableCell colSpan={isAdmin ? 6 : 5} className="p-4 bg-muted/30">
@@ -207,11 +194,11 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
                                                     {report.description}
                                                 </div>
                                             </div>
-                                            
+
                                             {report.url && (
                                                 <div className="space-y-2">
                                                     <h3 className="font-medium">URL</h3>
-                                                    <a 
+                                                    <a
                                                         href={report.url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
@@ -222,7 +209,7 @@ export function BugReportTable({ reports, isAdmin }: BugReportTableProps) {
                                                     </a>
                                                 </div>
                                             )}
-                                            
+
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                                 <div>
                                                     <p className="text-muted-foreground">Submitted by</p>

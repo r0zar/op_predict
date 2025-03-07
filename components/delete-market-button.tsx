@@ -14,7 +14,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteMarket } from "@/app/actions/market-actions";
-import { toast } from "@/lib/utils";
 
 interface DeleteMarketButtonProps {
     marketId: string;
@@ -30,17 +29,10 @@ export function DeleteMarketButton({ marketId }: DeleteMarketButtonProps) {
             const result = await deleteMarket(marketId);
 
             if (result.success) {
-                toast.success("Market deleted successfully");
             } else {
-                toast.error("Failed to delete market", {
-                    description: result.error || "An unexpected error occurred",
-                });
             }
         } catch (error) {
             console.error("Error deleting market:", error);
-            toast.error("Something went wrong", {
-                description: "Failed to delete the market. Please try again.",
-            });
         } finally {
             setIsDeleting(false);
             setOpen(false);

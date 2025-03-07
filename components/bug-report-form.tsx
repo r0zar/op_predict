@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { toast } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -70,29 +69,14 @@ export function BugReportForm() {
                 // Check if the initial reward was paid
                 if (result.rewardPaid) {
                     setRewardPaid(true);
-                    toast.success("Bug report submitted and $10 reward issued", {
-                        description: "You'll receive an additional $90 if an admin confirms this bug.",
-                        duration: 5000,
-                    });
                 } else {
-                    toast.success("Bug report submitted successfully", {
-                        duration: 3000,
-                    });
                 }
                 form.reset();
                 router.refresh();
             } else {
-                toast.error("Failed to submit bug report", {
-                    description: result.error || "An unexpected error occurred.",
-                    duration: 3000,
-                });
             }
         } catch (error) {
             console.error("Error submitting bug report:", error);
-            toast.error("Something went wrong", {
-                description: "Failed to submit your bug report. Please try again.",
-                duration: 3000,
-            });
         } finally {
             setIsSubmitting(false);
         }

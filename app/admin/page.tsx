@@ -45,7 +45,6 @@ export default function AdminPage() {
         e.preventDefault();
 
         if (!userId) {
-            toast.error('Please enter a user ID');
             return;
         }
 
@@ -67,7 +66,6 @@ export default function AdminPage() {
             }
 
             // Show success message
-            toast.success(`User ${userId} was granted admin permissions`);
 
             // Add to local admin users list
             setAdminUsers(prev => [...prev, userId]);
@@ -75,7 +73,6 @@ export default function AdminPage() {
             // Reset form
             setUserId('');
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to set user as admin');
             console.error(error);
         } finally {
             setIsSubmitting(false);

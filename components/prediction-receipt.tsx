@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Copy, Wallet } from "lucide-react";
-import { toast } from "@/lib/utils";
+import { } from "@/lib/utils";
 import PredictionShare from "@/components/prediction-share";
 
 interface PredictionReceiptProps {
@@ -43,7 +43,6 @@ export function PredictionReceipt({
     const copyReceiptId = () => {
         navigator.clipboard.writeText(receipt.tokenId);
         setCopied(true);
-        toast.success("Receipt ID copied to clipboard");
 
         // Reset the copied state after a delay
         setTimeout(() => {
