@@ -15,7 +15,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/lib/utils";
 import { Trash2, Trophy, User } from "lucide-react";
 // Define Prediction type locally
 type Prediction = any;
