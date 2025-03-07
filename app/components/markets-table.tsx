@@ -705,19 +705,19 @@ export default function MarketsTable({
                       <Badge
                         className="capitalize relative overflow-hidden"
                         variant={
-                          market.status === 'active' 
-                            ? new Date(market.endDate) < new Date() 
-                              ? 'warning' 
+                          market.status === 'active'
+                            ? new Date(market.endDate) < new Date()
+                              ? 'warning'
                               : 'default'
-                            : market.status === 'resolved' 
-                              ? 'success' 
+                            : market.status === 'resolved'
+                              ? 'success'
                               : 'destructive'
                         }
                       >
                         {/* Add a subtle shimmer effect */}
                         <span className="animate-shimmer absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full"></span>
-                        {market.status === 'active' && new Date(market.endDate) < new Date() 
-                          ? 'Expired' 
+                        {market.status === 'active' && new Date(market.endDate) < new Date()
+                          ? 'Expired'
                           : market.status}
                       </Badge>
                     </TableCell>
@@ -783,7 +783,7 @@ export default function MarketsTable({
       )}
 
       {/* Analytics View with cyberpunk styling */}
-      {!isLoading && marketsResult?.items.length > 0 && viewMode === 'analytics' && (
+      {!isLoading && marketsResult?.items && marketsResult?.items.length > 0 && viewMode === 'analytics' && (
         <ClientAnalytics
           marketStats={marketStats}
           topMarkets={[...marketsResult.items].sort((a, b) => b.poolAmount - a.poolAmount).slice(0, 5)}
