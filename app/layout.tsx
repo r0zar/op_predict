@@ -12,7 +12,7 @@ import {
 } from "next/font/google"
 import Link from "next/link"
 import { TrendingUp } from "lucide-react"
-import "./globals.css"
+// import "./globals.css"
 import {
   ClerkProvider,
   SignInButton,

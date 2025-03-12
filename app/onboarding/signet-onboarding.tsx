@@ -712,15 +712,6 @@ export function SignetOnboarding({ username }: SignetOnboardingProps) {
                     </Button>
                   ) : (
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <a
-                        href={getExtensionLink()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-md text-lg font-medium bg-primary text-black hover:bg-primary/90 flex-1"
-                      >
-                        <Download className="h-5 w-5" />
-                        INSTALL SIGNET
-                      </a>
                       <Button
                         onClick={checkExtension}
                         variant="outline"
