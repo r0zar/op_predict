@@ -37,13 +37,13 @@ function preparePackageJson() {
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
     console.log('package.json modified successfully');
     
-    // Install dependencies
+    // Install dependencies with --no-frozen-lockfile to handle overrides changes
     console.log('Installing dependencies...');
-    execSync('pnpm install', { stdio: 'inherit' });
+    execSync('pnpm install --no-frozen-lockfile', { stdio: 'inherit' });
     
-    // Build the application
+    // Build the application (bypass prebuild script which might interfere)
     console.log('Building the application...');
-    execSync('pnpm build', { stdio: 'inherit' });
+    execSync('pnpm exec next build', { stdio: 'inherit' });
     
     console.log('Build completed successfully');
   } catch (error) {
