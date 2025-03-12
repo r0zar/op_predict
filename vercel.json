@@ -1,5 +1,5 @@
 {
-  "buildCommand": "sed -i 's|\"signet-sdk\": \"link:../signet/packages/signet-sdk\"|\"signet-sdk\": \"latest\"|g' package.json && sed -i 's|\"wisdom-sdk\": \"link:../wisdom\"|\"wisdom-sdk\": \"latest\"|g' package.json && sed -i '\\|\"pnpm\": {|,\\|},|d' package.json && pnpm install && pnpm build",
+  "buildCommand": "pnpm vercel-build",
   "installCommand": "echo 'Using custom install in buildCommand'",
   "outputDirectory": ".next"
 }
