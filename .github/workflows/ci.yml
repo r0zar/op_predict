@@ -40,12 +40,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       
-      # Use a dedicated script to prepare package.json for CI
-      - name: Prepare package.json for CI
-        run: node ./scripts/prepare-ci.js
-      
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
       
       - name: Lint
         run: pnpm lint || echo "Linting failed but continuing build"

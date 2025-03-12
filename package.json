@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prebuild": "echo 'Using wisdom-sdk package. No local build needed.'",
-    "vercel-build": "node ./scripts/vercel-build.js",
+    "postinstall": "echo 'Using published packages for signet-sdk and wisdom-sdk'",
     "mcp:kill": "kill-port 3002 || true",
     "mcp:build": "cd mcp-server && pnpm install && pnpm build",
     "mcp:server": "cd mcp-server && MCP_PORT=3002 pnpm start",
@@ -54,10 +53,10 @@
     "react-masonry-css": "^1.0.16",
     "recharts": "^2.15.1",
     "sharp": "^0.33.5",
-    "signet-sdk": "link:../signet/packages/signet-sdk",
+    "signet-sdk": "latest",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "wisdom-sdk": "link:../wisdom",
+    "wisdom-sdk": "latest",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -81,9 +80,7 @@
     "typescript": "^5",
     "vitest": "^3.0.7"
   },
-  "pnpm": {
-    "overrides": {
-      "signet-sdk": "link:../signet/packages/signet-sdk"
-    }
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

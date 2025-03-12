@@ -1,5 +1,3 @@
 {
-  "buildCommand": "pnpm vercel-build",
-  "installCommand": "echo 'Using custom install in buildCommand'",
   "outputDirectory": ".next"
 }
