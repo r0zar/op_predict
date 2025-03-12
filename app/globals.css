@@ -411,6 +411,20 @@
     --khala-light: 60 30% 96%;
     --khala-medium: 260 45% 70%;
     --khala-dark: 260 27% 35%;
+    
+    /* Initialize Matrix colors for compatibility even in default theme */
+    --matrix-black: 160 12% 5%;
+    --matrix-dark: 160 12% 8%;
+    --matrix-deepgreen: 160 15% 12%;
+    --matrix-green: 120 100% 45%;
+    --matrix-lightgreen: 120 100% 75%;
+    --matrix-code: 150 100% 50%;
+    --matrix-red: 0 100% 50%;
+    --matrix-terminal: 120 63% 31%;
+    --matrix-glow: 120 100% 35%;
+    --matrix-text: 120 70% 90%;
+    --matrix-gray: 160 10% 50%;
+    --matrix-darkgray: 160 10% 20%;
   }
 
   /* Cyberpunk Theme - explicit redeclarations for clarity */
@@ -473,6 +487,35 @@
     --border: hsl(var(--khala-dark));
     --input: hsl(var(--khala-dark));
     --ring: hsl(var(--psi-blade));
+  }
+  
+  /* Matrix Theme */
+  [data-theme="matrix"] {
+    /* Override Tailwind CSS vars with Matrix colors */
+    --background: hsl(var(--matrix-black));
+    --foreground: hsl(var(--matrix-text));
+    --card: hsl(var(--matrix-dark));
+    --card-foreground: hsl(var(--matrix-text));
+    --popover: hsl(var(--matrix-dark));
+    --popover-foreground: hsl(var(--matrix-text));
+    --primary: hsl(var(--matrix-green));
+    --primary-foreground: #000;
+    --secondary: hsl(var(--matrix-code));
+    --secondary-foreground: #000;
+    --accent: hsl(var(--matrix-lightgreen));
+    --accent-foreground: #000;
+    --muted: hsl(var(--matrix-deepgreen));
+    --muted-foreground: hsl(var(--matrix-gray));
+    --destructive: hsl(var(--matrix-red));
+    --destructive-foreground: #fff;
+    --border: hsl(var(--matrix-darkgray));
+    --input: hsl(var(--matrix-darkgray));
+    --ring: hsl(var(--matrix-green));
+    
+    /* Force mono fonts for Matrix theme */
+    --font-primary: 'Source Code Pro', monospace;
+    --font-display: 'Source Code Pro', monospace;
+    --font-mono: 'Source Code Pro', monospace;
   }
 }
 
@@ -547,14 +590,14 @@
 }
 
 /* Cyberpunk-inspired gradients */
-.bg-cyber-gradient {
+[data-theme="cyberpunk"] .bg-cyber-gradient {
   @apply bg-gradient-to-r from-cyan-500/10 via-cyan-400/5 to-cyan-500/10;
   @apply border border-cyan-500/30;
 }
 
 .bg-panel-gradient {
   background: linear-gradient(to bottom, var(--card), color-mix(in srgb, var(--card), transparent 20%));
-  @apply border border-cyan-500/20;
+  border: 1px solid var(--border);
 }
 
 /* 3D tilt effect */
@@ -564,9 +607,14 @@
   perspective: 1000px;
 }
 
-.tilt-card:hover {
+[data-theme="cyberpunk"] .tilt-card:hover {
   @apply shadow-lg shadow-cyan-500/20;
   transform: translateY(-5px) rotateX(2deg) rotateY(-2deg);
+}
+
+[data-theme="bitcoin"] .tilt-card:hover {
+  box-shadow: 0 8px 16px hsla(var(--btc-gray-400), 0.15);
+  transform: translateY(-3px);
 }
 
 /* Glow effects */
@@ -574,51 +622,88 @@
   @apply relative overflow-hidden;
 }
 
-.glow-effect::before {
+[data-theme="cyberpunk"] .glow-effect::before {
   content: "";
   @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
   box-shadow: 0 0 15px theme('colors.cyan.400'), 0 0 30px theme('colors.cyan.300/20');
 }
 
-.glow-effect:hover::before {
+[data-theme="cyberpunk"] .glow-effect:hover::before {
   @apply opacity-100;
 }
 
-/* Button variants */
+[data-theme="bitcoin"] .glow-effect::before {
+  content: "";
+  @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
+  box-shadow: 0 0 15px hsla(var(--btc-orange), 0.3), 0 0 30px hsla(var(--btc-orange), 0.1);
+}
+
+[data-theme="bitcoin"] .glow-effect:hover::before {
+  @apply opacity-70;
+}
+
+/* Default button styles will be elegant, professional and suitable for light themes */
 .cyber-button {
-  @apply relative overflow-hidden bg-transparent text-cyan-400 font-medium
-         border border-cyan-500/50 px-4 py-2 rounded-md
-         hover:shadow-md hover:shadow-cyan-500/20
+  @apply relative overflow-hidden bg-transparent font-medium
+         border px-4 py-2 rounded-md
+         hover:shadow-md 
          transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
 .cyber-button-success {
-  @apply relative overflow-hidden bg-transparent text-green-400 font-medium
-         border border-green-500/50 px-4 py-2 rounded-md
-         hover:shadow-md hover:shadow-green-500/20
+  @apply relative overflow-hidden bg-transparent font-medium
+         border px-4 py-2 rounded-md
+         hover:shadow-md 
          transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
 .cyber-button-danger {
-  @apply relative overflow-hidden bg-transparent text-red-400 font-medium
-         border border-red-500/50 px-4 py-2 rounded-md
-         hover:shadow-md hover:shadow-red-500/20
+  @apply relative overflow-hidden bg-transparent font-medium
+         border px-4 py-2 rounded-md
+         hover:shadow-md 
          transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
 /* Shimmer and glow effects are now defined in tailwind.config.ts */
 
-/* Glowing text - reduced intensity */
+/* Basic text effect classes */
 .text-glow {
-  text-shadow: 0 0 5px theme('colors.cyan.400/15'), 0 0 10px theme('colors.cyan.300/10');
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Override text color for bitcoin theme */
+[data-theme="bitcoin"] .text-glow {
+  color: hsl(var(--btc-orange)) !important;
 }
 
 .text-glow-purple {
-  text-shadow: 0 0 5px theme('colors.purple.400/15'), 0 0 10px theme('colors.purple.300/10');
+  font-weight: 600;
+  color: var(--secondary);
 }
 
 .text-glow-pink {
-  text-shadow: 0 0 5px theme('colors.pink.400/15'), 0 0 10px theme('colors.pink.300/10');
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Theme-specific text effects - toned down for better readability */
+[data-theme="cyberpunk"] .text-glow {
+  font-weight: 600;
+  color: hsl(var(--cyber-blue));
+  text-shadow: none;
+}
+
+[data-theme="cyberpunk"] .text-glow-purple {
+  font-weight: 600;
+  color: hsl(var(--neon-purple));
+  text-shadow: none;
+}
+
+[data-theme="cyberpunk"] .text-glow-pink {
+  font-weight: 600;
+  color: hsl(var(--neon-pink));
+  text-shadow: none;
 }
 
 /* Protoss Theme Specific Styles - reduced intensity */
@@ -768,6 +853,15 @@
   font-family: var(--applied-font-family-display, var(--font-syncopate)), 'Syncopate', sans-serif !important;
 }
 
+/* Ensure neon colors are only applied in the Cyberpunk theme */
+:not([data-theme="cyberpunk"]) .text-\[hsl\(var\(--neon-green\)\)\],
+:not([data-theme="cyberpunk"]) .text-\[hsl\(var\(--neon-purple\)\)\],
+:not([data-theme="cyberpunk"]) .text-\[hsl\(var\(--neon-pink\)\)\],
+:not([data-theme="cyberpunk"]) .text-\[hsl\(var\(--neon-red\)\)\],
+:not([data-theme="cyberpunk"]) .text-\[hsl\(var\(--neon-orange\)\)\] {
+  color: var(--foreground) !important;
+}
+
 [data-theme="cyberpunk"] h4,
 [data-theme="cyberpunk"] h5,
 [data-theme="cyberpunk"] h6,
@@ -804,6 +898,23 @@
   font-family: var(--applied-font-family-mono, var(--font-fira-code)), 'Fira Code', monospace !important;
 }
 
+/* Matrix theme typography */
+[data-theme="matrix"] h1,
+[data-theme="matrix"] h2,
+[data-theme="matrix"] h3,
+[data-theme="matrix"] h4,
+[data-theme="matrix"] h5,
+[data-theme="matrix"] h6,
+[data-theme="matrix"] p,
+[data-theme="matrix"] span,
+[data-theme="matrix"] div,
+[data-theme="matrix"] a,
+[data-theme="matrix"] code,
+[data-theme="matrix"] pre {
+  font-family: var(--applied-font-family-mono, var(--font-source-code-pro)), 'Source Code Pro', monospace !important;
+  letter-spacing: 0.03em;
+}
+
 /* Global Scrollbar Resets */
 html {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
@@ -837,6 +948,20 @@ html {
   --scrollbar-track: hsl(var(--void-dark));
   --scrollbar-thumb: hsl(var(--void-medium));
   --scrollbar-thumb-hover: hsl(var(--psi-gold));
+}
+
+/* Matrix theme scrollbar overrides */
+[data-theme="matrix"] {
+  --scrollbar-track: hsl(var(--matrix-black));
+  --scrollbar-thumb: hsl(var(--matrix-deepgreen));
+  --scrollbar-thumb-hover: hsl(var(--matrix-green));
+}
+
+/* Bitcoin theme scrollbar overrides */
+[data-theme="bitcoin"] {
+  --scrollbar-track: hsl(var(--btc-light-gray));
+  --scrollbar-thumb: hsl(var(--btc-gray-300));
+  --scrollbar-thumb-hover: hsl(var(--btc-orange));
 }
 
 /* Override the default Cyberpunk and Protoss styles to make them visible */
@@ -882,4 +1007,21 @@ div::-webkit-scrollbar {
 
 /* Import theme stylesheets */
 @import './styles/cyberpunk.css';
+@import '../public/styles/cyberpunk.css';
 @import './styles/protoss.css';
+@import '../public/styles/protoss.css';
+@import './styles/matrix.css';
+@import '../public/styles/matrix.css';
+@import './styles/bitcoin.css';
+@import '../public/styles/bitcoin.css';
+
+
+.border-\[hsl\(var\(--cyber-blue\)\/10\)\] {
+  border-color: hsl(var(--white) / 0.3);
+}
+.border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
+  border-color: hsl(var(--white) / 0.2);
+}
+.border-b-white {
+  border-bottom-color: hsl(var(--white) / 0.2);
+}

@@ -14,7 +14,7 @@ export default async function BugReportPage() {
     const user = await currentUser();
 
     if (!user) {
-        redirect("/sign-in");
+        redirect("/");
     }
 
     // Check if user is admin using the utility function

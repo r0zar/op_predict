@@ -78,17 +78,23 @@
          transition-all duration-300 transform hover:scale-105 active:scale-95;
 }
 
-/* Glowing text effects */
+/* Toned down text styling - removed glow effects for better readability */
 [data-theme="cyberpunk"] .text-glow {
-  text-shadow: 0 0 5px theme('colors.cyan.400/30'), 0 0 10px theme('colors.cyan.300/20');
+  font-weight: 600;
+  color: hsl(var(--cyber-blue));
+  text-shadow: none;
 }
 
 [data-theme="cyberpunk"] .text-glow-purple {
-  text-shadow: 0 0 5px theme('colors.purple.400/30'), 0 0 10px theme('colors.purple.300/20');
+  font-weight: 600;
+  color: hsl(var(--neon-purple));
+  text-shadow: none;
 }
 
 [data-theme="cyberpunk"] .text-glow-pink {
-  text-shadow: 0 0 5px theme('colors.pink.400/30'), 0 0 10px theme('colors.pink.300/20');
+  font-weight: 600;
+  color: hsl(var(--neon-pink));
+  text-shadow: none;
 }
 
 /* Corner accents */

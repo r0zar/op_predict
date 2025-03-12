@@ -7,7 +7,8 @@ import {
   Syncopate,
   Exo_2,
   Orbitron,
-  Fira_Code
+  Fira_Code,
+  Montserrat
 } from "next/font/google"
 import Link from "next/link"
 import { TrendingUp } from "lucide-react"
@@ -20,7 +21,6 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs'
-import { SignetProvider } from "@/lib/signet-context"
 import { ThemeProvider as NextThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ThemeProvider } from "@/lib/hooks/use-theme"
@@ -78,6 +78,14 @@ const firaCode = Fira_Code({
   weight: ['400', '500', '600', '700'],
 })
 
+// Bitcoin theme fonts
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: '--font-montserrat',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+})
+
 export const metadata: Metadata = {
   title: "OP_PREDICT | Predict the future. Earn Bitcoin",
   description: "Explore and participate in markets for politics, sports, and more.",
@@ -114,7 +122,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <ClerkProvider>
-        <SignetProvider>
+        <>
           <body className={`
             ${inter.variable} 
             ${jetbrainsMono.variable} 
@@ -123,14 +131,17 @@ export default function RootLayout({
             ${exo2.variable} 
             ${orbitron.variable} 
             ${firaCode.variable}
+            ${montserrat.variable}
           `}>
             <NextThemeProvider
               attribute="data-theme"
-              defaultTheme="cyberpunk"
+              defaultTheme="bitcoin" /* Use Bitcoin as default theme */
               value={{
                 cyberpunk: "cyberpunk",
                 protoss: "protoss",
-                system: "cyberpunk" // Default to cyberpunk when system theme is chosen
+                matrix: "matrix",
+                bitcoin: "bitcoin",
+                system: "bitcoin" // Default to bitcoin (light theme) when system theme is chosen
               }}
               enableSystem={false}
               enableColorScheme={false}
@@ -143,9 +154,8 @@ export default function RootLayout({
                     <div className="scanline"></div>
                     <div className="container flex h-16 items-center justify-between py-4">
                       <div className="items-center gap-1 hidden sm:flex">
-                        <Image src={crystalBallLogo} width={48} height={48} alt="OP_PREDICT Logo" className="translate-x-2 -translate-y-1" />
                         <Link href="/" className="text-xl font-bold tracking-tight text-glow font-display">
-                          PREDICT
+                          OP_PREDICT
                         </Link>
                       </div>
                       <div className='flex sm:hidden' />
@@ -207,7 +217,7 @@ export default function RootLayout({
               </ThemeProvider>
             </NextThemeProvider>
           </body>
-        </SignetProvider>
+        </>
       </ClerkProvider>
     </html>
   )

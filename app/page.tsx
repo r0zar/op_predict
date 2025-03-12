@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ChevronRight, TrendingUp, Users, Zap } from "lucide-react"
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +12,20 @@ import { calculateOutcomePercentages } from "@/lib/utils"
 
 export default async function Home() {
   const { userId } = await auth();
-  const user = await currentUser();
+
+  // Check if the user is logged in, if so, check if they have completed onboarding
+  if (userId) {
+    const user = await currentUser();
+    const hasStacksAddress = user?.publicMetadata?.stacksAddress;
+
+    // If user doesn't have a Stacks address, redirect to onboarding
+    if (!hasStacksAddress) {
+      redirect('/onboarding');
+    }
+  }
+
+  // If user is logged in and has a Stacks address, or is not logged in, show the homepage
+  const user = userId ? await currentUser() : null;
 
   // Fetch real markets from the database
   const markets = await getAllMarkets();
@@ -62,7 +76,7 @@ export default async function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2 mb-4">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    Predict & <div className="text-primary">Earn Bitcoin.</div>
+                    Predict & <div className="text-primary">Earn Bitcoin</div>
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-lg">
                     Explore and participate in markets for politics, sports, and more.

@@ -1,0 +1,638 @@
+/* Animation effects for different themes */
+
+/* ---------------- CYBERPUNK THEME ANIMATIONS ---------------- */
+:global([data-theme="cyberpunk"]) .cyberGrid {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  opacity: 0.2;
+}
+
+:global([data-theme="cyberpunk"]) .gridPattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(125, 249, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(125, 249, 255, 0.05) 1px, transparent 1px);
+  opacity: 0.2;
+}
+
+:global([data-theme="cyberpunk"]) .scanLine {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(125, 249, 255, 0.5);
+  z-index: 10;
+  pointer-events: none;
+  animation: scanLine 6s linear infinite;
+}
+
+:global([data-theme="cyberpunk"]) .gridCell {
+  position: absolute;
+  border: 1px solid rgba(125, 249, 255, 0.05);
+  background: transparent;
+  animation: pulseGrid 4s infinite;
+}
+
+:global([data-theme="cyberpunk"]) .glowingText {
+  text-shadow: 0 0 10px rgba(125, 249, 255, 0.5), 0 0 20px rgba(125, 249, 255, 0.3);
+}
+
+:global([data-theme="cyberpunk"]) .glowingBorder {
+  border: 1px solid rgba(125, 249, 255, 0.3);
+  box-shadow: 0 0 10px rgba(125, 249, 255, 0.2), inset 0 0 5px rgba(125, 249, 255, 0.1);
+}
+
+:global([data-theme="cyberpunk"]) .glowingGradient {
+  background: linear-gradient(to right, rgba(125, 249, 255, 0.1), rgba(64, 185, 253, 0.1));
+  border: 1px solid rgba(125, 249, 255, 0.2);
+  box-shadow: 0 0 10px rgba(125, 249, 255, 0.1);
+}
+
+:global([data-theme="cyberpunk"]) .cyberButton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(125, 249, 255, 0.2) 0%, rgba(125, 200, 255, 0.2) 100%);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(125, 249, 255, 0.3);
+  z-index: 1;
+}
+
+:global([data-theme="cyberpunk"]) .cyberButton:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(125, 249, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+  z-index: -1;
+}
+
+:global([data-theme="cyberpunk"]) .cyberButton:hover:before {
+  left: 100%;
+}
+
+:global([data-theme="cyberpunk"]) .cyberButton:hover {
+  background: linear-gradient(90deg, rgba(125, 249, 255, 0.3) 0%, rgba(125, 200, 255, 0.3) 100%);
+  box-shadow: 0 0 15px rgba(125, 249, 255, 0.2);
+}
+
+:global([data-theme="cyberpunk"]) .glitchEffect {
+  animation: glitchTextCyber 5s infinite;
+}
+
+:global([data-theme="cyberpunk"]) .hologram::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(125, 249, 255, 0.1) 0%,
+    rgba(125, 249, 255, 0.2) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: -1;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+:global([data-theme="cyberpunk"]) .energyBeam {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, rgba(125, 249, 255, 0.3), rgba(125, 249, 255, 0.8), rgba(125, 249, 255, 0.3));
+  box-shadow: 0 0 8px rgba(125, 249, 255, 0.5);
+  animation: beam 2s infinite;
+}
+
+:global([data-theme="cyberpunk"]) .techBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(125, 249, 255, 0.3);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: rgb(125, 249, 255);
+}
+
+/* Cyberpunk animations */
+@keyframes scanLine {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes pulseGrid {
+  0%, 100% {
+    opacity: 0.1;
+    border-color: rgba(125, 249, 255, 0.02);
+  }
+  50% {
+    opacity: 0.3;
+    border-color: rgba(125, 249, 255, 0.08);
+  }
+}
+
+@keyframes glitchTextCyber {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(125, 249, 255, 0.5), 0 0 20px rgba(125, 249, 255, 0.3);
+    opacity: 1;
+  }
+  25% {
+    text-shadow: 0 0 14px rgba(255, 0, 128, 0.4), 0 0 28px rgba(255, 0, 128, 0.2);
+    opacity: 0.9;
+    transform: translateX(-1px);
+  }
+  75% {
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6), 0 0 20px rgba(0, 255, 255, 0.4);
+    opacity: 0.8;
+    transform: translateX(1px);
+  }
+}
+
+@keyframes beam {
+  0% {
+    width: 0;
+    opacity: 0.3;
+  }
+  50% {
+    width: 100%;
+    opacity: 0.8;
+  }
+  100% {
+    width: 0;
+    opacity: 0.3;
+  }
+}
+
+/* ---------------- MATRIX THEME ANIMATIONS ---------------- */
+:global([data-theme="matrix"]) .cyberGrid {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  opacity: 0.2;
+}
+
+:global([data-theme="matrix"]) .gridPattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+  opacity: 0.2;
+}
+
+:global([data-theme="matrix"]) .scanLine {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(0, 255, 0, 0.5);
+  z-index: 10;
+  pointer-events: none;
+  animation: matrixScanLine 6s linear infinite;
+}
+
+:global([data-theme="matrix"]) .gridCell {
+  position: absolute;
+  border: 1px solid rgba(0, 255, 0, 0.05);
+  background: transparent;
+  animation: matrixPulseGrid 4s infinite;
+}
+
+:global([data-theme="matrix"]) .glowingText {
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+:global([data-theme="matrix"]) .glowingBorder {
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.2), inset 0 0 5px rgba(0, 255, 0, 0.1);
+}
+
+:global([data-theme="matrix"]) .glowingGradient {
+  background: linear-gradient(to right, rgba(0, 255, 0, 0.1), rgba(0, 200, 0, 0.1));
+  border: 1px solid rgba(0, 255, 0, 0.2);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+}
+
+:global([data-theme="matrix"]) .cyberButton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(0, 255, 0, 0.2) 0%, rgba(0, 200, 0, 0.2) 100%);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  z-index: 1;
+}
+
+:global([data-theme="matrix"]) .cyberButton:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.2), transparent);
+  transition: left 0.5s ease;
+  z-index: -1;
+}
+
+:global([data-theme="matrix"]) .cyberButton:hover:before {
+  left: 100%;
+}
+
+:global([data-theme="matrix"]) .cyberButton:hover {
+  background: linear-gradient(90deg, rgba(0, 255, 0, 0.3) 0%, rgba(0, 200, 0, 0.3) 100%);
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+}
+
+:global([data-theme="matrix"]) .glitchEffect {
+  animation: glitchTextMatrix 5s infinite;
+}
+
+:global([data-theme="matrix"]) .hologram::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 0, 0.1) 0%,
+    rgba(0, 255, 0, 0.2) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: -1;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+:global([data-theme="matrix"]) .energyBeam {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.8), rgba(0, 255, 0, 0.3));
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+  animation: matrixBeam 2s infinite;
+}
+
+:global([data-theme="matrix"]) .techBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: rgb(0, 255, 0);
+}
+
+/* Matrix animations */
+@keyframes matrixScanLine {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes matrixPulseGrid {
+  0%, 100% {
+    opacity: 0.1;
+    border-color: rgba(0, 255, 0, 0.02);
+  }
+  50% {
+    opacity: 0.3;
+    border-color: rgba(0, 255, 0, 0.08);
+  }
+}
+
+@keyframes glitchTextMatrix {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.3);
+    opacity: 1;
+  }
+  25% {
+    text-shadow: 0 0 14px rgba(0, 255, 0, 0.4), 0 0 28px rgba(0, 255, 0, 0.2);
+    opacity: 0.9;
+    transform: translateX(-1px);
+  }
+  75% {
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.4);
+    opacity: 0.8;
+    transform: translateX(1px);
+  }
+}
+
+@keyframes matrixBeam {
+  0% {
+    width: 0;
+    opacity: 0.3;
+  }
+  50% {
+    width: 100%;
+    opacity: 0.8;
+  }
+  100% {
+    width: 0;
+    opacity: 0.3;
+  }
+}
+
+/* ---------------- BITCOIN THEME ANIMATIONS ---------------- */
+:global([data-theme="bitcoin"]) .cyberGrid {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  opacity: 0.1;
+}
+
+:global([data-theme="bitcoin"]) .gridPattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(247, 147, 26, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(247, 147, 26, 0.05) 1px, transparent 1px);
+  opacity: 0.1;
+}
+
+:global([data-theme="bitcoin"]) .scanLine {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(247, 147, 26, 0.3);
+  z-index: 10;
+  pointer-events: none;
+  animation: bitcoinScanLine 6s linear infinite;
+}
+
+:global([data-theme="bitcoin"]) .gridCell {
+  position: absolute;
+  border: 1px solid rgba(247, 147, 26, 0.05);
+  background: transparent;
+  animation: bitcoinPulseGrid 4s infinite;
+}
+
+:global([data-theme="bitcoin"]) .glowingText {
+  text-shadow: 0 0 10px rgba(247, 147, 26, 0.5), 0 0 20px rgba(247, 147, 26, 0.3);
+}
+
+:global([data-theme="bitcoin"]) .glowingBorder {
+  border: 1px solid rgba(247, 147, 26, 0.3);
+  box-shadow: 0 0 10px rgba(247, 147, 26, 0.2), inset 0 0 5px rgba(247, 147, 26, 0.1);
+}
+
+:global([data-theme="bitcoin"]) .glowingGradient {
+  background: linear-gradient(to right, rgba(247, 147, 26, 0.1), rgba(240, 140, 20, 0.1));
+  border: 1px solid rgba(247, 147, 26, 0.2);
+  box-shadow: 0 0 10px rgba(247, 147, 26, 0.1);
+}
+
+:global([data-theme="bitcoin"]) .cyberButton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(247, 147, 26, 0.2) 0%, rgba(240, 140, 20, 0.2) 100%);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(247, 147, 26, 0.3);
+  z-index: 1;
+}
+
+:global([data-theme="bitcoin"]) .cyberButton:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(247, 147, 26, 0.2), transparent);
+  transition: left 0.5s ease;
+  z-index: -1;
+}
+
+:global([data-theme="bitcoin"]) .cyberButton:hover:before {
+  left: 100%;
+}
+
+:global([data-theme="bitcoin"]) .cyberButton:hover {
+  background: linear-gradient(90deg, rgba(247, 147, 26, 0.3) 0%, rgba(240, 140, 20, 0.3) 100%);
+  box-shadow: 0 0 15px rgba(247, 147, 26, 0.2);
+}
+
+:global([data-theme="bitcoin"]) .glitchEffect {
+  animation: glitchTextBitcoin 5s infinite;
+}
+
+:global([data-theme="bitcoin"]) .hologram::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(247, 147, 26, 0.05) 0%,
+    rgba(247, 147, 26, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: -1;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+:global([data-theme="bitcoin"]) .energyBeam {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, rgba(247, 147, 26, 0.3), rgba(247, 147, 26, 0.8), rgba(247, 147, 26, 0.3));
+  box-shadow: 0 0 8px rgba(247, 147, 26, 0.5);
+  animation: bitcoinBeam 2s infinite;
+}
+
+:global([data-theme="bitcoin"]) .techBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(247, 147, 26, 0.1);
+  border: 1px solid rgba(247, 147, 26, 0.3);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: rgb(247, 147, 26);
+}
+
+/* Bitcoin animations */
+@keyframes bitcoinScanLine {
+  0% {
+    top: 0%;
+    opacity: 0.4;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes bitcoinPulseGrid {
+  0%, 100% {
+    opacity: 0.05;
+    border-color: rgba(247, 147, 26, 0.02);
+  }
+  50% {
+    opacity: 0.1;
+    border-color: rgba(247, 147, 26, 0.05);
+  }
+}
+
+@keyframes glitchTextBitcoin {
+  0%, 100% {
+    text-shadow: 0 0 4px rgba(247, 147, 26, 0.5), 0 0 8px rgba(247, 147, 26, 0.3);
+    opacity: 1;
+  }
+  25% {
+    text-shadow: 0 0 6px rgba(247, 147, 26, 0.4), 0 0 12px rgba(247, 147, 26, 0.2);
+    opacity: 0.9;
+    transform: translateX(-1px);
+  }
+  75% {
+    text-shadow: 0 0 5px rgba(247, 147, 26, 0.6), 0 0 10px rgba(247, 147, 26, 0.4);
+    opacity: 0.95;
+    transform: translateX(1px);
+  }
+}
+
+@keyframes bitcoinBeam {
+  0% {
+    width: 0;
+    opacity: 0.2;
+  }
+  50% {
+    width: 100%;
+    opacity: 0.6;
+  }
+  100% {
+    width: 0;
+    opacity: 0.2;
+  }
+}
+
+/* Default (theme-agnostic) class definitions */
+.cyberGrid {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  opacity: 0.2;
+}
+
+.gridPattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(125, 249, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(125, 249, 255, 0.05) 1px, transparent 1px);
+  opacity: 0.2;
+}
+
+.scanLine {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(125, 249, 255, 0.5);
+  z-index: 10;
+  pointer-events: none;
+  animation: scanLine 6s linear infinite;
+}
+
+.gridCell {
+  position: absolute;
+  border: 1px solid rgba(125, 249, 255, 0.05);
+  background: transparent;
+  animation: pulseGrid 4s infinite;
+}
+
+.glowingText {
+  text-shadow: 0 0 10px rgba(125, 249, 255, 0.5), 0 0 20px rgba(125, 249, 255, 0.3);
+}
+
+.glowingBorder {
+  border: 1px solid rgba(125, 249, 255, 0.3);
+  box-shadow: 0 0 10px rgba(125, 249, 255, 0.2), inset 0 0 5px rgba(125, 249, 255, 0.1);
+}
+
+.glowingGradient {
+  background: linear-gradient(to right, rgba(125, 249, 255, 0.1), rgba(64, 185, 253, 0.1));
+  border: 1px solid rgba(125, 249, 255, 0.2);
+  box-shadow: 0 0 10px rgba(125, 249, 255, 0.1);
+}
+
+.glitchEffect {
+  animation: glitchTextCyber 5s infinite;
+}
+
+.hologram {
+  position: relative;
+  display: inline-block;
+}
+
+.energyBeam {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, rgba(125, 249, 255, 0.3), rgba(125, 249, 255, 0.8), rgba(125, 249, 255, 0.3));
+  box-shadow: 0 0 8px rgba(125, 249, 255, 0.5);
+  animation: beam 2s infinite;
+}
+
+.techBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(125, 249, 255, 0.3);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: rgb(125, 249, 255);
+}

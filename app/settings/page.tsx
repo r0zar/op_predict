@@ -1,8 +1,7 @@
-
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
-import { UserCircle } from "lucide-react";
+import { UserCircle, WalletIcon } from "lucide-react";
 
 import {
     Card,
@@ -10,6 +9,7 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
+    CardFooter,
 } from "@/components/ui/card";
 import {
     Table,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { StacksAddressForm } from './stacks-address-form';
 
 export default async function SettingsPage() {
     const user = await currentUser();
@@ -35,6 +36,9 @@ export default async function SettingsPage() {
         if (!timestamp) return "N/A";
         return format(new Date(timestamp), "PPP 'at' p");
     };
+
+    // Get Stacks address from public metadata
+    const stacksAddress = user.publicMetadata?.stacksAddress as string | undefined;
 
     return (
         <div className="container max-w-4xl py-10">
@@ -62,6 +66,32 @@ export default async function SettingsPage() {
                             </div>
                         </div>
                     </CardHeader>
+                </Card>
+
+                {/* Stacks Address Card */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <WalletIcon className="h-5 w-5" />
+                            <CardTitle>Stacks Address</CardTitle>
+                        </div>
+                        <CardDescription>Connect your Stacks wallet to use on-chain tokens for predictions</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {stacksAddress ? (
+                            <div className="flex flex-col space-y-2">
+                                <p className="text-sm font-medium">Current Address:</p>
+                                <code className="bg-muted p-2 rounded text-xs sm:text-sm break-all">
+                                    {stacksAddress}
+                                </code>
+                            </div>
+                        ) : (
+                            <p className="text-muted-foreground">No Stacks address connected yet</p>
+                        )}
+                    </CardContent>
+                    <CardFooter>
+                        <StacksAddressForm currentAddress={stacksAddress} />
+                    </CardFooter>
                 </Card>
 
                 {/* Account Details */}

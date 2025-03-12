@@ -10,21 +10,21 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-transparent border border-cyber-blue/50 text-cyber-blue hover:shadow-[0_0_10px_rgba(125,249,255,0.15)] hover:scale-102 active:scale-98",
+          "bg-transparent border border-primary/50 text-primary hover:shadow-md hover:scale-102 active:scale-98 data-[theme='cyberpunk']:border-cyber-blue/50 data-[theme='cyberpunk']:text-cyber-blue data-[theme='cyberpunk']:hover:shadow-[0_0_10px_rgba(125,249,255,0.15)]",
         destructive:
-          "bg-transparent border border-neon-red/50 text-neon-red hover:shadow-[0_0_10px_rgba(255,85,85,0.15)] hover:scale-102 active:scale-98",
+          "bg-transparent border border-destructive/50 text-destructive hover:shadow-md hover:scale-102 active:scale-98 data-[theme='cyberpunk']:border-neon-red/50 data-[theme='cyberpunk']:text-neon-red data-[theme='cyberpunk']:hover:shadow-[0_0_10px_rgba(255,85,85,0.15)]",
         outline:
-          "border border-input bg-background hover:bg-cyber-blue/10 hover:text-cyber-blue hover:border-cyber-blue/30",
+          "border border-input bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/30 data-[theme='cyberpunk']:hover:bg-cyber-blue/10 data-[theme='cyberpunk']:hover:text-cyber-blue data-[theme='cyberpunk']:hover:border-cyber-blue/30",
         secondary:
-          "bg-transparent border border-neon-purple/50 text-neon-purple hover:shadow-[0_0_10px_rgba(189,147,249,0.15)] hover:scale-102 active:scale-98",
+          "bg-transparent border border-secondary/50 text-secondary hover:shadow-md hover:scale-102 active:scale-98 data-[theme='cyberpunk']:border-neon-purple/50 data-[theme='cyberpunk']:text-neon-purple data-[theme='cyberpunk']:hover:shadow-[0_0_10px_rgba(189,147,249,0.15)]",
         ghost: 
-          "hover:bg-cyber-blue/5 hover:text-cyber-blue",
+          "hover:bg-accent/5 hover:text-accent data-[theme='cyberpunk']:hover:bg-cyber-blue/5 data-[theme='cyberpunk']:hover:text-cyber-blue",
         link: 
-          "text-cyber-blue underline-offset-4 hover:underline",
+          "text-primary underline-offset-4 hover:underline data-[theme='cyberpunk']:text-cyber-blue",
         success:
-          "bg-transparent border border-neon-green/50 text-neon-green hover:shadow-[0_0_10px_rgba(80,250,123,0.15)] hover:scale-102 active:scale-98",
+          "bg-transparent border border-green-500/50 text-green-500 hover:shadow-md hover:scale-102 active:scale-98 data-[theme='cyberpunk']:border-neon-green/50 data-[theme='cyberpunk']:text-neon-green data-[theme='cyberpunk']:hover:shadow-[0_0_10px_rgba(80,250,123,0.15)]",
         warning:
-          "bg-transparent border border-neon-orange/50 text-neon-orange hover:shadow-[0_0_10px_rgba(255,184,108,0.15)] hover:scale-102 active:scale-98",
+          "bg-transparent border border-orange-500/50 text-orange-500 hover:shadow-md hover:scale-102 active:scale-98 data-[theme='cyberpunk']:border-neon-orange/50 data-[theme='cyberpunk']:text-neon-orange data-[theme='cyberpunk']:hover:shadow-[0_0_10px_rgba(255,184,108,0.15)]",
       },
       size: {
         default: "h-9 px-4 py-2",

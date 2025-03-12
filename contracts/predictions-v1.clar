@@ -1,5 +1,5 @@
-;; Title: Blaze Prediction Market Vault
-;; Version: 0.1.1
+;; Title: blaze
+;; Version: welsh-predict-v1
 ;; Description: 
 ;;   Implementation of a prediction market vault for the Stacks blockchain that
 ;;   supports both on-chain and off-chain (signed) operations.
@@ -56,7 +56,7 @@
 (define-non-fungible-token prediction-receipt uint)
 
 ;; Data structures
-(define-map markets uint {
+(define-map markets (string-ascii 64) {
   creator: principal,
   name: (string-ascii 64),
   description: (string-ascii 128),
@@ -73,7 +73,7 @@
 
 ;; Map to track receipts by receipt ID (no predictor field)
 (define-map predictions uint {
-  market-id: uint,
+  market-id: (string-ascii 64),
   outcome-id: uint,
   amount: uint
 })
@@ -123,22 +123,22 @@
 ;;         (if (is-eq op-type (buff-to-uint-le OP_CLAIM_REWARD)) (claim-reward receipt-id)
 ;;         ERR_INVALID_OPERATION))))
 
-(define-read-only (quote (amount uint) (opcode (optional (buff 16))))
-    (let (
-        (op-buffer (default-to 0x00 opcode))
-        (op-type (get-byte op-buffer u0))
-        (market-id (get-byte op-buffer u1))
-        (outcome-id (get-byte op-buffer u2))
-        (receipt-id amount))
-        (if (is-eq op-type (buff-to-uint-le OP_PREDICT)) (quote-prediction market-id outcome-id)
-        (if (is-eq op-type (buff-to-uint-le OP_CLAIM_REWARD)) (quote-reward receipt-id)
-        ERR_INVALID_OPERATION))))
+;; (define-read-only (quote (amount uint) (opcode (optional (buff 16))))
+;;     (let (
+;;         (op-buffer (default-to 0x00 opcode))
+;;         (op-type (get-byte op-buffer u0))
+;;         (market-id (get-byte op-buffer u1))
+;;         (outcome-id (get-byte op-buffer u2))
+;;         (receipt-id amount))
+;;         (if (is-eq op-type (buff-to-uint-le OP_PREDICT)) (quote-prediction market-id outcome-id)
+;;         (if (is-eq op-type (buff-to-uint-le OP_CLAIM_REWARD)) (quote-reward receipt-id)
+;;         ERR_INVALID_OPERATION))))
 
 ;; --- Market Management Functions ---
 
 ;; Create a new prediction market (standard function, not an opcode)
 (define-public (create-market 
-    (market-id uint) 
+    (market-id (string-ascii 64)) 
     (name (string-ascii 64)) 
     (description (string-ascii 128))
     (outcome-names (list 16 (string-ascii 32))))
@@ -177,7 +177,7 @@
 )
 
 ;; Close a market (no more predictions allowed)
-(define-public (close-market (market-id uint))
+(define-public (close-market (market-id (string-ascii 64)))
     (let ((market (unwrap! (map-get? markets market-id) ERR_MARKET_NOT_FOUND)))
         ;; Only vault deployer or authorized admin can close
         (asserts! (or 
@@ -193,7 +193,7 @@
 )
 
 ;; Resolve a market (determine correct outcome)
-(define-public (resolve-market (market-id uint) (winning-outcome uint))
+(define-public (resolve-market (market-id (string-ascii 64)) (winning-outcome uint))
     (let (
         (sender tx-sender)
         (market (unwrap! (map-get? markets market-id) ERR_MARKET_NOT_FOUND))
@@ -209,7 +209,7 @@
         (asserts! (< winning-outcome (len (get outcome-names market))) ERR_INVALID_OUTCOME)
 
         ;; Pay admin fee directly to resolver
-        (try! (as-contract (stx-transfer? admin-fee CONTRACT sender)))
+        (try! (as-contract (contract-call? 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS.blaze-welsh-v1 transfer admin-fee CONTRACT sender none)))
         
         ;; Update market state
         (map-set markets market-id (merge market {
@@ -226,7 +226,7 @@
 
 ;; --- Execute Functions ---
 
-(define-public (make-prediction (market-id uint) (outcome-id uint) (amount uint))
+(define-public (make-prediction (market-id (string-ascii 64)) (outcome-id uint) (amount uint))
     (let (
         (sender tx-sender)
         (market (unwrap! (map-get? markets market-id) ERR_MARKET_NOT_FOUND))
@@ -238,8 +238,8 @@
         ;; Verify outcome ID is valid
         (asserts! (< outcome-id (len (get outcome-names market))) ERR_INVALID_OUTCOME)
         
-        ;; Transfer STX to contract
-        (try! (stx-transfer? amount sender CONTRACT))
+        ;; Transfer tokens to contract
+        (try! (contract-call? 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS.blaze-welsh-v1 transfer amount sender CONTRACT none))
 
         ;; Store receipt data without predictor field
         (map-set predictions receipt-id {
@@ -279,7 +279,7 @@
 ;; Make a prediction using a signed transaction from the Blaze subnet token
 (define-public (signed-predict
   (signet {signature: (buff 65), nonce: uint})
-  (market-id uint)
+  (market-id (string-ascii 64))
   (outcome-id uint)
   (amount uint)
 )
@@ -292,7 +292,7 @@
                              amount) 
                     ERR_INVALID_SIGNATURE))
     (market (unwrap! (map-get? markets market-id) ERR_MARKET_NOT_FOUND))
-    (receipt-id (var-get next-receipt-id)))
+    (receipt-id (get nonce signet)))
     
     ;; Verify market is open
     (asserts! (get is-open market) ERR_MARKET_CLOSED)
@@ -351,7 +351,7 @@
 (define-private (try-predict
   (operation {
     signet: {signature: (buff 65), nonce: uint},
-    market-id: uint,
+    market-id: (string-ascii 64),
     outcome-id: uint, 
     amount: uint
   })
@@ -380,7 +380,7 @@
         (asserts! (> total-reward u0) ERR_NOT_WINNER)
         
         ;; Transfer reward to user
-        (try! (as-contract (stx-transfer? total-reward CONTRACT sender)))
+        (try! (as-contract (contract-call? 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS.blaze-welsh-v1 transfer total-reward CONTRACT sender none)))
         
         ;; Burn the NFT receipt (marks as claimed)
         (try! (nft-burn? prediction-receipt receipt-id sender))
@@ -449,12 +449,12 @@
 
 ;; --- Quote Functions ---
 
-(define-read-only (quote-prediction (market-id uint) (outcome-id uint))
+(define-read-only (quote-prediction (market-id (string-ascii 64)) (outcome-id uint))
     (match (map-get? markets market-id)
         market 
         (if (not (get is-open market))
             (ok {
-                dx: u0,
+                dx: market-id,
                 dy: u0,
                 dk: u0
             })
@@ -510,10 +510,10 @@
     )
 )
 
-;; --- Helper Functions ---
+;; ;; --- Helper Functions ---
 
-(define-read-only (get-byte (opcode (buff 16)) (position uint))
-   (buff-to-uint-le (default-to 0x00 (element-at? opcode position))))
+;; (define-read-only (get-byte (opcode (buff 16)) (position uint))
+;;    (buff-to-uint-le (default-to 0x00 (element-at? opcode position))))
 
 ;;; Generate a hash of the structured data for redeeming a prediction receipt.
 ;;; This authorizes the receipt to be redeemed from the signer's account.
@@ -543,7 +543,7 @@
   )
   (match (secp256k1-recover? hash signature)
     public-key (principal-of? public-key)
-    _ ERR_INVALID_SIGNATURE
+    error ERR_INVALID_SIGNATURE
   )
 )
 
@@ -583,7 +583,7 @@
 
 ;; --- Market Info Functions ---
 
-(define-read-only (get-market-info (market-id uint))
+(define-read-only (get-market-info (market-id (string-ascii 64)))
     (match (map-get? markets market-id)
         market (ok market)
         ERR_MARKET_NOT_FOUND)
@@ -604,7 +604,7 @@
 (define-public (batch-predict
     (operations (list 200 {
       signet: {signature: (buff 65), nonce: uint},
-      market-id: uint,
+      market-id: (string-ascii 64),
       outcome-id: uint,
       amount: uint
     }))

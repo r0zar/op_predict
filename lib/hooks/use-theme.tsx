@@ -7,13 +7,17 @@ type ThemeContextType = {
   currentTheme: string
   isProtoss: boolean
   isCyberpunk: boolean
+  isMatrix: boolean
+  isBitcoin: boolean
   setTheme: (theme: string) => void
 }
 
 const defaultContext: ThemeContextType = {
-  currentTheme: 'cyberpunk',
+  currentTheme: 'bitcoin',
   isProtoss: false,
-  isCyberpunk: true,
+  isCyberpunk: false,
+  isMatrix: false,
+  isBitcoin: true,
   setTheme: () => {}
 }
 
@@ -21,16 +25,18 @@ const ThemeContext = createContext<ThemeContextType>(defaultContext)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useNextTheme()
-  const [currentTheme, setCurrentTheme] = useState<string>('cyberpunk')
+  const [currentTheme, setCurrentTheme] = useState<string>('bitcoin')
   
   useEffect(() => {
-    setCurrentTheme(theme || 'cyberpunk')
+    setCurrentTheme(theme || 'bitcoin')
   }, [theme])
 
   const contextValue: ThemeContextType = {
     currentTheme,
     isProtoss: currentTheme === 'protoss',
     isCyberpunk: currentTheme === 'cyberpunk',
+    isMatrix: currentTheme === 'matrix',
+    isBitcoin: currentTheme === 'bitcoin',
     setTheme
   }
   
@@ -53,15 +59,21 @@ export function useTheme() {
 export function ThemedContent({ 
   protoss, 
   cyberpunk,
+  matrix,
+  bitcoin,
   children 
 }: { 
   protoss?: React.ReactNode
   cyberpunk?: React.ReactNode
+  matrix?: React.ReactNode
+  bitcoin?: React.ReactNode
   children?: React.ReactNode 
 }) {
-  const { isProtoss, isCyberpunk } = useTheme()
+  const { isProtoss, isCyberpunk, isMatrix, isBitcoin } = useTheme()
   
   if (isProtoss && protoss) return <>{protoss}</>
   if (isCyberpunk && cyberpunk) return <>{cyberpunk}</>
+  if (isMatrix && matrix) return <>{matrix}</>
+  if (isBitcoin && bitcoin) return <>{bitcoin}</>
   return <>{children}</>
 }

@@ -9,19 +9,19 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-cyber-blue/50 bg-cyber-blue/10 text-cyber-blue shadow-cyber-sm",
+          "border-primary/50 bg-primary/10 text-primary shadow-sm data-[theme='cyberpunk']:border-cyber-blue/50 data-[theme='cyberpunk']:bg-cyber-blue/10 data-[theme='cyberpunk']:text-cyber-blue data-[theme='cyberpunk']:shadow-cyber-sm",
         primary:
-          "border-neon-pink/50 bg-neon-pink/10 text-neon-pink",
+          "border-accent/50 bg-accent/10 text-accent data-[theme='cyberpunk']:border-neon-pink/50 data-[theme='cyberpunk']:bg-neon-pink/10 data-[theme='cyberpunk']:text-neon-pink",
         secondary:
-          "border-neon-purple/50 bg-neon-purple/10 text-neon-purple",
+          "border-secondary/50 bg-secondary/10 text-secondary data-[theme='cyberpunk']:border-neon-purple/50 data-[theme='cyberpunk']:bg-neon-purple/10 data-[theme='cyberpunk']:text-neon-purple",
         destructive:
-          "border-neon-red/50 bg-neon-red/10 text-neon-red",
+          "border-destructive/50 bg-destructive/10 text-destructive data-[theme='cyberpunk']:border-neon-red/50 data-[theme='cyberpunk']:bg-neon-red/10 data-[theme='cyberpunk']:text-neon-red",
         success:
-          "border-neon-green/50 bg-neon-green/10 text-neon-green",
+          "border-green-500/50 bg-green-500/10 text-green-500 data-[theme='cyberpunk']:border-neon-green/50 data-[theme='cyberpunk']:bg-neon-green/10 data-[theme='cyberpunk']:text-neon-green",
         warning:
-          "border-neon-orange/50 bg-neon-orange/10 text-neon-orange",
+          "border-orange-500/50 bg-orange-500/10 text-orange-500 data-[theme='cyberpunk']:border-neon-orange/50 data-[theme='cyberpunk']:bg-neon-orange/10 data-[theme='cyberpunk']:text-neon-orange",
         outline:
-          "border-dark-steel bg-transparent text-foreground",
+          "border-muted-foreground/30 bg-transparent text-foreground data-[theme='cyberpunk']:border-dark-steel",
       },
       glow: {
         true: "text-glow",

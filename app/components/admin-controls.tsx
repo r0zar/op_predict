@@ -39,7 +39,7 @@ export default function AdminControls({ className }: AdminControlsProps) {
   };
 
   return (
-    <Card className={cn("border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20", className)}>
+    <Card className={cn("border-amber-200/50 dark:border-amber-800 dark:bg-amber-950/10 bg-amber-950/10", className)}>
       <CardHeader className="pb-3">
         <CardTitle>Admin Controls</CardTitle>
         <CardDescription>

@@ -72,9 +72,6 @@ export default async function MarketsPage({
                 <div className="absolute top-[5%] right-[5%] w-60 h-60 bg-[hsl(var(--cyber-blue)/1)] rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
                 <div className="absolute bottom-[10%] left-[5%] w-60 h-60 bg-[hsl(var(--neon-purple)/1)] rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
 
-                {/* Linear gradient background instead of circles */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--space-black))] via-[hsl(var(--space-black))] to-[hsl(var(--space-void))] opacity-20 pointer-events-none"></div>
-
                 <div className="relative">
                     <MarketsTable
                         initialMarkets={initialMarkets}

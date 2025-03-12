@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,6 @@ type PredictionNFTReceipt = any;
 import { createPrediction } from "@/app/actions/prediction-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { cn } from "@/lib/utils";
-import { useSignet } from "@/lib/signet-context";
 import { InfoIcon } from "lucide-react";
 
 interface PredictionFormProps {
@@ -40,7 +39,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
     const [nftReceipt, setNftReceipt] = useState<PredictionNFTReceipt | null>(null);
 
     // Use the Signet context
-    const signet = useSignet();
+    const signet = {} as any
 
     // Predefined amounts for quick selection
     const predefinedAmounts = [5, 10, 25, 50];
@@ -97,17 +96,21 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 throw new Error("Selected outcome not found");
             }
 
-            // Notify Signet extension about the prediction and wait for confirmation
-            const signetResponse = await signet.createMarketPrediction({
+
+            const { signPrediction } = await import('signet-sdk')
+
+            // request a predict signature
+            const signetResponse = await signPrediction({
+                subnetId: 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS.blaze-welsh-v1',
+                to: 'SP2ZNGJ85ENDY6QRHQ5P2D4FXKGZWCKTB2T0Z55KS.blaze-welsh-predictions-v1',
+                nonce: Date.now(),
                 marketId: market.id,
-                marketName: market.name,
                 outcomeId: selectedOutcome,
-                outcomeName: selectedOutcomeData.name,
-                amount
-            });
+                amount,
+            })
 
             // If user rejected the prediction in Signet, abort
-            if (!signetResponse.approved) {
+            if (!signetResponse.success) {
                 return;
             }
 

@@ -1,0 +1,1277 @@
+/* Matrix Theme Styles */
+
+/* Core theme variables */
+[data-theme="matrix"] {
+  /* Font configuration */
+  --font-primary: 'Source Code Pro', monospace;
+  --font-display: 'Source Code Pro', monospace;
+  --font-mono: 'Source Code Pro', monospace;
+  
+  /* Theme colors */
+  --matrix-black: 160 12% 5%;
+  --matrix-dark: 160 12% 8%;
+  --matrix-deepgreen: 160 15% 12%;
+  --matrix-green: 120 100% 45%;
+  --matrix-lightgreen: 120 100% 75%;
+  --matrix-code: 150 100% 50%;
+  --matrix-red: 0 100% 50%;
+  --matrix-terminal: 120 63% 31%;
+  --matrix-glow: 120 100% 35%;
+  --matrix-text: 120 70% 90%;
+  --matrix-gray: 160 10% 50%;
+  --matrix-darkgray: 160 10% 20%;
+  
+  /* Tailwind CSS vars - mapping to Matrix colors */
+  --background: hsl(160, 12%, 5%);
+  --foreground: hsl(120, 70%, 90%);
+  --card: hsl(160, 12%, 8%);
+  --card-foreground: hsl(120, 70%, 90%);
+  --popover: hsl(160, 12%, 8%);
+  --popover-foreground: hsl(120, 70%, 90%);
+  --primary: hsl(120, 100%, 45%);
+  --primary-foreground: #000;
+  --secondary: hsl(150, 100%, 50%);
+  --secondary-foreground: #000;
+  --accent: hsl(120, 100%, 75%);
+  --accent-foreground: #000;
+  --muted: hsl(160, 15%, 12%);
+  --muted-foreground: hsl(160, 10%, 50%);
+  --destructive: hsl(0, 100%, 50%);
+  --destructive-foreground: #fff;
+  --border: hsl(160, 10%, 20%);
+  --input: hsl(160, 10%, 20%);
+  --ring: hsl(120, 100%, 45%);
+  
+  /* Radius and animations */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius: 4px;
+  
+  /* Global background */
+  background-color: hsl(var(--matrix-black)) !important;
+  color: hsl(var(--matrix-text)) !important;
+}
+
+/* Button variants */
+[data-theme="matrix"] .theme-button-primary {
+  color: hsl(var(--matrix-green));
+  border: 1px solid hsla(var(--matrix-green), 0.5);
+}
+
+[data-theme="matrix"] .theme-button-primary:hover {
+  box-shadow: 0 4px 6px -1px hsla(var(--matrix-green), 0.2);
+}
+
+[data-theme="matrix"] .theme-button-secondary {
+  color: hsl(var(--matrix-code));
+  border: 1px solid hsla(var(--matrix-code), 0.5);
+}
+
+[data-theme="matrix"] .theme-button-secondary:hover {
+  box-shadow: 0 4px 6px -1px hsla(var(--matrix-code), 0.2);
+}
+
+[data-theme="matrix"] .theme-button-danger {
+  color: hsl(var(--matrix-red));
+  border: 1px solid hsla(var(--matrix-red), 0.5);
+}
+
+[data-theme="matrix"] .theme-button-danger:hover {
+  box-shadow: 0 4px 6px -1px hsla(var(--matrix-red), 0.2);
+}
+
+/* Legacy cyber buttons with matrix styling */
+[data-theme="matrix"] .cyber-button {
+  position: relative;
+  overflow: hidden;
+  background-color: transparent;
+  color: hsl(var(--matrix-green));
+  font-family: monospace;
+  border: 1px solid hsla(var(--matrix-green), 0.5);
+  padding: 0.5rem 1rem;
+  transition: all 0.3s;
+}
+
+[data-theme="matrix"] .cyber-button:hover {
+  box-shadow: 0 4px 6px -1px hsla(var(--matrix-green), 0.2);
+  transform: scale(1.05);
+}
+
+[data-theme="matrix"] .cyber-button:active {
+  transform: scale(0.95);
+}
+
+[data-theme="matrix"] .cyber-button-success {
+  position: relative;
+  overflow: hidden;
+  background-color: transparent;
+  color: hsl(var(--matrix-lightgreen));
+  font-family: monospace;
+  border: 1px solid hsla(var(--matrix-lightgreen), 0.5);
+  padding: 0.5rem 1rem;
+  transition: all 0.3s;
+}
+
+[data-theme="matrix"] .cyber-button-success:hover {
+  box-shadow: 0 4px 6px -1px hsla(var(--matrix-lightgreen), 0.2);
+  transform: scale(1.05);
+}
+
+[data-theme="matrix"] .cyber-button-success:active {
+  transform: scale(0.95);
+}
+
+[data-theme="matrix"] .cyber-button-danger {
+  position: relative;
+  overflow: hidden;
+  background-color: transparent;
+  color: hsl(var(--matrix-red));
+  font-family: monospace;
+  border: 1px solid hsla(var(--matrix-red), 0.5);
+  padding: 0.5rem 1rem;
+  transition: all 0.3s;
+}
+
+[data-theme="matrix"] .cyber-button-danger:hover {
+  box-shadow: 0 4px 6px -1px hsla(var(--matrix-red), 0.2);
+  transform: scale(1.05);
+}
+
+[data-theme="matrix"] .cyber-button-danger:active {
+  transform: scale(0.95);
+}
+
+/* Glowing text effects */
+[data-theme="matrix"] .text-glow {
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.7), 0 0 10px hsl(var(--matrix-green) / 0.4);
+}
+
+[data-theme="matrix"] .text-glow-code {
+  text-shadow: 0 0 5px hsl(var(--matrix-code) / 0.7), 0 0 10px hsl(var(--matrix-code) / 0.4);
+}
+
+[data-theme="matrix"] .text-glow-red {
+  text-shadow: 0 0 5px hsl(var(--matrix-red) / 0.7), 0 0 10px hsl(var(--matrix-red) / 0.4);
+}
+
+/* Matrix-specific text effects */
+[data-theme="matrix"] .text-code {
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 5px hsla(var(--matrix-green), 0.7), 0 0 10px hsla(var(--matrix-green), 0.4);
+}
+
+/* Corner accents */
+[data-theme="matrix"] .corner-accents::before,
+[data-theme="matrix"] .corner-accents::after {
+  border-color: hsla(var(--matrix-green), 0.5);
+}
+
+/* Crystal accents */
+[data-theme="matrix"] .crystal-accents::before,
+[data-theme="matrix"] .crystal-accents::after {
+  border-color: hsla(var(--matrix-green), 0.5);
+}
+
+/* Crystal glow effect */
+[data-theme="matrix"] .crystal-glow::before {
+  box-shadow: 0 0 15px hsl(var(--matrix-green)), 0 0 30px hsl(var(--matrix-glow) / 0.4);
+}
+
+/* Energy wave effect */
+[data-theme="matrix"] .energy-wave {
+  background: linear-gradient(90deg, transparent, hsl(var(--matrix-green) / 0.7), hsl(var(--matrix-glow) / 0.7), transparent);
+}
+
+/* Pulse animations */
+[data-theme="matrix"] .theme-pulse {
+  animation-name: pulse-matrix;
+}
+
+@keyframes pulse-matrix {
+  0% { box-shadow: 0 0 5px hsl(var(--matrix-green) / 0.4); }
+  50% { box-shadow: 0 0 15px hsl(var(--matrix-green) / 0.7), 0 0 25px hsl(var(--matrix-glow) / 0.4); }
+  100% { box-shadow: 0 0 5px hsl(var(--matrix-green) / 0.4); }
+}
+
+/* Panel styles */
+[data-theme="matrix"] .bg-panel-gradient {
+  background: linear-gradient(to bottom, hsl(var(--matrix-dark)), hsla(var(--matrix-deepgreen), 0.8));
+  border: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+/* Card styling */
+[data-theme="matrix"] .theme-card {
+  background-color: hsl(var(--matrix-dark));
+  border: 1px solid hsla(var(--matrix-darkgray), 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s;
+}
+
+[data-theme="matrix"] .theme-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 255, 0, 0.2);
+}
+
+/* Progress bar styling */
+[data-theme="matrix"] .theme-progress-primary {
+  background: linear-gradient(to right, hsla(var(--matrix-green), 0.7), hsla(var(--matrix-green), 0.9));
+}
+
+[data-theme="matrix"] .theme-progress-secondary {
+  background: linear-gradient(to right, hsla(var(--matrix-code), 0.7), hsla(var(--matrix-code), 0.9));
+}
+
+[data-theme="matrix"] .theme-progress-danger {
+  background: linear-gradient(to right, hsla(var(--matrix-red), 0.7), hsla(var(--matrix-red), 0.9));
+}
+
+/* Digital rain background - should be used with a container that has overflow: hidden */
+[data-theme="matrix"] .matrix-rain-bg {
+  position: relative;
+}
+
+[data-theme="matrix"] .matrix-rain-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    hsl(var(--matrix-green) / 0.05) 1px,
+    transparent 2px
+  );
+  background-size: 100% 4px;
+  animation: matrix-scan 8s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes matrix-scan {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+/* Apply Matrix rain background to main containers */
+[data-theme="matrix"] .container,
+[data-theme="matrix"] main,
+[data-theme="matrix"] section {
+  position: relative;
+}
+
+[data-theme="matrix"] .container::before,
+[data-theme="matrix"] main::before,
+[data-theme="matrix"] section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    hsl(var(--matrix-green) / 0.05) 1px,
+    transparent 2px
+  );
+  background-size: 100% 4px;
+  animation: matrix-scan 10s linear infinite;
+  z-index: -1;
+  opacity: 0.3;
+}
+
+/* Terminal effect for text sections */
+[data-theme="matrix"] .terminal-section {
+  font-family: monospace;
+  color: hsl(var(--matrix-green));
+  background-color: hsl(var(--matrix-black));
+  border: 1px solid hsla(var(--matrix-green), 0.2);
+  padding: 1rem;
+  box-shadow: inset 0 0 10px hsla(var(--matrix-green), 0.1);
+}
+
+/* Blinking cursor for terminal-like effects */
+[data-theme="matrix"] .terminal-cursor::after {
+  content: "_";
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Glitch effect */
+[data-theme="matrix"] .matrix-glitch {
+  position: relative;
+  animation: matrix-glitch 3s infinite;
+}
+
+@keyframes matrix-glitch {
+  0%, 100% { text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.7); }
+  25% { text-shadow: -2px 0 5px hsl(var(--matrix-green) / 0.7), 2px 0 3px hsl(var(--matrix-red) / 0.7); }
+  50% { text-shadow: 2px 0 5px hsl(var(--matrix-green) / 0.7), -2px 0 3px hsl(var(--matrix-code) / 0.7); }
+  75% { text-shadow: -2px -2px 5px hsl(var(--matrix-green) / 0.7), 2px 2px 3px hsl(var(--matrix-lightgreen) / 0.7); }
+}
+
+/* ===== COMPREHENSIVE COLOR OVERRIDES ===== */
+
+/* Text color overrides */
+[data-theme="matrix"] .text-primary,
+[data-theme="matrix"] .text-cyber-blue,
+[data-theme="matrix"] .text-cyan-400,
+[data-theme="matrix"] .text-cyan-500,
+[data-theme="matrix"] .text-blue-400,
+[data-theme="matrix"] .text-blue-500,
+[data-theme="matrix"] .text-purple-400,
+[data-theme="matrix"] .text-purple-500 {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .text-secondary,
+[data-theme="matrix"] .text-indigo-400,
+[data-theme="matrix"] .text-indigo-500 {
+  color: hsl(var(--matrix-code)) !important;
+}
+
+[data-theme="matrix"] .text-destructive,
+[data-theme="matrix"] .text-red-400,
+[data-theme="matrix"] .text-red-500 {
+  color: hsl(var(--matrix-red)) !important;
+}
+
+[data-theme="matrix"] .text-success,
+[data-theme="matrix"] .text-green-400,
+[data-theme="matrix"] .text-green-500 {
+  color: hsl(var(--matrix-lightgreen)) !important;
+}
+
+/* Background color overrides */
+[data-theme="matrix"] .bg-primary,
+[data-theme="matrix"] .bg-cyber-blue,
+[data-theme="matrix"] .bg-cyan-400,
+[data-theme="matrix"] .bg-cyan-500,
+[data-theme="matrix"] .bg-blue-400,
+[data-theme="matrix"] .bg-blue-500,
+[data-theme="matrix"] .bg-purple-400,
+[data-theme="matrix"] .bg-purple-500 {
+  background-color: hsl(var(--matrix-green)) !important;
+  color: black !important;
+}
+
+[data-theme="matrix"] .bg-secondary,
+[data-theme="matrix"] .bg-indigo-400,
+[data-theme="matrix"] .bg-indigo-500 {
+  background-color: hsl(var(--matrix-code)) !important;
+  color: black !important;
+}
+
+[data-theme="matrix"] .bg-destructive,
+[data-theme="matrix"] .bg-red-400,
+[data-theme="matrix"] .bg-red-500 {
+  background-color: hsl(var(--matrix-red)) !important;
+  color: white !important;
+}
+
+[data-theme="matrix"] .bg-success,
+[data-theme="matrix"] .bg-green-400,
+[data-theme="matrix"] .bg-green-500 {
+  background-color: hsl(var(--matrix-lightgreen)) !important;
+  color: black !important;
+}
+
+/* Border color overrides */
+[data-theme="matrix"] .border-primary,
+[data-theme="matrix"] .border-cyber-blue,
+[data-theme="matrix"] .border-cyan-400,
+[data-theme="matrix"] .border-cyan-500,
+[data-theme="matrix"] .border-blue-400,
+[data-theme="matrix"] .border-blue-500,
+[data-theme="matrix"] .border-purple-400,
+[data-theme="matrix"] .border-purple-500 {
+  border-color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .border-secondary,
+[data-theme="matrix"] .border-indigo-400,
+[data-theme="matrix"] .border-indigo-500 {
+  border-color: hsl(var(--matrix-code)) !important;
+}
+
+[data-theme="matrix"] .border-destructive,
+[data-theme="matrix"] .border-red-400,
+[data-theme="matrix"] .border-red-500 {
+  border-color: hsl(var(--matrix-red)) !important;
+}
+
+[data-theme="matrix"] .border-success,
+[data-theme="matrix"] .border-green-400,
+[data-theme="matrix"] .border-green-500 {
+  border-color: hsl(var(--matrix-lightgreen)) !important;
+}
+
+/* Background opacity variants */
+[data-theme="matrix"] .bg-primary\/5,
+[data-theme="matrix"] .bg-cyber-blue\/5,
+[data-theme="matrix"] .bg-cyan-400\/5,
+[data-theme="matrix"] .bg-cyan-500\/5,
+[data-theme="matrix"] .bg-blue-400\/5,
+[data-theme="matrix"] .bg-blue-500\/5,
+[data-theme="matrix"] .bg-purple-400\/5,
+[data-theme="matrix"] .bg-purple-500\/5 {
+  background-color: hsl(var(--matrix-green) / 0.05) !important;
+}
+
+[data-theme="matrix"] .bg-primary\/10,
+[data-theme="matrix"] .bg-cyber-blue\/10,
+[data-theme="matrix"] .bg-cyan-400\/10,
+[data-theme="matrix"] .bg-cyan-500\/10,
+[data-theme="matrix"] .bg-blue-400\/10,
+[data-theme="matrix"] .bg-blue-500\/10,
+[data-theme="matrix"] .bg-purple-400\/10,
+[data-theme="matrix"] .bg-purple-500\/10 {
+  background-color: hsl(var(--matrix-green) / 0.1) !important;
+}
+
+[data-theme="matrix"] .bg-primary\/20,
+[data-theme="matrix"] .bg-cyber-blue\/20,
+[data-theme="matrix"] .bg-cyan-400\/20,
+[data-theme="matrix"] .bg-cyan-500\/20,
+[data-theme="matrix"] .bg-blue-400\/20,
+[data-theme="matrix"] .bg-blue-500\/20,
+[data-theme="matrix"] .bg-purple-400\/20,
+[data-theme="matrix"] .bg-purple-500\/20 {
+  background-color: hsl(var(--matrix-green) / 0.2) !important;
+}
+
+/* Button overrides */
+[data-theme="matrix"] .btn,
+[data-theme="matrix"] .button {
+  background-color: transparent !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.7) !important;
+  color: hsl(var(--matrix-green)) !important;
+  box-shadow: 0 0 5px hsl(var(--matrix-green) / 0.3) !important;
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.5) !important;
+}
+
+[data-theme="matrix"] .btn:hover,
+[data-theme="matrix"] .button:hover {
+  background-color: hsl(var(--matrix-green) / 0.2) !important;
+  box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.5) !important;
+}
+
+/* Card overrides */
+[data-theme="matrix"] .card {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 0 5px hsl(var(--matrix-green) / 0.1) !important;
+}
+
+[data-theme="matrix"] .card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 0 10px hsl(var(--matrix-green) / 0.2) !important;
+}
+
+/* Badge overrides */
+[data-theme="matrix"] .badge {
+  background-color: hsl(var(--matrix-darkgray)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* Select and Input overrides */
+[data-theme="matrix"] select,
+[data-theme="matrix"] input,
+[data-theme="matrix"] textarea {
+  background-color: hsl(var(--matrix-black)) !important;
+  border: 1px solid hsl(var(--matrix-darkgray)) !important;
+  color: hsl(var(--matrix-text)) !important;
+}
+
+[data-theme="matrix"] select:focus,
+[data-theme="matrix"] input:focus,
+[data-theme="matrix"] textarea:focus {
+  border-color: hsl(var(--matrix-green)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* Override any lingering cyberpunk elements */
+[data-theme="matrix"] [class*="cyber-"],
+[data-theme="matrix"] [class*="cyberpunk-"] {
+  color: hsl(var(--matrix-green)) !important;
+  border-color: hsl(var(--matrix-green) / 0.5) !important;
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.5) !important;
+}
+
+/* Override prediction percentage indicators */
+[data-theme="matrix"] .prediction-percentage-bar {
+  background-color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+[data-theme="matrix"] .prediction-percentage-indicator {
+  background-color: hsl(var(--matrix-green)) !important;
+}
+
+/* Table styling */
+[data-theme="matrix"] table {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-darkgray)) !important;
+}
+
+[data-theme="matrix"] thead tr {
+  background-color: hsl(var(--matrix-black)) !important;
+  border-bottom: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+}
+
+[data-theme="matrix"] tbody tr:hover {
+  background-color: hsl(var(--matrix-deepgreen)) !important;
+}
+
+[data-theme="matrix"] td, 
+[data-theme="matrix"] th {
+  border-color: hsl(var(--matrix-darkgray)) !important;
+}
+
+/* Matrix-specific gradients - more selective targeting */
+[data-theme="matrix"] .button.bg-gradient-to-r,
+[data-theme="matrix"] .btn.bg-gradient-to-r,
+[data-theme="matrix"] .card.bg-gradient-to-r,
+[data-theme="matrix"] .badge.bg-gradient-to-r,
+[data-theme="matrix"] .button.bg-gradient-to-l,
+[data-theme="matrix"] .btn.bg-gradient-to-l,
+[data-theme="matrix"] .card.bg-gradient-to-l,
+[data-theme="matrix"] .badge.bg-gradient-to-l,
+[data-theme="matrix"] .button.bg-gradient-to-t,
+[data-theme="matrix"] .btn.bg-gradient-to-t,
+[data-theme="matrix"] .card.bg-gradient-to-t,
+[data-theme="matrix"] .badge.bg-gradient-to-t,
+[data-theme="matrix"] .button.bg-gradient-to-b,
+[data-theme="matrix"] .btn.bg-gradient-to-b,
+[data-theme="matrix"] .card.bg-gradient-to-b,
+[data-theme="matrix"] .badge.bg-gradient-to-b {
+  background-image: linear-gradient(to right, hsl(120, 100%, 25%), hsl(120, 100%, 45%)) !important;
+}
+
+/* Special case for the onboarding background */
+[data-theme="matrix"] .min-h-screen.bg-gradient-to-b {
+  background: hsl(var(--matrix-black)) !important;
+  background-image: none !important;
+}
+
+[data-theme="matrix"] .from-primary,
+[data-theme="matrix"] .from-cyber-blue,
+[data-theme="matrix"] .from-cyan-400,
+[data-theme="matrix"] .from-cyan-500,
+[data-theme="matrix"] .from-blue-400,
+[data-theme="matrix"] .from-blue-500 {
+  --tw-gradient-from: hsl(120, 100%, 30%) !important;
+  --tw-gradient-to: hsl(120, 100%, 30% / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+[data-theme="matrix"] .to-primary,
+[data-theme="matrix"] .to-cyber-blue,
+[data-theme="matrix"] .to-cyan-400,
+[data-theme="matrix"] .to-cyan-500,
+[data-theme="matrix"] .to-blue-400,
+[data-theme="matrix"] .to-blue-500 {
+  --tw-gradient-to: hsl(120, 100%, 45%) !important;
+}
+
+[data-theme="matrix"] .via-primary,
+[data-theme="matrix"] .via-cyber-blue,
+[data-theme="matrix"] .via-cyan-400,
+[data-theme="matrix"] .via-cyan-500,
+[data-theme="matrix"] .via-blue-400,
+[data-theme="matrix"] .via-blue-500 {
+  --tw-gradient-to: hsl(120, 100%, 40% / 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), hsl(120, 100%, 40%), var(--tw-gradient-to) !important;
+}
+
+/* ===== ONBOARDING PAGE OVERRIDES ===== */
+
+/* Reset scan line colors */
+[data-theme="matrix"] .scanLine {
+  background-color: hsl(var(--matrix-green) / 0.5) !important;
+  box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.5) !important;
+  height: 2px !important;
+}
+
+/* Reset radial gradient colors */
+[data-theme="matrix"] [class*="bg-[radial-gradient"] {
+  background: radial-gradient(circle, hsl(var(--matrix-green) / 0.08) 0%, transparent 70%) !important;
+}
+
+/* Override grid patterns */
+[data-theme="matrix"] .gridPattern {
+  background-image: linear-gradient(to right, hsl(var(--matrix-green) / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--matrix-green) / 0.05) 1px, transparent 1px) !important;
+}
+
+/* Override success connection screen */
+[data-theme="matrix"] .CONNECTED {
+  color: hsl(var(--matrix-green)) !important;
+  text-shadow: 0 0 10px hsl(var(--matrix-green) / 0.7) !important;
+}
+
+[data-theme="matrix"] .glitchEffect {
+  animation: matrix-glitch 5s infinite !important;
+}
+
+/* Override the "CONNECTED" success message and line */
+[data-theme="matrix"] h2.glitchEffect {
+  color: hsl(var(--matrix-green)) !important;
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.7) !important;
+}
+
+[data-theme="matrix"] .absolute.-bottom-2 {
+  background: linear-gradient(90deg, 
+    hsl(var(--matrix-green) / 0), 
+    hsl(var(--matrix-green) / 1), 
+    hsl(var(--matrix-green) / 0)) !important;
+}
+
+/* Override "Wallet Connected" success card */
+[data-theme="matrix"] .glowingBorder {
+  border-color: hsl(var(--matrix-green) / 0.3) !important;
+  box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.2), inset 0 0 5px hsl(var(--matrix-green) / 0.1) !important;
+  background-color: hsl(var(--matrix-deepgreen)) !important;
+}
+
+[data-theme="matrix"] .text-green-400,
+[data-theme="matrix"] .text-green-300 {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .bg-green-500 {
+  background-color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .bg-green-500:hover {
+  background-color: hsl(var(--matrix-green) / 0.8) !important;
+}
+
+[data-theme="matrix"] .border-green-500 {
+  border-color: hsl(var(--matrix-green)) !important;
+}
+
+/* Override scan line effect in success card */
+[data-theme="matrix"] .glowingBorder .absolute.left-0 {
+  background-color: hsl(var(--matrix-green) / 0.4) !important;
+}
+
+/* Matrix-specific animations for onboarding */
+@keyframes matrix-scan-rapid {
+  0% { top: -10px; opacity: 0.7; }
+  100% { top: 100px; opacity: 0; }
+}
+
+[data-theme="matrix"] .glowingBorder .absolute.left-0.h-\[2px\] {
+  animation: matrix-scan-rapid 2s infinite linear !important;
+}
+
+/* Fix other green elements in onboarding */
+[data-theme="matrix"] .bg-green-500\/10 {
+  background-color: hsl(var(--matrix-green) / 0.1) !important;
+}
+
+[data-theme="matrix"] .border-green-500\/30 {
+  border-color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+[data-theme="matrix"] .border-green-500\/50 {
+  border-color: hsl(var(--matrix-green) / 0.5) !important;
+}
+
+/* Digital rain animation adjustment */
+[data-theme="matrix"] .text-primary\/30 {
+  color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* This rule is now replaced by the more specific rule above */
+
+/* Fix the Matrix digital rain effect on the onboarding page */
+[data-theme="matrix"] .font-mono.text-primary\/30.text-sm.opacity-20 {
+  color: hsl(var(--matrix-green)) !important;
+  opacity: 0.5 !important;
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.5) !important;
+}
+
+/* Tone down the radial gradient spots in Matrix theme */
+[data-theme="matrix"] .w-\[45vw\].h-\[45vw\].rounded-full,
+[data-theme="matrix"] .w-\[35vw\].h-\[35vw\].rounded-full {
+  background: radial-gradient(circle, hsl(var(--matrix-green) / 0.05) 0%, transparent 70%) !important;
+  opacity: 0.3 !important;
+}
+
+/* ===== MARKET PAGE OVERRIDES ===== */
+
+/* Market card styling */
+[data-theme="matrix"] .market-card {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 0 10px hsl(var(--matrix-green) / 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+[data-theme="matrix"] .market-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 0 20px hsl(var(--matrix-green) / 0.2) !important;
+  border-color: hsl(var(--matrix-green) / 0.5) !important;
+}
+
+[data-theme="matrix"] .market-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    hsl(var(--matrix-green) / 0.02) 1px,
+    transparent 2px
+  );
+  background-size: 100% 4px;
+  animation: matrix-scan 15s linear infinite;
+  z-index: 0;
+  opacity: 0.3;
+}
+
+/* Market card headers */
+[data-theme="matrix"] .market-card h3 {
+  color: hsl(var(--matrix-green)) !important;
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* Market deadline/timing indicators */
+[data-theme="matrix"] .market-deadline {
+  color: hsl(var(--matrix-gray)) !important;
+  border-color: hsl(var(--matrix-darkgray)) !important;
+}
+
+[data-theme="matrix"] .market-deadline .countdown {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* Percentage bars and metrics */
+[data-theme="matrix"] .percentage-bar {
+  background-color: hsl(var(--matrix-darkgray)) !important;
+}
+
+[data-theme="matrix"] .percentage-bar .percentage-fill {
+  background-color: hsl(var(--matrix-green)) !important;
+  box-shadow: 0 0 5px hsl(var(--matrix-green) / 0.5) !important;
+}
+
+/* Outcome badges in market view */
+[data-theme="matrix"] .outcome-badge {
+  background-color: hsl(var(--matrix-deepgreen)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .outcome-badge.selected {
+  background-color: hsl(var(--matrix-green) / 0.3) !important;
+  border-color: hsl(var(--matrix-green)) !important;
+  box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* Status indicators */
+[data-theme="matrix"] .status-indicator {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .status-indicator::before {
+  background-color: hsl(var(--matrix-green)) !important;
+  box-shadow: 0 0 5px hsl(var(--matrix-green)) !important;
+}
+
+/* ===== PREDICTIONS TABLE OVERRIDES ===== */
+
+/* Prediction table styling */
+[data-theme="matrix"] .predictions-table {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-darkgray)) !important;
+}
+
+[data-theme="matrix"] .predictions-table th {
+  color: hsl(var(--matrix-green)) !important;
+  border-bottom-color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+[data-theme="matrix"] .predictions-table td {
+  border-color: hsl(var(--matrix-darkgray)) !important;
+}
+
+[data-theme="matrix"] .predictions-table tr:hover td {
+  background-color: hsl(var(--matrix-deepgreen)) !important;
+}
+
+/* Prediction status badges */
+[data-theme="matrix"] .prediction-status {
+  background-color: hsl(var(--matrix-deepgreen)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .prediction-status.won {
+  background-color: hsl(var(--matrix-green) / 0.2) !important;
+  border-color: hsl(var(--matrix-green)) !important;
+  color: hsl(var(--matrix-lightgreen)) !important;
+}
+
+[data-theme="matrix"] .prediction-status.lost {
+  background-color: hsl(var(--matrix-red) / 0.2) !important;
+  border-color: hsl(var(--matrix-red)) !important;
+  color: hsl(var(--matrix-red)) !important;
+}
+
+/* Prediction form styling */
+[data-theme="matrix"] .prediction-form {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+}
+
+[data-theme="matrix"] .prediction-form label {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .prediction-form input {
+  background-color: hsl(var(--matrix-black)) !important;
+  border-color: hsl(var(--matrix-darkgray)) !important;
+  color: hsl(var(--matrix-text)) !important;
+}
+
+[data-theme="matrix"] .prediction-form input:focus {
+  border-color: hsl(var(--matrix-green)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* ===== SPECIFIC COMPONENT OVERRIDES ===== */
+
+/* UI component overrides */
+[data-theme="matrix"] .bg-muted {
+  background-color: hsl(var(--matrix-deepgreen)) !important;
+}
+
+[data-theme="matrix"] .text-muted-foreground {
+  color: hsl(var(--matrix-gray)) !important;
+}
+
+/* Fix shimmer animations to use matrix green */
+[data-theme="matrix"] .animate-shimmer {
+  background: linear-gradient(
+    to right,
+    hsl(var(--matrix-dark)) 0%,
+    hsl(var(--matrix-green) / 0.1) 20%,
+    hsl(var(--matrix-dark)) 40%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* Add subtle scan effect to cards on hover */
+[data-theme="matrix"] .card:hover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: hsl(var(--matrix-green) / 0.5);
+  animation: matrix-scan-rapid 2s infinite linear;
+  z-index: 0;
+}
+
+/* Add matrix-specific code effect to monospace text */
+[data-theme="matrix"] code, 
+[data-theme="matrix"] .font-mono {
+  color: hsl(var(--matrix-green)) !important;
+  text-shadow: 0 0 5px hsl(var(--matrix-green) / 0.5) !important;
+}
+
+/* Ensure dialog and popover components match theme */
+[data-theme="matrix"] .dialog-content,
+[data-theme="matrix"] .popover-content {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.3) !important;
+  box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.1) !important;
+}
+
+/* Fix neon colors - only for content from cyberpunk theme */
+/* To preserve the global theme switching functionality, we need to be selective */
+
+/* Market background and similar content */
+[data-theme="matrix"] .bg-\[hsl\(var\(--neon-purple\)\/5\)\],
+[data-theme="matrix"] .bg-\[hsl\(var\(--neon-purple\)\/10\)\] {
+  background-color: hsl(var(--matrix-green) / 0.1) !important;
+}
+
+/* Badge backgrounds and similar UI elements */
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--neon-purple\)\/20\)\],
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--neon-blue\)\/20\)\],
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--cyber-blue\)\/20\)\],
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--neon-green\)\/20\)\],
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--neon-orange\)\/20\)\],
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--neon-red\)\/20\)\],
+[data-theme="matrix"] .badge.bg-\[hsl\(var\(--neon-pink\)\/20\)\] {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border: 1px solid hsl(var(--matrix-green) / 0.5) !important;
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* Any elements specifically from cyberpunk theme */
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-purple\)\/5\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-purple\)\/10\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-purple\)\/20\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-purple\)\/30\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-purple\)\/40\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-purple\)\/50\)\] {
+  background-color: hsl(var(--matrix-green) / 0.1) !important;
+}
+
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-blue\)\/5\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-blue\)\/10\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-blue\)\/20\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-blue\)\/30\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-blue\)\/40\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--neon-blue\)\/50\)\] {
+  background-color: hsl(var(--matrix-green) / 0.1) !important;
+}
+
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--cyber-blue\)\/5\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--cyber-blue\)\/10\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--cyber-blue\)\/20\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--cyber-blue\)\/30\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--cyber-blue\)\/40\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .bg-\[hsl\(var\(--cyber-blue\)\/50\)\] {
+  background-color: hsl(var(--matrix-green) / 0.1) !important;
+}
+
+/* Still fix critical UI elements like cards, badges, buttons */
+[data-theme="matrix"] .card.bg-\[hsl\(var\(--neon-purple\)\/20\)\],
+[data-theme="matrix"] .card.bg-\[hsl\(var\(--neon-blue\)\/20\)\],
+[data-theme="matrix"] .card.bg-\[hsl\(var\(--cyber-blue\)\/20\)\] {
+  background-color: hsl(var(--matrix-dark)) !important;
+  border-color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* Fix specifically market list backgrounds which are critical */
+[data-theme="matrix"] .markets-list .bg-\[hsl\(var\(--neon-purple\)\/5\)\],
+[data-theme="matrix"] .markets-container .bg-\[hsl\(var\(--neon-purple\)\/5\)\] {
+  background-color: hsl(var(--matrix-black)) !important;
+}
+
+/* Fix search panel in markets page */
+[data-theme="matrix"] .bg-panel-gradient {
+  background: hsl(var(--matrix-dark)) !important;
+  border-color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+/* Remove this from all themes except Protoss */
+:not([data-theme="protoss"]) .border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
+  border-color: transparent !important;
+}
+
+/* Add appropriate styling for each theme */
+[data-theme="matrix"] .border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
+  border-color: hsl(var(--matrix-green) / 0.3) !important;
+}
+
+[data-theme="bitcoin"] .border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
+  border-color: #e5e7eb !important; /* Light gray border for Bitcoin theme */
+}
+
+[data-theme="cyberpunk"] .border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
+  /* keep the cyber blue for cyberpunk theme */
+  border-color: hsl(var(--cyber-blue) / 0.15) !important;
+}
+
+[data-theme="protoss"] .border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
+  /* Explicitly keep cyber blue for protoss theme */
+  border-color: hsl(var(--cyber-blue) / 0.15) !important;
+}
+
+/* Specifically target the :: after table filters for non-Protoss themes */
+:not([data-theme="protoss"]) .relative.p-5.mb-6 label + span.text-\[hsl\(var\(--cyber-blue\)\)\],
+:not([data-theme="protoss"]) .relative.overflow-visible span.text-\[hsl\(var\(--cyber-blue\)\)\] {
+  display: none !important;
+}
+
+/* Ensure theme menu shows correctly in all themes */
+[data-theme="matrix"] [data-radix-dropdown-menu] .text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="bitcoin"] [data-radix-dropdown-menu] .text-\[hsl\(var\(--cyber-blue\)\)\] {
+  color: hsl(183, 95%, 75%) !important;
+  opacity: 1 !important;
+  display: inline-flex !important;
+}
+
+/* Fix dark theme dropdown menu items hover colors */
+[data-theme="matrix"] [data-radix-dropdown-menu-content] [data-radix-dropdown-menu-item]:hover span,
+[data-theme="cyberpunk"] [data-radix-dropdown-menu-content] [data-radix-dropdown-menu-item]:hover span,
+[data-theme="protoss"] [data-radix-dropdown-menu-content] [data-radix-dropdown-menu-item]:hover span,
+[data-theme="matrix"] [data-radix-dropdown-menu-content] [data-radix-dropdown-menu-item]:focus span,
+[data-theme="cyberpunk"] [data-radix-dropdown-menu-content] [data-radix-dropdown-menu-item]:focus span,
+[data-theme="protoss"] [data-radix-dropdown-menu-content] [data-radix-dropdown-menu-item]:focus span {
+  color: #000 !important;
+}
+
+/* Fix colored text in table cells for consistent appearance */
+[data-theme="matrix"] .text-\[hsl\(var\(--neon-green\)\)\],
+[data-theme="matrix"] .text-green-500,
+[data-theme="matrix"] td [class*="text-[hsl(var(--neon-green))"] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .text-\[hsl\(var\(--neon-purple\)\)\],
+[data-theme="matrix"] .text-purple-500,
+[data-theme="matrix"] td [class*="text-[hsl(var(--neon-purple))"] {
+  color: hsl(var(--matrix-code)) !important;
+}
+
+/* (Removed conflicting focus rule) */
+
+/* Customize the hover/focus for each theme */
+
+/* Matrix theme - green accent */
+[data-theme="matrix"] .focus\:bg-accent:focus {
+  background-color: rgba(0, 255, 0, 0.2) !important;
+}
+
+[data-theme="matrix"] [role="menuitem"]:hover,
+[data-theme="matrix"] [role="menuitem"]:focus,
+[data-theme="matrix"] [role="option"]:hover,
+[data-theme="matrix"] [role="option"]:focus {
+  color: hsl(var(--matrix-green)) !important;
+  background-color: rgba(0, 255, 0, 0.15) !important;
+  text-shadow: 0 0 3px rgba(0, 255, 0, 0.5) !important;
+}
+
+/* Ring shadow styles for focus states */
+[data-theme="matrix"] .focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) hsl(var(--matrix-dark)) !important;
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) hsl(var(--matrix-green)) !important;
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000) !important;
+}
+
+[data-theme="matrix"] .focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px !important;
+  --tw-ring-offset-color: hsl(var(--matrix-dark)) !important;
+}
+
+/* Radix UI fix removed as it was causing regressions */
+
+/* Cyberpunk theme - cyan accent */
+[data-theme="cyberpunk"] .focus\:bg-accent:focus {
+  background-color: rgba(125, 249, 255, 0.2) !important;
+}
+
+[data-theme="cyberpunk"] [role="menuitem"]:hover,
+[data-theme="cyberpunk"] [role="menuitem"]:focus,
+[data-theme="cyberpunk"] [role="option"]:hover,
+[data-theme="cyberpunk"] [role="option"]:focus {
+  color: hsl(var(--cyber-blue)) !important;
+  background-color: rgba(125, 249, 255, 0.15) !important;
+  text-shadow: 0 0 3px rgba(125, 249, 255, 0.5) !important;
+}
+
+/* Protoss theme - gold accent */
+[data-theme="protoss"] .focus\:bg-accent:focus {
+  background-color: rgba(255, 197, 0, 0.2) !important;
+}
+
+[data-theme="protoss"] [role="menuitem"]:hover,
+[data-theme="protoss"] [role="menuitem"]:focus,
+[data-theme="protoss"] [role="option"]:hover,
+[data-theme="protoss"] [role="option"]:focus {
+  color: hsl(var(--psi-gold)) !important;
+  background-color: rgba(255, 197, 0, 0.15) !important;
+  text-shadow: 0 0 3px rgba(255, 197, 0, 0.5) !important;
+}
+
+/* Fix dropdown content background in dark themes */
+[data-theme="matrix"] [data-radix-dropdown-menu-content],
+[data-theme="cyberpunk"] [data-radix-dropdown-menu-content],
+[data-theme="protoss"] [data-radix-dropdown-menu-content],
+[data-theme="matrix"] div[data-radix-popper-content-wrapper],
+[data-theme="cyberpunk"] div[data-radix-popper-content-wrapper],
+[data-theme="protoss"] div[data-radix-popper-content-wrapper] {
+  background-color: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  z-index: 999999 !important;
+}
+
+/* Fix popper content wrappers for all themes */
+div[data-radix-popper-content-wrapper] {
+  z-index: 999999 !important;
+}
+
+/* Explicitly fix items inside the popper wrapper */
+[data-theme="matrix"] div[data-radix-popper-content-wrapper] [role="option"],
+[data-theme="matrix"] div[data-radix-popper-content-wrapper] [role="listbox"] {
+  visibility: visible !important;
+  display: flex !important;  
+  /* background-color: transparent !important; */
+  opacity: 1 !important;
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* Fix content visibility but preserve display property */
+[data-theme="matrix"] div[data-radix-popper-content-wrapper] div,
+[data-theme="matrix"] div[data-radix-popper-content-wrapper] ul,
+[data-theme="matrix"] div[data-radix-popper-content-wrapper] li,
+[data-theme="matrix"] div[data-radix-popper-content-wrapper] span {
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: hsl(var(--matrix-text)) !important;
+}
+
+/* Theme-specific text color overrides */
+[data-theme="matrix"] .text-\[hsl\(var\(--cyber-blue\)\)\] {
+  color: hsl(var(--matrix-green)) !important; 
+}
+
+/* ===== MARKETS PAGE THEME-SPECIFIC OVERRIDES ===== */
+
+/* Fix theme-specific styling in markets table toggle and filter controls */
+[data-theme="matrix"] .relative.inline-flex.rounded-md.overflow-hidden {
+  border-color: hsl(var(--matrix-green) / 0.3) !important;
+  background-image: none !important;
+  background-color: hsl(var(--matrix-dark)) !important;
+}
+
+/* Fix table/analytics toggle buttons */
+[data-theme="matrix"] .bg-\[hsl\(var\(--cyber-blue\)\/0\)\],
+[data-theme="matrix"] .bg-\[hsl\(var\(--neon-purple\)\/5\)\] {
+  background-color: hsl(var(--matrix-dark)) !important;
+  box-shadow: inset 0 0 10px hsl(var(--matrix-green) / 0.1) !important;
+}
+
+/* Fix corner accents and borders */
+[data-theme="matrix"] .absolute.top-0.left-0.w-2.h-2,
+[data-theme="matrix"] .absolute.bottom-0.right-0.w-2.h-2,
+[data-theme="matrix"] .absolute.top-0.left-0.w-3.h-3,
+[data-theme="matrix"] .absolute.bottom-0.right-0.w-3.h-3 {
+  border-color: hsl(var(--matrix-green) / 0.6) !important;
+}
+
+/* Fix the active indicator lines */
+[data-theme="matrix"] .absolute.bottom-0.h-\[2px\].bg-gradient-to-r.transition-all.duration-300 {
+  background-image: linear-gradient(to right, hsl(var(--matrix-green) / 0.7), hsl(var(--matrix-green) / 0.3)) !important;
+}
+
+/* Fix grid patterns and panel backgrounds */
+[data-theme="matrix"] .absolute.inset-0.opacity-\[0\.03\].pointer-events-none {
+  background-image: repeating-linear-gradient(0deg, hsl(var(--matrix-green) / 0.2), hsl(var(--matrix-green) / 0.2) 1px, transparent 1px, transparent 60px),
+    repeating-linear-gradient(90deg, hsl(var(--matrix-green) / 0.2), hsl(var(--matrix-green) / 0.2) 1px, transparent 1px, transparent 60px) !important;
+}
+
+/* ClientAnalytics component fixes */
+[data-theme="matrix"] .text-\[hsl\(var\(--neon-purple\)\)\] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .text-\[hsl\(var\(--neon-green\)\)\] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] .text-\[hsl\(var\(--neon-pink\)\)\] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* Make the stats card use Matrix styling */
+[data-theme="matrix"] .bg-panel-gradient {
+  background-color: hsl(var(--matrix-black)) !important;
+  background-image: none !important;
+  border-color: hsl(var(--matrix-green) / 0.2) !important;
+  box-shadow: 0 0 10px hsl(var(--matrix-green) / 0.1) !important;
+}
+
+/* Fix progress bars in analytics */
+[data-theme="matrix"] .h-2.bg-\[hsl\(var\(--space-void\)\)\] {
+  background-color: hsl(var(--matrix-black)) !important;
+  border-color: hsl(var(--matrix-darkgray)) !important;
+}
+
+[data-theme="matrix"] .h-2.bg-\[hsl\(var\(--space-void\)\)\] > div {
+  background-image: linear-gradient(to right, hsl(var(--matrix-green) / 0.5), hsl(var(--matrix-green) / 0.8)) !important;
+}
+
+[data-theme="bitcoin"] .text-\[hsl\(var\(--cyber-blue\)\)\] {
+  color: #000 !important;
+}
+
+[data-theme="cyberpunk"] .text-\[hsl\(var\(--cyber-blue\)\)\] {
+  color: hsl(var(--cyber-blue)) !important;
+}
+
+/* Fix text colors for other cyberpunk theme colors - only for the Matrix theme */
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .text-\[hsl\(var\(--neon-blue\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .text-\[hsl\(var\(--neon-green\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .text-\[hsl\(var\(--neon-purple\)\)\] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .text-\[hsl\(var\(--neon-pink\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .text-\[hsl\(var\(--neon-red\)\)\] {
+  color: hsl(var(--matrix-red)) !important; 
+}
+
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .text-\[hsl\(var\(--neon-orange\)\)\] {
+  color: hsl(var(--matrix-lightgreen)) !important;
+}
+
+/* Alternative approach - by element type */
+[data-theme="matrix"] .badge .text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] .badge .text-\[hsl\(var\(--neon-blue\)\)\],
+[data-theme="matrix"] .badge .text-\[hsl\(var\(--neon-green\)\)\],
+[data-theme="matrix"] .badge .text-\[hsl\(var\(--neon-purple\)\)\] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* For cases where we need these regardless of origin */
+[data-theme="matrix"] h1.text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] h2.text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] h3.text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] h4.text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] h5.text-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] h6.text-\[hsl\(var\(--cyber-blue\)\)\] {
+  color: hsl(var(--matrix-green)) !important;
+}
+
+/* Fix border colors for cyberpunk theme colors */
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--neon-blue\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--neon-green\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--neon-purple\)\)\] {
+  border-color: hsl(var(--matrix-green)) !important;
+}
+
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--neon-pink\)\)\],
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--neon-red\)\)\] {
+  border-color: hsl(var(--matrix-red)) !important; 
+}
+
+[data-theme="matrix"] [data-theme-origin="cyberpunk"] .border-\[hsl\(var\(--neon-orange\)\)\] {
+  border-color: hsl(var(--matrix-lightgreen)) !important;
+}
+
+/* For common elements and buttons */
+[data-theme="matrix"] .button.border-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] .button.border-\[hsl\(var\(--neon-blue\)\)\],
+[data-theme="matrix"] .button.border-\[hsl\(var\(--neon-green\)\)\],
+[data-theme="matrix"] .button.border-\[hsl\(var\(--neon-purple\)\)\],
+[data-theme="matrix"] .btn.border-\[hsl\(var\(--cyber-blue\)\)\],
+[data-theme="matrix"] .btn.border-\[hsl\(var\(--neon-blue\)\)\],
+[data-theme="matrix"] .btn.border-\[hsl\(var\(--neon-green\)\)\],
+[data-theme="matrix"] .btn.border-\[hsl\(var\(--neon-purple\)\)\] {
+  border-color: hsl(var(--matrix-green)) !important;
+}

@@ -288,10 +288,10 @@ export default async function MarketPage({ params }: { params: { id: string } })
     // Check if market is already resolved or cancelled
     const isMarketResolved = market.status === 'resolved';
     const isMarketCancelled = market.status === 'cancelled';
-    
+
     // Check if market has expired (end date has passed)
     const isMarketExpired = new Date(market.endDate) < new Date();
-    
+
     // A market is considered closed if it's resolved, cancelled, or expired
     const isMarketClosed = isMarketResolved || isMarketCancelled || isMarketExpired;
 
@@ -398,12 +398,12 @@ export default async function MarketPage({ params }: { params: { id: string } })
 
                     {/* Status notifications for resolved/cancelled markets */}
                     {isMarketResolved && market.resolvedOutcomeId && (
-                        <div className="mx-6 mb-6 bg-green-950/30 border border-green-500/30 rounded-lg p-4 backdrop-blur">
+                        <div className="mx-6 mb-6 bg-green-950/5 border border-green-600/90 rounded-lg p-4 backdrop-blur">
                             <div className="flex items-start">
                                 <Trophy className="h-5 w-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-medium text-green-300 mb-1">Market Resolved</h3>
-                                    <p className="text-sm text-green-400/80">
+                                    <p className="text-sm text-green-600/90">
                                         This market was resolved on {new Date(market.resolvedAt || '').toLocaleDateString()}.
                                         The winning outcome was <strong>{market.outcomes.find((o: any) => o.id === market.resolvedOutcomeId)?.name}</strong>.
                                     </p>
@@ -425,7 +425,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                             </div>
                         </div>
                     )}
-                    
+
                     {isMarketExpired && !isMarketResolved && !isMarketCancelled && (
                         <div className="mx-6 mb-6 bg-amber-950/30 border border-amber-500/30 rounded-lg p-4 backdrop-blur">
                             <div className="flex items-start">
@@ -547,7 +547,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                         <p className="text-xs text-muted-foreground border-t border-muted pt-4 mt-4">
                                             Market ended on {new Date(market.endDate).toLocaleDateString()}
                                         </p>
-                                        
+
                                         {isUserAdmin && (
                                             <div className="mt-6 w-full">
                                                 <ResolveMarketButton

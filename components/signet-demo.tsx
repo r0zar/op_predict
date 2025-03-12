@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useSignet } from '@/lib/signet-context';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function SignetDemo() {
-  const signet = useSignet();
   const [response, setResponse] = useState<any>(null);
+  const [walletInfo, setWalletInfo] = useState<any>(null);
+  const [txResult, setTxResult] = useState<any>(null);
+
+  const signet = {} as any
+  const blaze = {} as any
 
   // Demo for system notification
   const handleSystemNotification = () => {
@@ -47,14 +50,18 @@ export function SignetDemo() {
 
   // Demo for basic prediction market
   const handlePredictionMarket = () => {
-    signet.createMarketPrediction({
+    // Use the new BlazeClient API from the SDK
+    blaze.predict({
       marketId: 'market-123',
       marketName: 'Will ETH reach $10k by EOY?',
       outcomeId: 1,
       outcomeName: 'Yes',
-      amount: 100
+      amount: 100,
+      potentialPayout: 250
     }).then(response => {
       setResponse(response);
+    }).catch(err => {
+      console.error("Prediction failed:", err);
     });
   };
 
@@ -97,36 +104,47 @@ export function SignetDemo() {
     });
   };
 
-  // Demo for enhanced wallet update
-  const handleSimulateWalletUpdate = () => {
-    // This is just for demonstration purposes
-    // In a real app, wallet updates come from the extension
-    if (typeof window !== 'undefined') {
-      window.postMessage({
-        type: 'WALLET_UPDATE',
-        address: 'sp1abcdef1234567890abcdef1234567890abcdef',
-        balance: '1240.50',
-        previousBalance: '1200.50',
-        delta: '+40.00',
-        reason: 'PREDICTION_WIN',
-        relatedTransaction: {
-          id: 'tx-987654321',
-          type: 'MARKET_RESOLUTION',
-          timestamp: Date.now(),
-          marketId: 'market-456',
-          marketName: 'Will ETH merge by EOY?'
-        }
-      }, '*');
+  // Demo for token transfer using the high-level API
+  const handleTransferTokens = () => {
+    blaze.transfer({
+      to: 'ST1234567890ABCDEFGHIJKLMNOPQRSTUV',
+      amount: 50,
+      token: 'WIF',
+      memo: 'Demo transfer'
+    }).then(response => {
+      setResponse(response);
+      setTxResult(response);
+    }).catch(err => {
+      console.error("Transfer failed:", err);
+    });
+  };
 
-      // Show a notification to inform the user
-      signet.showNotification({
-        title: 'WALLET UPDATE SIMULATED',
-        message: 'A simulated wallet update was sent',
-        details: 'Check the wallet info badge to see the update',
-        notificationType: 'SYSTEM',
-        duration: 3000
-      });
+  // Demo for wallet info via the high-level API
+  const handleGetWalletInfo = async () => {
+    try {
+      const info = await blaze.getWalletInfo();
+      setWalletInfo(info);
+      setResponse(info);
+    } catch (err) {
+      console.error("Failed to get wallet info:", err);
     }
+  };
+
+  // Demo for enhanced UI options
+  const handleSetUIOptions = () => {
+    blaze.setUIOptions({
+      theme: 'dark',
+      accentColor: '#bd93f9',
+      showControls: true
+    });
+
+    signet.showNotification({
+      title: 'UI UPDATED',
+      message: 'UI theme set to dark mode',
+      details: 'UI preferences have been updated',
+      notificationType: 'SYSTEM',
+      duration: 3000
+    });
   };
 
   // Demo for 3D cube
@@ -151,14 +169,14 @@ export function SignetDemo() {
             {signet.isAvailable ? "Extension Available" : "Extension Not Detected"}
           </Badge>
 
-          {signet.walletInfo && (
+          {(signet.walletInfo || walletInfo) && (
             <div className="flex items-center ml-2 gap-2">
               <Badge variant="outline">
-                Balance: {signet.walletInfo.balance}
+                Balance: {walletInfo?.balance || signet.walletInfo?.balance || "0.00"}
               </Badge>
-              {signet.walletInfo.delta && (
-                <Badge variant={signet.walletInfo.delta.startsWith('+') ? "success" : "destructive"}>
-                  {signet.walletInfo.delta}
+              {(walletInfo?.balanceNumeric || signet.walletInfo?.delta) && (
+                <Badge variant="success">
+                  {walletInfo?.address ? "Connected" : signet.walletInfo?.delta || ""}
                 </Badge>
               )}
             </div>
@@ -203,30 +221,60 @@ export function SignetDemo() {
             <Button
               onClick={handleRichNotification}
               variant="secondary"
-              className="col-span-2"
             >
-              Rich Notification with Image
+              Rich Notification
             </Button>
 
             <Button
-              onClick={handleSimulateWalletUpdate}
+              onClick={handleTransferTokens}
               variant="outline"
-              className="col-span-2"
             >
-              Simulate Wallet Update
+              Transfer Tokens
+            </Button>
+
+            <Button
+              onClick={handleGetWalletInfo}
+              variant="ghost"
+            >
+              Get Wallet Info
+            </Button>
+
+            <Button
+              onClick={handleSetUIOptions}
+              variant="outline"
+            >
+              Set UI Theme
             </Button>
           </TabsContent>
         </Tabs>
       </CardContent>
 
-      {response && (
-        <CardFooter className="flex flex-col items-start">
-          <p className="text-sm font-medium">Last Response:</p>
-          <pre className="text-xs mt-2 bg-slate-100 dark:bg-slate-800 p-2 rounded w-full overflow-auto">
-            {JSON.stringify(response, null, 2)}
-          </pre>
-        </CardFooter>
-      )}
+      <CardFooter className="flex flex-col items-start">
+        {txResult && (
+          <div className="w-full mb-3">
+            <p className="text-sm font-medium">Transaction Result:</p>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant={txResult.status === 'confirmed' ? 'success' : txResult.status === 'pending' ? 'outline' : 'destructive'}>
+                {txResult.status}
+              </Badge>
+              {txResult.txId && (
+                <code className="text-xs bg-slate-100 dark:bg-slate-800 p-1 rounded">
+                  {txResult.txId}
+                </code>
+              )}
+            </div>
+          </div>
+        )}
+
+        {response && (
+          <div className="w-full">
+            <p className="text-sm font-medium">Last Response:</p>
+            <pre className="text-xs mt-2 bg-slate-100 dark:bg-slate-800 p-2 rounded w-full overflow-auto">
+              {JSON.stringify(response, null, 2)}
+            </pre>
+          </div>
+        )}
+      </CardFooter>
     </Card>
   );
 }

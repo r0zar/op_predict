@@ -336,50 +336,50 @@ export default function MarketsTable({
           <Button
             variant="ghost"
             className={`relative rounded-l-md rounded-r-none border-0 transition-all duration-300 ${viewMode === 'table'
-              ? 'bg-[hsl(var(--cyber-blue)/0)] shadow-[inset_0_0_10px_rgba(125,249,255,0.1)]'
-              : 'text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--cyber-blue)/10)]'
+              ? 'data-[theme="cyberpunk"]:shadow-[inset_0_0_10px_rgba(125,249,255,0.1)]'
+              : 'text-muted-foreground hover:text-foreground data-[theme="cyberpunk"]:hover:bg-[hsl(var(--cyber-blue)/10)]'
               }`}
             onClick={() => setViewMode('table')}
           >
             {/* Decorative corner accent */}
             {viewMode === 'table' && (
               <>
-                <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--cyber-blue))]"></span>
-                <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--cyber-blue))]"></span>
+                <span className="absolute top-0 left-0 w-2 h-2 border-t border-l data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue))]"></span>
+                <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue))]"></span>
               </>
             )}
             <span className={`flex items-center ${viewMode === 'table' ? 'text-[hsl(var(--foreground))] font-semibold' : ''}`}>Table View</span>
           </Button>
 
           {/* Divider */}
-          <div className="w-[1px] bg-gradient-to-b from-transparent via-[hsl(var(--cyber-blue)/30)] to-transparent"></div>
+          <div className="w-[1px] bg-gradient-to-b from-transparent data-[theme='cyberpunk']:via-[hsl(var(--cyber-blue)/30)] to-transparent"></div>
 
           {/* Analytics Button */}
           <Button
             variant="ghost"
             className={`relative rounded-r-md rounded-l-none border-0 transition-all duration-300 ${viewMode === 'analytics'
-              ? 'bg-[hsl(var(--neon-purple)/5)] shadow-[inset_0_0_10px_rgba(189,147,249,0.1)]'
-              : 'text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--neon-purple)/10)]'
+              ? 'data-[theme="cyberpunk"]:bg-[hsl(var(--neon-purple)/5)] data-[theme="cyberpunk"]:shadow-[inset_0_0_10px_rgba(189,147,249,0.1)]'
+              : 'text-muted-foreground hover:text-foreground data-[theme="cyberpunk"]:hover:bg-[hsl(var(--neon-purple)/10)]'
               }`}
             onClick={() => setViewMode('analytics')}
           >
             {/* Decorative corner accent */}
             {viewMode === 'analytics' && (
               <>
-                <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--neon-purple))]"></span>
-                <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--neon-purple))]"></span>
+                <span className="absolute top-0 left-0 w-2 h-2 border-t border-l data-[theme='cyberpunk']:border-[hsl(var(--neon-purple))]"></span>
+                <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r data-[theme='cyberpunk']:border-[hsl(var(--neon-purple))]"></span>
               </>
             )}
             <span className={`flex items-center ${viewMode === 'analytics' ? 'text-[hsl(var(--foreground))] font-semibold' : ''}`}>Analytics</span>
           </Button>
 
           {/* Subtle ambient effect */}
-          <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-[hsl(var(--cyber-blue)/5)] via-transparent to-[hsl(var(--neon-purple)/5)] opacity-30"></div>
+          <div className="absolute inset-0 pointer-events-none data-[theme='cyberpunk']:bg-gradient-to-br data-[theme='cyberpunk']:from-[hsl(var(--cyber-blue)/5)] via-transparent data-[theme='cyberpunk']:to-[hsl(var(--neon-purple)/5)] opacity-30"></div>
 
           {/* Active indicator line */}
           <div className={`absolute bottom-0 h-[2px] bg-gradient-to-r transition-all duration-300 ${viewMode === 'table'
-            ? 'from-[hsl(var(--cyber-blue)/70)] to-[hsl(var(--cyber-blue)/30)] left-0 w-1/2'
-            : 'from-[hsl(var(--neon-purple)/30)] to-[hsl(var(--neon-purple)/70)] left-1/2 w-1/2'
+            ? 'data-[theme="cyberpunk"]:from-[hsl(var(--cyber-blue)/70)] data-[theme="cyberpunk"]:to-[hsl(var(--cyber-blue)/30)] left-0 w-1/2'
+            : 'data-[theme="cyberpunk"]:from-[hsl(var(--neon-purple)/30)] data-[theme="cyberpunk"]:to-[hsl(var(--neon-purple)/70)] left-1/2 w-1/2'
             }`}></div>
         </div>
       </div>
@@ -409,7 +409,7 @@ export default function MarketsTable({
                 placeholder="search markets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-[hsl(var(--space-void))] border-[hsl(var(--cyber-blue)/30)] focus:border-[hsl(var(--cyber-blue))] focus:ring-[hsl(var(--cyber-blue)/30)] shadow-sm placeholder:text-muted-foreground/50 transition-all duration-300"
+                className="bg-muted border-primary/30 focus:ring-primary/30 shadow-sm placeholder:text-muted-foreground/50 transition-all duration-300"
               />
               {/* Subtle highlight effect when focused/filled */}
               {searchQuery && (
@@ -427,13 +427,13 @@ export default function MarketsTable({
               value={category || 'all'}
               onValueChange={(value) => setCategory(value === 'all' ? undefined : value)}
             >
-              <SelectTrigger id="category" className="bg-[hsl(var(--space-void))] border-[hsl(var(--cyber-blue)/30)] focus:border-[hsl(var(--cyber-blue))] focus:ring-[hsl(var(--cyber-blue)/30)] shadow-sm">
+              <SelectTrigger id="category" className="bg-muted border-primary/30 focus:ring-primary/30 shadow-sm">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent className="bg-[hsl(var(--space-dark))] border-[hsl(var(--cyber-blue)/30)]">
-                <SelectItem value="all" className="focus:bg-[hsl(var(--cyber-blue)/15)]">All Categories</SelectItem>
+              <SelectContent className="border-primary/30">
+                <SelectItem value="all" className="focus:bg-accent/20">All Categories</SelectItem>
                 {MARKET_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat} className="focus:bg-[hsl(var(--cyber-blue)/15)] capitalize">
+                  <SelectItem key={cat} value={cat} className="focus:bg-accent/20 capitalize">
                     {cat}
                   </SelectItem>
                 ))}
@@ -450,25 +450,25 @@ export default function MarketsTable({
               value={status}
               onValueChange={(value: 'active' | 'resolved' | 'all') => setStatus(value)}
             >
-              <SelectTrigger id="status" className="bg-[hsl(var(--space-void))] border-[hsl(var(--cyber-blue)/30)] focus:border-[hsl(var(--cyber-blue))] focus:ring-[hsl(var(--cyber-blue)/30)] shadow-sm">
+              <SelectTrigger id="status" className="bg-muted border-primary/30 focus:ring-primary/30 shadow-sm">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent className="bg-[hsl(var(--space-dark))] border-[hsl(var(--cyber-blue)/30)]">
-                <SelectItem value="active" className="focus:bg-[hsl(var(--cyber-blue)/15)]">
+              <SelectContent className="border-primary/30">
+                <SelectItem value="active" className="focus:bg-accent/20">
                   <span className="inline-flex items-center">
-                    <span className="w-2 h-2 rounded-full bg-[hsl(var(--neon-green))] mr-2"></span>
+                    <span className="w-2 h-2 rounded-full bg-primary mr-2"></span>
                     Active
                   </span>
                 </SelectItem>
-                <SelectItem value="resolved" className="focus:bg-[hsl(var(--cyber-blue)/15)]">
+                <SelectItem value="resolved" className="focus:bg-accent/20">
                   <span className="inline-flex items-center">
-                    <span className="w-2 h-2 rounded-full bg-[hsl(var(--cyber-blue))] mr-2"></span>
+                    <span className="w-2 h-2 rounded-full bg-green-500/80 mr-2"></span>
                     Resolved
                   </span>
                 </SelectItem>
-                <SelectItem value="all" className="focus:bg-[hsl(var(--cyber-blue)/15)]">
+                <SelectItem value="all" className="focus:bg-accent/20">
                   <span className="inline-flex items-center">
-                    <span className="w-2 h-2 rounded-full bg-[hsl(var(--muted-foreground))] mr-2"></span>
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground mr-2"></span>
                     All
                   </span>
                 </SelectItem>
@@ -485,12 +485,12 @@ export default function MarketsTable({
               value={pageSize.toString()}
               onValueChange={(value) => setPageSize(Number(value))}
             >
-              <SelectTrigger id="page-size" className="bg-[hsl(var(--space-void))] border-[hsl(var(--cyber-blue)/30)] focus:border-[hsl(var(--cyber-blue))] focus:ring-[hsl(var(--cyber-blue)/30)] shadow-sm">
+              <SelectTrigger id="page-size" className="bg-muted border-primary/30 focus:ring-primary/30 shadow-sm">
                 <SelectValue placeholder="Page Size" />
               </SelectTrigger>
-              <SelectContent className="bg-[hsl(var(--space-dark))] border-[hsl(var(--cyber-blue)/30)]">
+              <SelectContent className="border-primary/30">
                 {[5, 10, 20, 50].map((size) => (
-                  <SelectItem key={size} value={size.toString()} className="focus:bg-[hsl(var(--cyber-blue)/15)]">
+                  <SelectItem key={size} value={size.toString()} className="focus:bg-accent/20">
                     {size} per page
                   </SelectItem>
                 ))}
@@ -500,32 +500,32 @@ export default function MarketsTable({
         </div>
       </div>
 
-      {/* Loading state - Cyberpunk style */}
+      {/* Loading state - Theme-aware style */}
       {isLoading && (
         <div className="text-center py-12 relative">
-          {/* Cyberpunk-style loading spinner with glowing effect */}
+          {/* Theme-aware loading spinner */}
           <div className="relative mx-auto w-16 h-16">
-            {/* Inner spinner */}
-            <div className="absolute inset-0 rounded-full border-2 border-[hsl(var(--cyber-blue)/70)] border-t-transparent animate-spin"></div>
+            {/* Inner spinner - Default with Cyberpunk override */}
+            <div className="absolute inset-0 rounded-full border-2 border-foreground/50 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/70)] border-t-transparent animate-spin"></div>
 
-            {/* Middle spinner (counter rotation) */}
-            <div className="absolute inset-1 rounded-full border-2 border-[hsl(var(--neon-purple)/70)] border-b-transparent animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            {/* Middle spinner (counter rotation) - Cyberpunk specific */}
+            <div className="absolute inset-1 rounded-full border-2 border-foreground/40 data-[theme='cyberpunk']:border-[hsl(var(--neon-purple)/70)] border-b-transparent animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
 
-            {/* Outer spinner */}
-            <div className="absolute inset-2 rounded-full border-2 border-[hsl(var(--neon-pink)/70)] border-l-transparent animate-spin" style={{ animationDuration: '3s' }}></div>
+            {/* Outer spinner - Cyberpunk specific */}
+            <div className="absolute inset-2 rounded-full border-2 border-foreground/30 data-[theme='cyberpunk']:border-[hsl(var(--neon-pink)/70)] border-l-transparent animate-spin" style={{ animationDuration: '3s' }}></div>
 
             {/* Center dot */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-[hsl(var(--cyber-blue))] animate-pulse"></div>
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
             </div>
 
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full shadow-[0_0_10px_rgba(125,249,255,0.3)] animate-pulse"></div>
+            {/* Glow effect - Cyberpunk only */}
+            <div className="absolute inset-0 rounded-full data-[theme='cyberpunk']:shadow-[0_0_10px_rgba(125,249,255,0.3)] animate-pulse"></div>
           </div>
 
           {/* Loading text with typewriter effect */}
-          <div className="mt-6 font-mono text-sm text-[hsl(var(--cyber-blue)/80)]">
-            <span className="inline-block animate-pulse">Accessing market database</span>
+          <div className="mt-6 font-mono text-sm text-foreground/80 data-[theme='cyberpunk']:text-[hsl(var(--cyber-blue)/80)]">
+            <span className="inline-block animate-pulse">Loading markets</span>
             <span className="inline-block ml-1 animate-pulse" style={{ animationDelay: '0.3s' }}>.</span>
             <span className="inline-block animate-pulse" style={{ animationDelay: '0.6s' }}>.</span>
             <span className="inline-block animate-pulse" style={{ animationDelay: '0.9s' }}>.</span>
@@ -533,39 +533,39 @@ export default function MarketsTable({
         </div>
       )}
 
-      {/* Empty state with cyberpunk styling */}
+      {/* Empty state with theme-aware styling */}
       {!isLoading && marketsResult?.items.length === 0 && (
-        <div className="relative rounded-lg overflow-hidden bg-panel-gradient border border-[hsl(var(--cyber-blue)/15)]">
+        <div className="relative rounded-lg overflow-hidden bg-panel-gradient border border-muted/30 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/15)]">
           {/* Decorative corner accents */}
-          <span className="absolute top-0 left-0 w-4 h-4 border-t border-l border-[hsl(var(--neon-red)/60)]"></span>
-          <span className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-[hsl(var(--neon-red)/60)]"></span>
+          <span className="absolute top-0 left-0 w-4 h-4 border-t border-l border-destructive/60 data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/60)]"></span>
+          <span className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-destructive/60 data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/60)]"></span>
 
-          {/* Warning pattern stripes */}
-          <div className="absolute inset-0 opacity-5" style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, hsl(var(--neon-red)) 10px, hsl(var(--neon-red)) 20px)`
+          {/* Warning pattern stripes - Cyberpunk only */}
+          <div className="absolute inset-0 opacity-5 data-[theme='cyberpunk']:bg-stripes" style={{
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, hsl(var(--destructive)) 10px, hsl(var(--destructive)) 20px)`
           }}></div>
 
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center relative z-10">
             {/* Error icon */}
             <div className="w-16 h-16 mb-4 relative">
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-10 h-10 border-2 border-[hsl(var(--neon-red)/70)] rounded-full flex items-center justify-center">
-                  <span className="text-[hsl(var(--neon-red))] text-2xl font-bold">!</span>
+                <div className="w-10 h-10 border-2 border-destructive/70 data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/70)] rounded-full flex items-center justify-center">
+                  <span className="text-destructive data-[theme='cyberpunk']:text-[hsl(var(--neon-red))] text-2xl font-bold">!</span>
                 </div>
               </div>
 
               {/* Pulsing glow effect */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-[hsl(var(--neon-red)/10)] animate-pulse"></div>
+                <div className="w-12 h-12 rounded-full bg-destructive/10 data-[theme='cyberpunk']:bg-[hsl(var(--neon-red)/10)] animate-pulse"></div>
               </div>
             </div>
 
-            <h3 className="text-xl font-mono text-[hsl(var(--neon-red)/90)] mb-2">DATA_RETRIEVAL_ERROR</h3>
+            <h3 className="text-xl font-mono text-destructive data-[theme='cyberpunk']:text-[hsl(var(--neon-red)/90)] mb-2">No Results Found</h3>
             <p className="text-muted-foreground max-w-md">No market entities found matching your filter parameters.</p>
 
             <Button
               variant="outline"
-              className="mt-6 relative overflow-hidden group border-[hsl(var(--neon-red)/50)] hover:border-[hsl(var(--neon-red))] hover:bg-[hsl(var(--neon-red)/10)] text-[hsl(var(--neon-red)/80)] hover:text-[hsl(var(--neon-red))]"
+              className="mt-6 relative overflow-hidden group border-destructive/50 hover:border-destructive data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/50)] data-[theme='cyberpunk']:hover:border-[hsl(var(--neon-red))] hover:bg-destructive/10 data-[theme='cyberpunk']:hover:bg-[hsl(var(--neon-red)/10)] text-destructive/80 data-[theme='cyberpunk']:text-[hsl(var(--neon-red)/80)] hover:text-destructive data-[theme='cyberpunk']:hover:text-[hsl(var(--neon-red))]"
               onClick={() => {
                 setSearchQuery('')
                 setCategory(undefined)
@@ -581,36 +581,36 @@ export default function MarketsTable({
                 })
               }}
             >
-              {/* Decorative corner accents */}
-              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--neon-red))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--neon-red))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              {/* Decorative corner accents - Cyberpunk only */}
+              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-destructive data-[theme='cyberpunk']:border-[hsl(var(--neon-red))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
+              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-destructive data-[theme='cyberpunk']:border-[hsl(var(--neon-red))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
 
-              {/* Add a subtle shimmer effect */}
-              <span className="animate-shimmer absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-[hsl(var(--neon-red)/15)] to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
+              {/* Add a subtle shimmer effect - Cyberpunk only */}
+              <span className="animate-shimmer absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-destructive/15 data-[theme='cyberpunk']:via-[hsl(var(--neon-red)/15)] to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
 
-              <span className="relative z-10 flex items-center">RESET_FILTERS</span>
+              <span className="relative z-10 flex items-center">Reset Filters</span>
             </Button>
           </div>
         </div>
       )}
 
-      {/* Table View with cyberpunk styling */}
+      {/* Table View with theme-aware styling */}
       {!isLoading && marketsResult?.items && marketsResult?.items?.length > 0 && viewMode === 'table' && (
         <div className="relative rounded-md overflow-hidden bg-panel-gradient border shadow-md">
-          {/* Corner accents */}
-          <span className="absolute top-0 left-0 w-3 h-3 border-t border-l border-[hsl(var(--cyber-blue)/60)]"></span>
-          <span className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[hsl(var(--cyber-blue)/60)]"></span>
+          {/* Corner accents - Cyberpunk specific */}
+          <span className="absolute top-0 left-0 w-3 h-3 border-t border-l border-primary/30 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/60)]"></span>
+          <span className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-primary/30 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/60)]"></span>
 
-          {/* Grid pattern with 3% opacity */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-            backgroundImage: `repeating-linear-gradient(0deg, hsl(var(--cyber-blue)/20), hsl(var(--cyber-blue)/20) 1px, transparent 1px, transparent 60px), 
-                          repeating-linear-gradient(90deg, hsl(var(--cyber-blue)/20), hsl(var(--cyber-blue)/20) 1px, transparent 1px, transparent 60px)`
+          {/* Grid pattern with 3% opacity - Cyberpunk specific */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none data-[theme='cyberpunk']:bg-grid" style={{
+            backgroundImage: `repeating-linear-gradient(0deg, hsl(var(--primary)/20), hsl(var(--primary)/20) 1px, transparent 1px, transparent 60px), 
+                          repeating-linear-gradient(90deg, hsl(var(--primary)/20), hsl(var(--primary)/20) 1px, transparent 1px, transparent 60px)`
           }}></div>
 
           <div className="relative z-10">
             <Table className="relative">
               <TableHeader>
-                <TableRow className="border-b bg-[hsl(var(--muted)/70)]">
+                <TableRow className="border-b-white bg-[hsl(var(--muted)/70)]">
                   <TableHead className="w-[100px] cursor-pointer font-mono text-sm text-glow" onClick={() => handleSort('createdAt')}>
                     <div className="flex items-center group">
                       CREATED
@@ -670,17 +670,14 @@ export default function MarketsTable({
                 {marketsResult?.items.map((market) => (
                   <TableRow
                     key={market.id}
-                    className="group relative cursor-pointer border-b border-[hsl(var(--cyber-blue)/10)] transition-colors duration-150"
+                    className="group relative cursor-pointer border-b border-primary/10 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/10)] transition-colors duration-150"
                     onClick={() => router.push(`/markets/${market.id}`)}
                   >
-                    {/* Left highlight accent */}
-                    <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[hsl(var(--cyber-blue))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
-
                     <TableCell className="whitespace-nowrap font-mono text-muted-foreground">
                       <ClientDate date={market.createdAt} format="medium" />
                     </TableCell>
                     <TableCell>
-                      <div className="font-semibold group-hover:text-[hsl(var(--cyber-blue))] transition-colors duration-150">
+                      <div className="font-semibold group-hover:text-primary data-[theme='cyberpunk']:group-hover:text-[hsl(var(--cyber-blue))] transition-colors duration-150">
                         {market.name}
                       </div>
                       <div className="text-sm text-muted-foreground line-clamp-1 group-hover:text-muted-foreground/80 transition-colors duration-150">
@@ -691,14 +688,14 @@ export default function MarketsTable({
                       <ClientDate date={market.endDate} format="medium" />
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="capitalize border-[hsl(var(--cyber-blue)/20)] bg-muted/20">
+                      <Badge variant="outline" className="capitalize border-primary/20 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/20)] bg-muted/20">
                         {market.category}
                       </Badge>
                     </TableCell>
-                    <TableCell className={`font-mono ${market.poolAmount > 1000 ? "text-[hsl(var(--neon-green))]" : "text-foreground"}`}>
+                    <TableCell className={`font-mono ${market.poolAmount > 1000 ? "text-green-500 data-[theme='cyberpunk']:text-[hsl(var(--neon-green))]" : "text-foreground"}`}>
                       <ClientCurrency amount={market.poolAmount} />
                     </TableCell>
-                    <TableCell className={`font-mono ${market.participants > 20 ? "text-[hsl(var(--neon-purple))]" : "text-foreground"}`}>
+                    <TableCell className={`font-mono ${market.participants > 20 ? "text-purple-500 data-[theme='cyberpunk']:text-[hsl(var(--neon-purple))]" : "text-foreground"}`}>
                       <ClientNumber value={market.participants} />
                     </TableCell>
                     <TableCell>
@@ -731,7 +728,7 @@ export default function MarketsTable({
               {/* Page info */}
               <div className="text-sm font-mono text-muted-foreground">
                 <span className="bg-muted/50 px-3 py-1 rounded border border-[hsl(var(--cyber-blue)/20)]">
-                  PAGE <span className="text-[hsl(var(--cyber-blue))]">{currentPage}</span> OF <span className="text-[hsl(var(--cyber-blue))]">{Math.ceil((marketsResult.total || 0) / pageSize)}</span>
+                  PAGE <span className="font-semibold">{currentPage}</span> OF <span className="font-semibold">{Math.ceil((marketsResult.total || 0) / pageSize)}</span>
                 </span>
               </div>
 
@@ -774,7 +771,7 @@ export default function MarketsTable({
               {/* Count info */}
               <div className="text-sm font-mono text-muted-foreground">
                 <span className="bg-muted/50 px-3 py-1 rounded border border-[hsl(var(--cyber-blue)/20)]">
-                  <span className="text-[hsl(var(--cyber-blue))]">{marketsResult.items.length}</span> OF <span className="text-[hsl(var(--cyber-blue))]">{marketsResult.total || 0}</span> MARKETS
+                  <span className="font-semibold">{marketsResult.items.length}</span> OF <span className="font-semibold">{marketsResult.total || 0}</span> MARKETS
                 </span>
               </div>
             </div>

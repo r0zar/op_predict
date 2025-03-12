@@ -38,7 +38,7 @@ export default function AdminPage() {
     }
 
     if (!user) {
-        redirect('/sign-in');
+        redirect('/');
     }
 
     const handleSetAdmin = async (e: React.FormEvent) => {

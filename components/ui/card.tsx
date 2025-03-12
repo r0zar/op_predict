@@ -14,8 +14,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const baseClasses = "rounded-lg border text-card-foreground shadow transition-all duration-medium";
     
     const variantClasses = 
-      variant === 'cyber' ? 'bg-cyber-gradient border-cyber-blue/30' :
-      variant === 'panel' ? 'bg-panel-gradient border-cyber-blue/20' :
+      variant === 'cyber' ? 'bg-panel-gradient border-primary/30 data-[theme="cyberpunk"]:bg-cyber-gradient data-[theme="cyberpunk"]:border-cyber-blue/30' :
+      variant === 'panel' ? 'bg-panel-gradient border-primary/20 data-[theme="cyberpunk"]:border-cyber-blue/20' :
       'bg-card border-input'; 
     
     const tiltClasses = tilt ? 'tilt-card' : '';
