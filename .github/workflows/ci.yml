@@ -40,20 +40,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       
-      # Direct modification of package.json for CI - simpler than the script
-      - name: Replace linked dependencies
-        run: |
-          # Create temporary file
-          jq '.dependencies."signet-sdk" = "latest" | 
-              .dependencies."wisdom-sdk" = "latest" | 
-              del(.pnpm)' package.json > temp.json
-          
-          # Replace original
-          mv temp.json package.json
-          
-          # Show changes
-          echo "Modified package.json:"
-          cat package.json
+      # Use a dedicated script to prepare package.json for CI
+      - name: Prepare package.json for CI
+        run: node ./scripts/prepare-ci.js
       
       - name: Install dependencies
         run: pnpm install
