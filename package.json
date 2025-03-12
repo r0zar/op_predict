@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "prebuild": "echo 'Using wisdom-sdk package. No local build needed.'",
+    "preVercelBuild": "node scripts/prepare-dependencies.js",
     "mcp:kill": "kill-port 3002 || true",
     "mcp:build": "cd mcp-server && pnpm install && pnpm build",
     "mcp:server": "cd mcp-server && MCP_PORT=3002 pnpm start",
