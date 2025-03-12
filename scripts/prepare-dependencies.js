@@ -1,8 +1,21 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // Path to package.json
 const packageJsonPath = path.resolve(__dirname, '../package.json');
+
+// Get latest package version from npm
+function getLatestVersion(packageName) {
+  try {
+    const result = execSync(`npm view ${packageName} version`, { encoding: 'utf8' }).trim();
+    console.log(`Latest version of ${packageName}: ${result}`);
+    return result;
+  } catch (error) {
+    console.warn(`Could not fetch latest version for ${packageName}, using 'latest' tag instead:`, error.message);
+    return 'latest';
+  }
+}
 
 // Prepare dependencies for deployment
 function prepareDependencies() {
@@ -11,39 +24,39 @@ function prepareDependencies() {
     
     // Read the current package.json
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    let modified = false;
     
     // Replace linked dependencies with published versions
     if (packageJson.dependencies) {
       if (packageJson.dependencies['signet-sdk'] && packageJson.dependencies['signet-sdk'].includes('link:')) {
-        console.log('Replacing linked signet-sdk with published version');
-        packageJson.dependencies['signet-sdk'] = 'latest';
+        const version = getLatestVersion('signet-sdk');
+        console.log(`Replacing linked signet-sdk with version ${version}`);
+        packageJson.dependencies['signet-sdk'] = version;
+        modified = true;
       }
       
       if (packageJson.dependencies['wisdom-sdk'] && packageJson.dependencies['wisdom-sdk'].includes('link:')) {
-        console.log('Replacing linked wisdom-sdk with published version');
-        packageJson.dependencies['wisdom-sdk'] = 'latest';
+        const version = getLatestVersion('wisdom-sdk');
+        console.log(`Replacing linked wisdom-sdk with version ${version}`);
+        packageJson.dependencies['wisdom-sdk'] = version;
+        modified = true;
       }
     }
     
-    // Remove pnpm overrides section if it exists and contains our linked packages
+    // Remove pnpm overrides section if it exists
     if (packageJson.pnpm && packageJson.pnpm.overrides) {
-      const overrides = packageJson.pnpm.overrides;
-      
-      if (overrides['signet-sdk'] && overrides['signet-sdk'].includes('link:')) {
-        console.log('Removing signet-sdk from pnpm overrides');
-        delete overrides['signet-sdk'];
-      }
-      
-      // If overrides is now empty, remove the entire pnpm section
-      if (Object.keys(overrides).length === 0) {
-        console.log('Removing empty pnpm.overrides section');
-        delete packageJson.pnpm;
-      }
+      console.log('Removing pnpm.overrides section');
+      delete packageJson.pnpm;
+      modified = true;
     }
     
-    // Write the modified package.json back to disk
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-    console.log('Dependencies prepared successfully for deployment');
+    if (modified) {
+      // Write the modified package.json back to disk
+      fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+      console.log('Dependencies prepared successfully for deployment');
+    } else {
+      console.log('No changes needed to package.json');
+    }
     
   } catch (error) {
     console.error('Error preparing dependencies:', error);
