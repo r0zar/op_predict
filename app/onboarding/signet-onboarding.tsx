@@ -383,7 +383,7 @@ export function SignetOnboarding({ username }: SignetOnboardingProps) {
 
                           <div className="flex flex-col sm:flex-row gap-3">
                             <a
-                              href={'https://chrome.google.com/webstore/detail/signet/'}
+                              href={'https://signet-omega.vercel.app/download.html'}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center justify-center gap-2 px-4 py-3 rounded-md text-lg font-medium bg-primary text-black hover:bg-primary/90 flex-1"
