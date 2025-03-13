@@ -1542,7 +1542,7 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 [data-theme="bitcoin"] [class*="bg-gradient-to-b from-black"],
 [data-theme="bitcoin"] [class*="bg-black"],
 [data-theme="bitcoin"] [class*="bg-gray-900"] {
-  /* background: hsl(var(--btc-light-gray)) !important; */
+  background: hsl(var(--btc-light-gray)) !important;
   background-image: none !important;
   color: hsl(var(--btc-gray-700)) !important;
 }
@@ -2065,12 +2065,17 @@ html[data-theme="bitcoin"] {
 
 /* ===== MARKETS PAGE THEME-SPECIFIC OVERRIDES ===== */
 
-/* Fix theme-specific styling in markets table toggle and filter controls */
 [data-theme="bitcoin"] .relative.inline-flex.rounded-md.overflow-hidden {
   border-color: hsl(var(--btc-gray-300)) !important;
   background-image: none !important;
-  background-color: hsl(var(--btc-white)) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  background-color: hsl(var(--btc-white)) !important;
+}
+
+/* Fix theme-specific styling in markets table toggle and filter controls */
+[data-theme="bitcoin"] button.relative.inline-flex.rounded-md.overflow-hidden {
+  background-color: hsl(var(--btc-dark-orange)) !important;
+  color: hsl(var(--btc-white)) !important;
 }
 
 /* Fix table/analytics toggle buttons */

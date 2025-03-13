@@ -449,6 +449,16 @@ export function SignetOnboarding({ username }: SignetOnboardingProps) {
                         Linking your wallet to your account.
                       </p>
 
+                      <div className="bg-yellow-500/10 p-4 rounded-lg border border-yellow-500/30">
+                        <div className="flex items-center gap-3">
+                          <Lock className="w-5 h-5 text-yellow-400" />
+                          <h3 className="font-medium text-yellow-400">Sign-in Required</h3>
+                        </div>
+                        <p className="text-sm text-gray-300 mt-2 ml-9">
+                          Make sure you are signed into your wallet in the Signet extension to complete this step.
+                        </p>
+                      </div>
+
                       {signerAddress ? (
                         <div className="space-y-4">
                           <div>
