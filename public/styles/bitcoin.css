@@ -788,7 +788,7 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 [data-theme="bitcoin"] .dropdownMenuContent {
   background-color: white !important;
   border: 1px solid hsl(220 15% 88%) !important;
-  box-shadow: 0 8px 16px rgba(220, 10, 30, 0.1) !important;
+  /* box-shadow: 0 8px 16px rgba(220, 10, 30, 0.1) !important; */
   color: hsl(0 0% 25%) !important;
 }
 

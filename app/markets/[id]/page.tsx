@@ -1,5 +1,6 @@
 import { getMarket } from "@/app/actions/market-actions";
-import { getMarketPredictions, getRelatedMarkets } from "@/app/actions/prediction-actions";
+import { getRelatedMarkets } from "@/app/actions/prediction-actions";
+import { getMarketCustodyTransactions } from "@/app/actions/custody-actions";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,8 +83,8 @@ function ErrorState({ error }: { error: Error }) {
 // Market predictions component
 async function MarketPredictions({ marketId }: { marketId: string }) {
     try {
-        const predictions = await getMarketPredictions(marketId);
-        if (!predictions.success || !predictions.predictions || predictions.predictions.length === 0) {
+        const transactions = await getMarketCustodyTransactions(marketId);
+        if (!transactions.success || !transactions.transactions || transactions.transactions.length === 0) {
             return (
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold">Recent Predictions</h2>
@@ -95,19 +96,28 @@ async function MarketPredictions({ marketId }: { marketId: string }) {
         const { getUserNameById } = await import("@/lib/clerk-user");
 
         const predictionsWithCreatorNames = await Promise.all(
-            predictions.predictions.map(async (prediction) => {
+            transactions.transactions.map(async (transaction) => {
                 try {
-                    const creatorName = prediction.userId ?
-                        await getUserNameById(prediction.userId).catch(() => 'Anonymous User') :
+                    const creatorName = transaction.userId ?
+                        await getUserNameById(transaction.userId).catch(() => 'Anonymous User') :
                         'Anonymous User';
 
+                    // Transform custody transaction to match prediction format expected by the table
                     return {
-                        ...prediction,
+                        ...transaction,
+                        id: transaction.id,
+                        createdAt: transaction.takenCustodyAt,
+                        outcomeId: transaction.outcomeId,
+                        outcomeName: transaction.outcomeName,
+                        marketId: transaction.marketId,
+                        userId: transaction.userId,
+                        amount: transaction.amount,
+                        status: transaction.status,
                         creatorName
                     };
                 } catch (error) {
                     return {
-                        ...prediction,
+                        ...transaction,
                         creatorName: 'Anonymous User'
                     };
                 }
@@ -223,10 +233,10 @@ async function RelatedMarkets({ marketId }: { marketId: string }) {
 }
 
 export default async function MarketPage({ params }: { params: { id: string } }) {
-    const [user, marketData, predictions] = await Promise.all([
+    const [user, marketData, transactions] = await Promise.all([
         currentUser(),
         getMarket(params.id),
-        getMarketPredictions(params.id)
+        getMarketCustodyTransactions(params.id)
     ]);
 
     if (!marketData) {
@@ -236,9 +246,9 @@ export default async function MarketPage({ params }: { params: { id: string } })
     // Use type assertion for the market data
     const market = marketData as any;
 
-    // Calculate actual votes and amounts from predictions
-    const predictionsByOutcome = predictions.predictions?.reduce((acc, prediction) => {
-        const outcomeId = prediction.outcomeId;
+    // Calculate actual votes and amounts from custody transactions
+    const predictionsByOutcome = transactions.transactions?.reduce((acc, transaction) => {
+        const outcomeId = transaction.outcomeId;
         if (!acc[outcomeId]) {
             acc[outcomeId] = {
                 votes: 0,
@@ -246,7 +256,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
             };
         }
         acc[outcomeId].votes += 1;
-        acc[outcomeId].amount += prediction.amount || 0;
+        acc[outcomeId].amount += transaction.amount || 0;
         return acc;
     }, {} as Record<string, { votes: number, amount: number }>) || {};
 

@@ -410,6 +410,10 @@ export default function MarketsTable({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-muted border-primary/30 focus:ring-primary/30 shadow-sm placeholder:text-muted-foreground/50 transition-all duration-300"
+                style={{
+                  height: '40px',
+                  borderRadius: '4px !important',
+                }}
               />
               {/* Subtle highlight effect when focused/filled */}
               {searchQuery && (
