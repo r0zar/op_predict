@@ -198,7 +198,7 @@ export default function RootLayout({
                         <span className="text-lg font-bold text-glow font-display">OP_PREDICT</span>
                       </div>
                       <p className="text-center text-xs text-muted-foreground md:text-left max-w-md">
-                        TESTNET ONLY: All funds are for testing purposes with no actual USD value.
+                        All funds are for testing purposes with $1 in app valued at 1 WELSH
                       </p>
                       <div className="flex gap-4">
                         <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
