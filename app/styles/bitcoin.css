@@ -464,7 +464,7 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 
 [data-theme="bitcoin"] a:hover {
   color: hsl(var(--btc-dark-orange)) !important;
-  text-decoration: underline !important;
+  /* text-decoration: underline !important; */
 }
 
 /* Table styling */
