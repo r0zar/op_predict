@@ -101,8 +101,9 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
 
     switch (sortField) {
       case "date":
-        aValue = new Date(a.createdAt).getTime();
-        bValue = new Date(b.createdAt).getTime();
+        // Handle both custody transactions and predictions
+        aValue = new Date(a.createdAt || a.takenCustodyAt).getTime();
+        bValue = new Date(b.createdAt || b.takenCustodyAt).getTime();
         break;
       case "amount":
         aValue = a.amount;
@@ -117,8 +118,8 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
         bValue = b.creatorName || b.userId;
         break;
       default:
-        aValue = new Date(a.createdAt).getTime();
-        bValue = new Date(b.createdAt).getTime();
+        aValue = new Date(a.createdAt || a.takenCustodyAt).getTime();
+        bValue = new Date(b.createdAt || b.takenCustodyAt).getTime();
     }
 
     // String comparison for text values
@@ -141,6 +142,7 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
 
   // Format date for display
   const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'short',
@@ -153,13 +155,19 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
+      case 'pending':
         return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Active</Badge>;
       case 'won':
         return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Won</Badge>;
       case 'lost':
         return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Lost</Badge>;
       case 'redeemed':
+      case 'confirmed':
         return <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20">Redeemed</Badge>;
+      case 'submitted':
+        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Submitted</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Rejected</Badge>;
       default:
         return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">{status}</Badge>;
     }
@@ -249,7 +257,7 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                 return (
                   <TableRow key={prediction.id}>
                     <TableCell className="font-medium">
-                      {formatDate(prediction.createdAt)}
+                      {formatDate(prediction.createdAt || prediction.takenCustodyAt)}
                     </TableCell>
                     <TableCell>
                       {prediction.creatorName || prediction.userId?.substring(0, 8)}

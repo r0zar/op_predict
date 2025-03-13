@@ -8,19 +8,20 @@ import Link from 'next/link';
 import PredictionShare from '@/components/prediction-share';
 // Use any type instead of defining explicit types
 import { calculateOutcomePercentages } from "@/lib/utils";
-import { marketStore, predictionStore } from 'wisdom-sdk';
+import { marketStore, custodyStore } from 'wisdom-sdk';
 
 // Dynamic metadata for the page
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
     const { id } = params;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oppredict.com';
 
-    // Fetch prediction and market data using wisdom-sdk
+    // Fetch transaction/prediction data using wisdom-sdk
     let prediction;
     try {
-        prediction = await predictionStore.getPrediction(id);
+        // Use custody store to get the transaction
+        prediction = await custodyStore.getTransaction(id);
     } catch (error) {
-        console.error('Error fetching prediction:', error);
+        console.error('Error fetching transaction:', error);
         return {
             title: 'Prediction Not Found',
             description: 'The requested prediction could not be found.',
@@ -100,12 +101,13 @@ export default async function PredictionPage({ params }: { params: { id: string 
     const id = params.id;
     const user = await currentUser();
 
-    // Fetch prediction data using wisdom-sdk
+    // Fetch transaction/prediction data using wisdom-sdk
     let prediction;
     try {
-        prediction = await predictionStore.getPrediction(id);
+        // Use custody store to get the transaction
+        prediction = await custodyStore.getTransaction(id);
     } catch (error) {
-        console.error('Error fetching prediction:', error);
+        console.error('Error fetching transaction:', error);
         return (
             <div className="container mx-auto py-10">
                 <Card className="bg-slate-800 border-slate-700">
@@ -253,15 +255,18 @@ export default async function PredictionPage({ params }: { params: { id: string 
     // Safely parse the creation date with fallback
     let createdAt: Date;
     try {
-        if (typeof prediction.createdAt === 'string' && prediction.createdAt.includes('-')) {
+        // For custody transactions, use takenCustodyAt, otherwise fall back to createdAt
+        const dateString = prediction.takenCustodyAt || prediction.createdAt;
+        
+        if (typeof dateString === 'string' && dateString.includes('-')) {
             // Handle ISO format string
-            createdAt = new Date(prediction.createdAt);
-        } else if (typeof prediction.createdAt === 'number') {
+            createdAt = new Date(dateString);
+        } else if (typeof dateString === 'number') {
             // Handle timestamp as number
-            createdAt = new Date(prediction.createdAt);
+            createdAt = new Date(dateString);
         } else {
             // Try to parse as number, but handle potential NaN
-            const timestamp = Number(prediction.createdAt);
+            const timestamp = Number(dateString);
             createdAt = !isNaN(timestamp) ? new Date(timestamp) : new Date();
         }
 
@@ -371,10 +376,25 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                         ? isWinner
                                             ? 'bg-green-600'
                                             : 'bg-red-600'
-                                        : 'bg-blue-600'
+                                        : prediction.status === 'submitted'
+                                            ? 'bg-yellow-600'
+                                            : prediction.status === 'confirmed'
+                                                ? 'bg-purple-600'
+                                                : prediction.status === 'rejected'
+                                                    ? 'bg-red-600'
+                                                    : 'bg-blue-600'
                                 }
                             >
-                                {isResolved ? (isWinner ? 'Won' : 'Lost') : 'Pending'}
+                                {isResolved 
+                                    ? (isWinner ? 'Won' : 'Lost') 
+                                    : prediction.status === 'submitted'
+                                        ? 'Submitted'
+                                        : prediction.status === 'confirmed'
+                                            ? 'Confirmed' 
+                                            : prediction.status === 'rejected'
+                                                ? 'Rejected'
+                                                : 'Pending'
+                                }
                             </Badge>
                         </div>
                     </CardHeader>

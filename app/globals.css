@@ -1007,21 +1007,10 @@ div::-webkit-scrollbar {
 
 /* Import theme stylesheets */
 @import './styles/cyberpunk.css';
-/* @import '../public/styles/cyberpunk.css'; */
+@import '../public/styles/cyberpunk.css';
 @import './styles/protoss.css';
-/* @import '../public/styles/protoss.css'; */
+@import '../public/styles/protoss.css';
 @import './styles/matrix.css';
-/* @import '../public/styles/matrix.css'; */
+@import '../public/styles/matrix.css';
 @import './styles/bitcoin.css';
-/* @import '../public/styles/bitcoin.css'; */
-
-
-.border-\[hsl\(var\(--cyber-blue\)\/10\)\] {
-  border-color: hsl(var(--white) / 0.3);
-}
-.border-\[hsl\(var\(--cyber-blue\)\/15\)\] {
-  border-color: hsl(var(--white) / 0.2);
-}
-.border-b-white {
-  border-bottom-color: hsl(var(--white) / 0.2);
-}
+@import '../public/styles/bitcoin.css';

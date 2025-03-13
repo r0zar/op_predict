@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { getUserPredictions, getAllPredictions } from "../actions/prediction-actions";
+import { getUserCustodyTransactions, getAllCustodyTransactions } from "../actions/custody-actions";
 import { isAdmin } from "@/lib/utils";
 import { userBalanceStore } from "wisdom-sdk";
 import { PredictionsTable } from "@/components/predictions-table";
@@ -55,17 +55,17 @@ export default async function PortfolioPage() {
     // Check if user is an admin
     const isUserAdmin = isAdmin(user.id);
 
-    // Fetch user's predictions
-    const predictionsResult = await getUserPredictions();
-    const userPredictions = predictionsResult.success ? predictionsResult.predictions || [] : [];
+    // Fetch user's transactions/predictions
+    const predictionsResult = await getUserCustodyTransactions();
+    const userPredictions = predictionsResult.success ? predictionsResult.transactions || [] : [];
 
-    // For admin users, fetch all predictions
+    // For admin users, fetch all transactions/predictions
     const allPredictionsResult = isUserAdmin
-        ? await getAllPredictions()
-        : { success: false, predictions: [] };
+        ? await getAllCustodyTransactions()
+        : { success: false, transactions: [] };
 
     const allPredictions = allPredictionsResult.success
-        ? allPredictionsResult.predictions || []
+        ? allPredictionsResult.transactions || []
         : [];
 
     // Import function to get user names

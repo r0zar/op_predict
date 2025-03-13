@@ -44,9 +44,9 @@ export function ClientAnalytics({ marketStats, topMarkets }: ClientAnalyticsProp
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Markets Card */}
-          <div className="relative rounded-md overflow-hidden bg-panel-gradient border border-[hsl(var(--neon-purple)/20)] shadow-md group hover:shadow-[0_0_15px_rgba(189,147,249,0.2)] transition-all duration-300">
-            <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--neon-purple)/60)]"></span>
-            <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--neon-purple)/60)]"></span>
+          <div className="relative rounded-md overflow-hidden border  shadow-md group transition-all duration-300 bg-panel-gradient">
+            <span className="absolute top-0 left-0 w-2 h-2"></span>
+            <span className="absolute bottom-0 right-0 w-2 h-2"></span>
 
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ boxShadow: 'inset 0 0 15px rgba(189,147,249,0.15)' }}></div>
@@ -62,9 +62,9 @@ export function ClientAnalytics({ marketStats, topMarkets }: ClientAnalyticsProp
           </div>
 
           {/* Total Pool Amount Card */}
-          <div className="relative rounded-md overflow-hidden bg-panel-gradient border border-primary/20 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/20)] shadow-md group hover:shadow-md hover:shadow-primary/10 data-[theme='cyberpunk']:hover:shadow-[0_0_15px_rgba(125,249,255,0.2)] transition-all duration-300">
-            <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/60 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/60)]"></span>
-            <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary/60 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/60)]"></span>
+          <div className="relative rounded-md overflow-hidden border shadow-md group transition-all duration-300 bg-panel-gradient">
+            <span className="absolute top-0 left-0 w-2 h-2"></span>
+            <span className="absolute bottom-0 right-0 w-2 h-2"></span>
 
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ boxShadow: 'inset 0 0 15px rgba(125,249,255,0.15)' }}></div>
@@ -80,15 +80,15 @@ export function ClientAnalytics({ marketStats, topMarkets }: ClientAnalyticsProp
           </div>
 
           {/* Total Participants Card */}
-          <div className="relative rounded-md overflow-hidden bg-panel-gradient border border-green-500/20 data-[theme='cyberpunk']:border-[hsl(var(--neon-green)/20)] shadow-md group hover:shadow-[0_0_15px_rgba(135,219,165,0.2)] transition-all duration-300">
-            <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-green-500/60 data-[theme='cyberpunk']:border-[hsl(var(--neon-green)/60)]"></span>
-            <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-green-500/60 data-[theme='cyberpunk']:border-[hsl(var(--neon-green)/60)]"></span>
+          <div className="relative rounded-md overflow-hidden border shadow-md group transition-all duration-300 bg-panel-gradient">
+            <span className="absolute top-0 left-0 w-2 h-2"></span>
+            <span className="absolute bottom-0 right-0 w-2 h-2"></span>
 
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ boxShadow: 'inset 0 0 15px rgba(135,219,165,0.15)' }}></div>
 
             <div className="p-6 relative z-10">
-              <div className="text-3xl font-mono font-bold text-green-500 data-[theme='cyberpunk']:text-[hsl(var(--neon-green))] mb-1">
+              <div className="text-3xl font-mono font-bold text-green-500 mb-1">
                 <ClientNumber value={marketStats.totalParticipants} />
               </div>
               <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
@@ -98,9 +98,9 @@ export function ClientAnalytics({ marketStats, topMarkets }: ClientAnalyticsProp
           </div>
 
           {/* Average Pool Card */}
-          <div className="relative rounded-md overflow-hidden bg-panel-gradient border border-[hsl(var(--neon-pink)/20)] shadow-md group hover:shadow-[0_0_15px_rgba(255,121,198,0.2)] transition-all duration-300">
-            <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--neon-pink)/60)]"></span>
-            <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--neon-pink)/60)]"></span>
+          <div className="relative rounded-md overflow-hidden border shadow-md group transition-all duration-300 bg-panel-gradient">
+            <span className="absolute top-0 left-0 w-2 h-2"></span>
+            <span className="absolute bottom-0 right-0 w-2 h-2"></span>
 
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ boxShadow: 'inset 0 0 15px rgba(255,121,198,0.15)' }}></div>

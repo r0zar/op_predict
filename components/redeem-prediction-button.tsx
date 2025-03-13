@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CoinsIcon, TrendingUp, AlertCircle } from 'lucide-react';
-import { redeemPredictionReceipt } from '@/app/actions/prediction-actions';
+import { updateCustodyTransactionStatus } from '@/app/actions/custody-actions';
 import { useRouter } from 'next/navigation';
 import {
     AlertDialog,
@@ -46,16 +46,18 @@ export function RedeemPredictionButton({
         setLoading(true);
 
         try {
-            const result = await redeemPredictionReceipt(predictionId);
+            // Use the custody system's status update to mark as confirmed (redeemed)
+            const result = await updateCustodyTransactionStatus(predictionId, 'confirmed');
 
             if (result.success) {
                 const message = isWinner
-                    ? `Prediction redeemed! You received $${result.payout?.toFixed(2)}`
+                    ? `Prediction redeemed! You received $${potentialPayout?.toFixed(2)}`
                     : 'Prediction redeemed. Better luck next time!';
 
                 setOpen(false);
                 router.refresh();
             } else {
+                console.error('Failed to redeem prediction:', result.error);
             }
         } catch (error) {
             console.error('Error redeeming prediction:', error);

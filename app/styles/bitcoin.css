@@ -213,25 +213,25 @@
 /* Panel styles */
 [data-theme="bitcoin"] .bg-panel-gradient {
   background: linear-gradient(to bottom, 
-    hsl(220 30% 99%), 
-    hsl(220 20% 96%)
+    hsl(220, 30%, 99%), 
+    hsl(220, 20%, 96%)
   ) !important;
-  border: 1px solid hsl(220 15% 88%) !important;
+  border: 1px solid hsl(220, 15%, 88%) !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 2px 8px hsla(220 10% 50%, 0.05) !important;
+  box-shadow: 0 2px 8px hsla(220, 10%, 50%, 0.05) !important;
 }
 
 /* Card styling */
 [data-theme="bitcoin"] .theme-card {
-  background-color: hsl(0 0% 100%) !important;
-  border: 1px solid hsl(220 15% 88%) !important;
+  background-color: hsl(0, 0%, 100%) !important;
+  border: 1px solid hsl(220, 15%, 88%) !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 2px 8px hsla(220 10% 50%, 0.05) !important;
+  box-shadow: 0 2px 8px hsla(220, 10%, 50%, 0.05) !important;
   transition: box-shadow 0.2s ease, transform 0.2s ease !important;
 }
 
 [data-theme="bitcoin"] .theme-card:hover {
-  box-shadow: 0 4px 12px hsla(220 10% 50%, 0.10) !important;
+  box-shadow: 0 4px 12px hsla(220, 10%, 50%, 0.10) !important;
   transform: translateY(-2px) !important;
 }
 
@@ -296,9 +296,9 @@
 /* Bitcoin Themed Market Card */
 [data-theme="bitcoin"] .theme-market-card {
   border-radius: 0.5rem !important;
-  background-color: hsl(0 0% 100%) !important;
-  border: 1px solid hsl(220 15% 88%) !important;
-  box-shadow: 0 2px 8px hsla(220 10% 50%, 0.05) !important;
+  background-color: hsl(0, 0%, 100%) !important;
+  border: 1px solid hsl(220, 15%, 88%) !important;
+  box-shadow: 0 2px 8px hsla(220, 10%, 50%, 0.05) !important;
   transition: transform 0.2s ease, box-shadow 0.2s ease !important;
   position: relative !important;
   overflow: hidden !important;
@@ -311,13 +311,13 @@
   left: 0 !important;
   width: 4px !important;
   height: 100% !important;
-  background-color: hsl(28 100% 54%) !important; /* Bitcoin orange */
+  background-color: hsl(28, 100%, 54%) !important; /* Bitcoin orange */
   opacity: 0.9 !important;
 }
 
 [data-theme="bitcoin"] .theme-market-card:hover {
   transform: translateY(-3px) !important;
-  box-shadow: 0 10px 20px hsla(220 10% 50%, 0.08) !important;
+  box-shadow: 0 10px 20px hsla(220, 10%, 50%, 0.08) !important;
 }
 
 /* Override any dark-mode specific styles in market cards */
@@ -476,21 +476,21 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
   background-color: white !important;
   border-radius: 0.5rem !important;
   overflow: hidden !important;
-  box-shadow: 0 2px 8px hsla(220 10% 50%, 0.05) !important;
+  box-shadow: 0 2px 8px hsla(220, 10%, 50%, 0.05) !important;
 }
 
 [data-theme="bitcoin"] th {
   text-align: left !important;
   font-weight: 600 !important;
   padding: 0.85rem 1rem !important;
-  border-bottom: 2px solid hsl(220 15% 88%) !important;
-  color: hsl(0 0% 25%) !important;
-  background-color: hsl(220 20% 99%) !important;
+  border-bottom: 2px solid hsl(220, 15%, 88%) !important;
+  color: hsl(0, 0%, 25%) !important;
+  background-color: hsl(220, 20%, 99%) !important;
 }
 
 [data-theme="bitcoin"] td {
   padding: 0.85rem 1rem !important;
-  border-bottom: 1px solid hsl(220 15% 94%) !important;
+  border-bottom: 1px solid hsl(220, 15%, 94%) !important;
 }
 
 [data-theme="bitcoin"] tr:last-child td {
@@ -535,8 +535,8 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 [data-theme="bitcoin"] select:focus,
 [data-theme="bitcoin"] textarea:focus {
   outline: none !important;
-  border-color: hsl(28 100% 54%) !important;
-  box-shadow: 0 0 0 2px hsla(28 100% 54%, 0.2) !important;
+  border-color: hsl(28, 100%, 54%) !important;
+  box-shadow: 0 0 0 2px hsla(28, 100%, 54%, 0.2) !important;
 }
 
 [data-theme="bitcoin"] label {
@@ -592,9 +592,9 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 [data-theme="bitcoin"] .menuContent,
 [data-theme="bitcoin"] .dropdownMenuContent {
   background-color: white !important;
-  border: 1px solid hsl(220 15% 88%) !important;
-  box-shadow: 0 8px 16px hsla(220 10% 30%, 0.1) !important;
-  color: hsl(0 0% 25%) !important;
+  border: 1px solid hsl(220, 15%, 88%) !important;
+  box-shadow: 0 8px 16px hsla(220, 10%, 30%, 0.1) !important;
+  color: hsl(0, 0%, 25%) !important;
 }
 
 [data-theme="bitcoin"] [role="option"],
@@ -721,9 +721,14 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 }
 
 /* Fix badge colors */
-[data-theme="bitcoin"] .badge[class*="bg-[hsl(var(--cyber-blue)"],
-[data-theme="bitcoin"] .bg-[hsl(var(--cyber-blue))],
-[data-theme="bitcoin"] [class*="bg-[hsl(var(--cyber-blue)"] {
+[data-theme="bitcoin"] .badge-cyber-blue,
+[data-theme="bitcoin"] .bg-cyber-blue {
+  background-color: hsla(var(--btc-orange), 0.15) !important;
+  color: hsl(var(--btc-dark-orange)) !important;
+  border-color: hsla(var(--btc-orange), 0.3) !important;
+}
+/* Fix cyber blue badge colors */
+[data-theme="bitcoin"] [class*="bg-cyber-blue"] {
   background-color: hsla(var(--btc-orange), 0.15) !important;
   color: hsl(var(--btc-dark-orange)) !important;
   border-color: hsla(var(--btc-orange), 0.3) !important;
@@ -744,134 +749,172 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 }
 
 /* Fix market outcome text colors */
-[data-theme="bitcoin"] .text-[hsl(var(--neon-green))],
 [data-theme="bitcoin"] .text-neon-green,
 [data-theme="bitcoin"] .text-green-500 {
   color: hsl(var(--btc-green)) !important;
 }
+/* Fix neon green text colors */
+[data-theme="bitcoin"] [class*="text-neon-green"] {
+  color: hsl(var(--btc-green)) !important;
+}
 
 /* Fix green backgrounds and borders */
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-green))],
 [data-theme="bitcoin"] .bg-neon-green,
 [data-theme="bitcoin"] .bg-green-500,
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-green)\/0.1)],
 [data-theme="bitcoin"] .bg-neon-green\/10,
 [data-theme="bitcoin"] .bg-green-500\/10 {
   background-color: hsla(var(--btc-green), 0.1) !important;
 }
+/* Fix neon green bg colors */
+[data-theme="bitcoin"] [class*="bg-neon-green"] {
+  background-color: hsla(var(--btc-green), 0.1) !important;
+}
 
-[data-theme="bitcoin"] .border-[hsl(var(--neon-green))],
 [data-theme="bitcoin"] .border-neon-green,
 [data-theme="bitcoin"] .border-green-500,
-[data-theme="bitcoin"] .border-[hsl(var(--neon-green)\/0.2)],
 [data-theme="bitcoin"] .border-neon-green\/20,
 [data-theme="bitcoin"] .border-green-500\/20 {
   border-color: hsla(var(--btc-green), 0.3) !important;
 }
+/* Fix neon green border colors */
+[data-theme="bitcoin"] [class*="border-neon-green"] {
+  border-color: hsla(var(--btc-green), 0.3) !important;
+}
 
 /* Fix red text colors */
-[data-theme="bitcoin"] .text-[hsl(var(--neon-red))],
 [data-theme="bitcoin"] .text-neon-red,
 [data-theme="bitcoin"] .text-red-500 {
   color: hsl(var(--btc-red)) !important;
 }
+/* Text color for neon red */
+[data-theme="bitcoin"] [class*="text-\[hsl\(var\(--neon-red"] {
+  color: hsl(var(--btc-red)) !important;
+}
 
 /* Fix red backgrounds and borders */
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-red))],
 [data-theme="bitcoin"] .bg-neon-red,
 [data-theme="bitcoin"] .bg-red-500,
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-red)\/0.1)],
 [data-theme="bitcoin"] .bg-neon-red\/10,
 [data-theme="bitcoin"] .bg-red-500\/10 {
   background-color: hsla(var(--btc-red), 0.1) !important;
 }
+/* BG colors for neon red */
+[data-theme="bitcoin"] [class*="bg-\[hsl\(var\(--neon-red"] {
+  background-color: hsla(var(--btc-red), 0.1) !important;
+}
 
-[data-theme="bitcoin"] .border-[hsl(var(--neon-red))],
 [data-theme="bitcoin"] .border-neon-red,
 [data-theme="bitcoin"] .border-red-500,
-[data-theme="bitcoin"] .border-[hsl(var(--neon-red)\/0.2)],
 [data-theme="bitcoin"] .border-neon-red\/20,
 [data-theme="bitcoin"] .border-red-500\/20 {
   border-color: hsla(var(--btc-red), 0.3) !important;
 }
+/* Border colors for neon red */
+[data-theme="bitcoin"] [class*="border-\[hsl\(var\(--neon-red"] {
+  border-color: hsla(var(--btc-red), 0.3) !important;
+}
 
 /* Additional colors for multiple choice markets */
-[data-theme="bitcoin"] .text-[hsl(var(--cyber-blue))],
 [data-theme="bitcoin"] .text-cyber-blue {
   color: hsl(var(--btc-orange)) !important;
 }
+/* Text color for cyber blue */
+[data-theme="bitcoin"] [class*="text-\[hsl\(var\(--cyber-blue"] {
+  /* color: hsl(var(--btc-orange)) !important; */
+}
 
 /* Fix cyber-blue backgrounds and borders */
-[data-theme="bitcoin"] .bg-[hsl(var(--cyber-blue))],
 [data-theme="bitcoin"] .bg-cyber-blue,
-[data-theme="bitcoin"] .bg-[hsl(var(--cyber-blue)\/0.1)],
 [data-theme="bitcoin"] .bg-cyber-blue\/10 {
   background-color: hsla(var(--btc-orange), 0.1) !important;
 }
+/* BG colors for cyber blue */
+[data-theme="bitcoin"] [class*="bg-\[hsl\(var\(--cyber-blue"] {
+  background-color: hsla(var(--btc-orange), 0.1) !important;
+}
 
-[data-theme="bitcoin"] .border-[hsl(var(--cyber-blue))],
 [data-theme="bitcoin"] .border-cyber-blue,
-[data-theme="bitcoin"] .border-[hsl(var(--cyber-blue)\/0.2)],
 [data-theme="bitcoin"] .border-cyber-blue\/20 {
+  border-color: hsla(var(--btc-orange), 0.3) !important;
+}
+/* Border colors for cyber blue */
+[data-theme="bitcoin"] [class*="border-\[hsl\(var\(--cyber-blue"] {
   border-color: hsla(var(--btc-orange), 0.3) !important;
 }
 
 /* Fix neon-purple colors */
-[data-theme="bitcoin"] .text-[hsl(var(--neon-purple))],
 [data-theme="bitcoin"] .text-neon-purple,
 [data-theme="bitcoin"] .text-purple-500 {
   color: hsl(var(--btc-blue)) !important;
 }
+/* Text color for neon purple */
+[data-theme="bitcoin"] [class*="text-\[hsl\(var\(--neon-purple"] {
+  color: hsl(var(--btc-blue)) !important;
+}
 
 /* Fix neon-pink colors */
-[data-theme="bitcoin"] .text-[hsl(var(--neon-pink))],
 [data-theme="bitcoin"] .text-neon-pink,
 [data-theme="bitcoin"] .text-pink-500 {
   color: #d25893 !important;
 }
+/* Text color for neon pink */
+[data-theme="bitcoin"] [class*="text-\[hsl\(var\(--neon-pink"] {
+  color: #d25893 !important;
+}
 
 /* Fix neon-pink backgrounds and borders */
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-pink))],
 [data-theme="bitcoin"] .bg-neon-pink,
 [data-theme="bitcoin"] .bg-pink-500,
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-pink)\/0.1)],
 [data-theme="bitcoin"] .bg-neon-pink\/10,
 [data-theme="bitcoin"] .bg-pink-500\/10 {
   background-color: hsla(220, 10%, 95%, 1) !important;
 }
+/* BG colors for neon pink */
+[data-theme="bitcoin"] [class*="bg-\[hsl\(var\(--neon-pink"] {
+  background-color: hsla(220, 10%, 95%, 1) !important;
+}
 
-[data-theme="bitcoin"] .border-[hsl(var(--neon-pink))],
 [data-theme="bitcoin"] .border-neon-pink,
 [data-theme="bitcoin"] .border-pink-500,
-[data-theme="bitcoin"] .border-[hsl(var(--neon-pink)\/0.2)],
 [data-theme="bitcoin"] .border-neon-pink\/20,
 [data-theme="bitcoin"] .border-pink-500\/20 {
   border-color: hsla(220, 15%, 85%, 1) !important;
 }
+/* Border colors for neon pink */
+[data-theme="bitcoin"] [class*="border-\[hsl\(var\(--neon-pink"] {
+  border-color: hsla(220, 15%, 85%, 1) !important;
+}
 
 /* Fix neon-orange colors */
-[data-theme="bitcoin"] .text-[hsl(var(--neon-orange))],
 [data-theme="bitcoin"] .text-neon-orange,
 [data-theme="bitcoin"] .text-orange-500 {
   color: #e67e22 !important;
 }
+/* Text color for neon orange */
+[data-theme="bitcoin"] [class*="text-\[hsl\(var\(--neon-orange"] {
+  color: #e67e22 !important;
+}
 
 /* Fix neon-orange backgrounds and borders */
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-orange))],
 [data-theme="bitcoin"] .bg-neon-orange,
 [data-theme="bitcoin"] .bg-orange-500,
-[data-theme="bitcoin"] .bg-[hsl(var(--neon-orange)\/0.1)],
 [data-theme="bitcoin"] .bg-neon-orange\/10,
 [data-theme="bitcoin"] .bg-orange-500\/10 {
   background-color: hsla(220, 10%, 95%, 1) !important;
 }
+/* BG colors for neon orange */
+[data-theme="bitcoin"] [class*="bg-\[hsl\(var\(--neon-orange"] {
+  background-color: hsla(220, 10%, 95%, 1) !important;
+}
 
-[data-theme="bitcoin"] .border-[hsl(var(--neon-orange))],
 [data-theme="bitcoin"] .border-neon-orange,
 [data-theme="bitcoin"] .border-orange-500,
-[data-theme="bitcoin"] .border-[hsl(var(--neon-orange)\/0.2)],
 [data-theme="bitcoin"] .border-neon-orange\/20,
 [data-theme="bitcoin"] .border-orange-500\/20 {
+  border-color: hsla(220, 15%, 85%, 1) !important;
+}
+/* Border colors for neon orange */
+[data-theme="bitcoin"] [class*="border-\[hsl\(var\(--neon-orange"] {
   border-color: hsla(220, 15%, 85%, 1) !important;
 }
 
@@ -892,19 +935,11 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 }
 
 /* Fix explore page cards */
-[data-theme="bitcoin"] .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4.gap-4 .card,
-[data-theme="bitcoin"] .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4.gap-4 .theme-market-card {
+[data-theme="bitcoin"] .grid.gap-4 .card,
+[data-theme="bitcoin"] .grid.gap-4 .theme-market-card {
   background-color: white !important;
   box-shadow: 0 2px 8px hsla(var(--btc-gray-400), 0.07) !important;
   border: 1px solid hsl(var(--btc-gray-200)) !important;
-}
-
-/* Fix explore featured stats section */
-[data-theme="bitcoin"] .grid.grid-cols-1.md\\:grid-cols-3.gap-4 > div {
-  background-color: white !important;
-  box-shadow: 0 2px 8px hsla(var(--btc-gray-400), 0.07) !important;
-  border: 1px solid hsl(var(--btc-gray-200)) !important;
-  border-radius: 0.5rem !important;
 }
 
 /* Fix featured section text colors */
@@ -913,7 +948,7 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
   color: hsl(var(--btc-gray-800)) !important;
 }
 
-[data-theme="bitcoin"] .grid.grid-cols-1.md\\:grid-cols-3.gap-4 > div .text-2xl.font-bold {
+[data-theme="bitcoin"] .grid.gap-4 > div .text-2xl.font-bold {
   color: hsl(var(--btc-orange)) !important;
 }
 
@@ -1040,10 +1075,8 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 
 /* Fix number indicators for active filters */
 [data-theme="bitcoin"] .text-cyber-blue,
-[data-theme="bitcoin"] .text-[hsl(var(--cyber-blue))],
-[data-theme="bitcoin"] [class*="text-cyber-blue"],
-[data-theme="bitcoin"] [class*="text-[hsl(var(--cyber-blue))"] {
-  color: hsl(var(--btc-orange)) !important;
+[data-theme="bitcoin"] [class*="text-cyber-blue"] {
+  /* color: hsl(var(--btc-orange)) !important; */
 }
 
 /* Fix status badges with light gray for a professional look */
@@ -1383,8 +1416,8 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
   color: hsl(var(--btc-gray-800)) !important;
 }
 
-/* Replace green dot in status filter */
-[data-theme="bitcoin"] span.rounded-full.bg-\[hsl\(var\(--neon-green\)\)] {
+/* Fix neon green background spans */
+[data-theme="bitcoin"] span.rounded-full[class*="bg-neon-green"] {
   background-color: hsl(var(--btc-orange)) !important;
 }
 
@@ -1509,14 +1542,14 @@ body[data-theme="bitcoin"]::-webkit-scrollbar-thumb:hover {
 [data-theme="bitcoin"] [class*="bg-gradient-to-b from-black"],
 [data-theme="bitcoin"] [class*="bg-black"],
 [data-theme="bitcoin"] [class*="bg-gray-900"] {
-  background: hsl(var(--btc-light-gray)) !important;
+  /* background: hsl(var(--btc-light-gray)) !important; */
   background-image: none !important;
   color: hsl(var(--btc-gray-700)) !important;
 }
 
 /* Force minimum height containers to have correct background */
 [data-theme="bitcoin"] .min-h-screen {
-  background: hsl(var(--btc-light-gray)) !important;
+  /* background: hsl(var(--btc-light-gray)) !important; */
   color: hsl(var(--btc-gray-700)) !important;
 }
 
@@ -1874,26 +1907,26 @@ html[data-theme="bitcoin"] {
 /* Bitcoin toast styling */
 [data-theme="bitcoin"] .custom-toast {
   background-color: white !important;
-  border-left: 4px solid hsl(28 100% 54%) !important;
-  box-shadow: 0 8px 16px hsla(220 30% 30%, 0.12) !important;
+  border-left: 4px solid hsl(28, 100%, 54%) !important;
+  box-shadow: 0 8px 16px hsla(220, 30%, 30%, 0.12) !important;
   border-radius: 0.375rem !important;
   padding: 1rem !important;
 }
 
 [data-theme="bitcoin"] .custom-toast.toast-success {
-  border-left-color: hsl(142 76% 36%) !important;
+  border-left-color: hsl(142, 76%, 36%) !important;
 }
 
 [data-theme="bitcoin"] .custom-toast.toast-error {
-  border-left-color: hsl(0 85% 60%) !important;
+  border-left-color: hsl(0, 85%, 60%) !important;
 }
 
 [data-theme="bitcoin"] .custom-toast.toast-warning {
-  border-left-color: hsl(40 100% 50%) !important;
+  border-left-color: hsl(40, 100%, 50%) !important;
 }
 
 [data-theme="bitcoin"] .custom-toast.toast-info {
-  border-left-color: hsl(210 100% 50%) !important;
+  border-left-color: hsl(210, 100%, 50%) !important;
 }
 
 /* Style hover/focus states for Bitcoin menu items */
@@ -2036,7 +2069,7 @@ html[data-theme="bitcoin"] {
 [data-theme="bitcoin"] .relative.inline-flex.rounded-md.overflow-hidden {
   border-color: hsl(var(--btc-gray-300)) !important;
   background-image: none !important;
-  /* background-color: hsl(var(--btc-white)) !important; */
+  background-color: hsl(var(--btc-white)) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 

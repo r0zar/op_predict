@@ -11,6 +11,7 @@ type Market = any;
 type MarketOutcome = any;
 type PredictionNFTReceipt = any;
 import { createPrediction } from "@/app/actions/prediction-actions";
+import { createPredictionWithCustody } from "@/app/actions/custody-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { cn } from "@/lib/utils";
 import { InfoIcon } from "lucide-react";
@@ -97,7 +98,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
             }
 
 
-            const { signPrediction } = await import('signet-sdk')
+            const { signPrediction, requestTransactionCustody } = await import('signet-sdk')
 
             // request a predict signature
             const signetResponse = await signPrediction({
@@ -114,19 +115,37 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 return;
             }
 
-            // Call the server action to create a prediction
-            const result = await createPrediction({
+            // Request custody of the signed prediction transaction
+            const custodyResponse = await requestTransactionCustody({
+                type: 'predict',
+                marketId: market.id,
+                outcomeId: selectedOutcome,
+                amount: amount,
+            }, signetResponse.subnetId)
+
+            // If we couldn't get custody of the transaction, abort
+            if (!custodyResponse.success || !custodyResponse.transaction) {
+                console.warn('Custory aborted/failed!')
+                return;
+            }
+
+            const result = await createPredictionWithCustody({
+                // Signet signature details
+                signature: custodyResponse.transaction.data.signature,
+                nonce: signetResponse.nonce,
+                signer: signetResponse.signer,
+                subnetId: signetResponse.subnetId,
+
+                // Prediction details
                 marketId: market.id,
                 outcomeId: selectedOutcome,
                 amount,
                 userId
             });
 
-
-            if (result.success && result.prediction) {
-
+            if (result.success && result.transaction) {
                 // Set the NFT receipt to show in the dialog
-                setNftReceipt(result.prediction.nftReceipt);
+                setNftReceipt(result.nftReceipt || result.transaction.nftReceipt);
 
                 // Open the receipt dialog
                 setReceiptDialogOpen(true);
@@ -138,94 +157,10 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                 // Refresh the page data
                 router.refresh();
             } else {
-                // Show error notification with Signet
-                if (result.error && result.error.includes('Insufficient balance')) {
-                    signet.createRichNotification({
-                        title: 'Insufficient Balance',
-                        message: 'You do not have enough funds to make this prediction.',
-                        details: `You attempted to place a $${amount} prediction, but your account balance is too low.`,
-                        notificationType: 'ERROR',
-                        htmlContent: `
-                            <div style="text-align: center;">
-                                <div style="color: #ff5555; font-size: 18px; margin-bottom: 12px;">
-                                    Insufficient Balance
-                                </div>
-                                <div style="margin: 8px 0;">
-                                    You need at least <span style="color: #f1fa8c; font-weight: bold;">$${amount}</span> in your account.
-                                </div>
-                                <div style="margin: 12px 0; font-size: 12px; color: #6272a4;">
-                                    Visit your portfolio to add more funds.
-                                </div>
-                            </div>
-                        `,
-                        actions: [
-                            {
-                                id: 'view-portfolio',
-                                label: 'VIEW PORTFOLIO',
-                                action: 'custom',
-                                color: 'rgb(80, 250, 123)'
-                            },
-                            {
-                                id: 'dismiss',
-                                label: 'DISMISS',
-                                action: 'dismiss'
-                            }
-                        ]
-                    })?.then((response: any) => {
-                        // Check if the user clicked on the "View Portfolio" button
-                        if (response && response.result && response.result.actionId === 'view-portfolio') {
-                            // Navigate to the portfolio page
-                            router.push('/portfolio');
-                        }
-                    });
-                } else if (result.error) {
-                    // Generic error notification
-                    signet.createRichNotification({
-                        title: 'Prediction Failed',
-                        message: result.error,
-                        notificationType: 'ERROR'
-                    });
-                }
+                console.error('FAILED')
             }
         } catch (error) {
             console.error("Error making prediction:", error);
-
-            // Show error notification with Signet for uncaught errors
-            if (error instanceof Error) {
-                // Check if it's an insufficient balance error
-                if (error.message && error.message.includes('Insufficient balance')) {
-                    signet.createRichNotification({
-                        title: 'Insufficient Balance',
-                        message: 'You do not have enough funds to make this prediction.',
-                        details: `You attempted to place a $${amount} prediction, but your account balance is too low.`,
-                        notificationType: 'ERROR',
-                        actions: [
-                            {
-                                id: 'view-portfolio',
-                                label: 'VIEW PORTFOLIO',
-                                action: 'custom',
-                                color: 'rgb(80, 250, 123)'
-                            },
-                            {
-                                id: 'dismiss',
-                                label: 'DISMISS',
-                                action: 'dismiss'
-                            }
-                        ]
-                    })?.then((response: any) => {
-                        if (response && response.result && response.result.actionId === 'view-portfolio') {
-                            router.push('/portfolio');
-                        }
-                    });
-                } else {
-                    // Generic error notification
-                    signet.createRichNotification({
-                        title: 'Prediction Failed',
-                        message: error.message || 'An unexpected error occurred',
-                        notificationType: 'ERROR'
-                    });
-                }
-            }
         } finally {
             setIsSubmitting(false);
         }
