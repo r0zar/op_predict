@@ -42,16 +42,16 @@ type PredictionWithNFT = {
 function generateQRCodeSVG(url: string, size = 100): string {
     // For simplicity, we'll create a simple grid-based QR code pattern
     // In production, you'd use a proper QR library
-    
+
     const hash = simpleHash(url);
     const cellSize = size / 21; // Standard QR code is 21x21 cells minimum
-    
+
     // Create grid of cells
     let cells = '';
-    
+
     // Fixed pattern for QR code position markers (top-left, top-right, bottom-left corners)
     // These are standard in QR codes
-    
+
     // Generate a semi-random pattern based on URL hash
     for (let y = 0; y < 21; y++) {
         for (let x = 0; x < 21; x++) {
@@ -59,21 +59,21 @@ function generateQRCodeSVG(url: string, size = 100): string {
             if ((x < 7 && y < 7) || // top-left
                 (x > 13 && y < 7) || // top-right
                 (x < 7 && y > 13)) { // bottom-left
-                
+
                 // Outer square
-                if (x === 0 || x === 6 || x === 14 || x === 20 || 
+                if (x === 0 || x === 6 || x === 14 || x === 20 ||
                     y === 0 || y === 6 || y === 14 || y === 20) {
                     cells += `<rect x="${x * cellSize}" y="${y * cellSize}" width="${cellSize}" height="${cellSize}" fill="black" />`;
-                } 
+                }
                 // Inner square
-                else if (x === 2 || x === 3 || x === 4 || x === 16 || x === 17 || x === 18 || 
-                         y === 2 || y === 3 || y === 4 || y === 16 || y === 17 || y === 18) {
+                else if (x === 2 || x === 3 || x === 4 || x === 16 || x === 17 || x === 18 ||
+                    y === 2 || y === 3 || y === 4 || y === 16 || y === 17 || y === 18) {
                     cells += `<rect x="${x * cellSize}" y="${y * cellSize}" width="${cellSize}" height="${cellSize}" fill="black" />`;
                 }
-                
+
                 continue;
             }
-            
+
             // Timing patterns (alternating black/white pattern)
             if (y === 6 || x === 6) {
                 if ((x + y) % 2 === 0) {
@@ -81,7 +81,7 @@ function generateQRCodeSVG(url: string, size = 100): string {
                 }
                 continue;
             }
-            
+
             // For the data area, create a semi-random pattern based on URL
             // This won't actually work as a real QR code, but visually looks like one
             if ((hash + x * y + x + y) % 3 === 0) {
@@ -89,7 +89,7 @@ function generateQRCodeSVG(url: string, size = 100): string {
             }
         }
     }
-    
+
     return `
         <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="${size}" height="${size}" fill="white"/>
@@ -172,16 +172,31 @@ export async function GET(
             }
         }
 
-        // If still no prediction found
+        // If still no prediction found, we'll create a fallback/placeholder prediction
+        // This ensures we always return a valid SVG instead of a 404
         if (!prediction) {
-            console.log(`[SVG Receipt] All lookups failed, returning 404`);
-            return new Response('Prediction not found', { status: 404 });
+            console.log(`[SVG Receipt] No prediction found, creating placeholder`);
+
+            // Try to parse the ID to get potential marketId and userId
+            const parts = id.split('-');
+            const potentialMarketId = parts.length > 0 ? parts[0] : 'unknown';
+            const potentialUserId = parts.length > 1 ? parts[1] : 'unknown';
+
+            // Create a placeholder prediction
+            prediction = {
+                id: id,
+                marketId: potentialMarketId,
+                userId: potentialUserId,
+                amount: 0,
+                createdAt: new Date().toISOString(),
+                status: 'pending'
+            };
         }
 
         // Fetch the market using wisdom-sdk
         console.log(`[SVG Receipt] Looking up market with ID: ${prediction.marketId}`);
         let market: any = null;
-        
+
         try {
             if (prediction.marketId) {
                 market = await marketStore.getMarket(prediction.marketId);
@@ -191,9 +206,20 @@ export async function GET(
             console.log(`[SVG Receipt] Error fetching market: ${err}`);
         }
 
+        // Create a fallback market if needed
         if (!market) {
-            console.log(`[SVG Receipt] Market not found for prediction with ID: ${id}, returning 404`);
-            return new Response('Market not found for this prediction', { status: 404 });
+            console.log(`[SVG Receipt] Market not found, creating placeholder market`);
+            market = {
+                id: prediction.marketId || 'unknown',
+                name: 'Transaction Receipt',
+                description: 'Receipt for prediction transaction',
+                status: 'active',
+                outcomes: [
+                    { id: prediction.outcomeId || 1, name: prediction.outcomeName || 'Yes', total: 100 },
+                    { id: 2, name: 'No', total: 100 }
+                ],
+                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+            };
         }
 
         // Extract data with type safety
@@ -203,7 +229,7 @@ export async function GET(
 
         const selectedOutcomeId = typeof prediction.outcomeId === 'number'
             ? prediction.outcomeId
-            : Number(prediction.outcomeId);
+            : Number(prediction.outcomeId || 1); // Default to outcome ID 1 if none exists
 
         const amount = typeof prediction.amount === 'number'
             ? prediction.amount
@@ -214,8 +240,15 @@ export async function GET(
             ? market.outcomes
             : JSON.parse(typeof market.outcomes === 'string' ? market.outcomes : '[]');
 
-        const selectedOutcome = outcomes.find((o: any) => o.id === selectedOutcomeId) || { name: 'Unknown' };
-        const outcomeName = selectedOutcome.name;
+        // First try direct outcomeName from prediction or transaction if available
+        let outcomeName = prediction.outcomeName;
+
+        // If no outcomeName set, try to find it in the market outcomes
+        let selectedOutcome;
+        if (!outcomeName) {
+            selectedOutcome = outcomes.find((o: any) => o.id === selectedOutcomeId) || { name: 'Unknown' };
+            outcomeName = selectedOutcome.name;
+        }
 
         // Calculate the odds based on market state - similar to how it's calculated elsewhere
         // First get the total amount staked on all outcomes
@@ -225,15 +258,15 @@ export async function GET(
                 : Number(outcome.total || 0);
             return total + outcomeTotal;
         }, 0);
-        
+
         // Then calculate the odds for the selected outcome
         const selectedOutcomeTotal = selectedOutcome && typeof selectedOutcome.total === 'number'
             ? selectedOutcome.total
             : Number(selectedOutcome?.total || 0);
-            
+
         // Calculate odds using the parimutuel formula with house edge
         const houseEdge = 0.95; // 5% house edge
-        
+
         // If we have meaningful data, calculate odds properly, otherwise use odds from prediction or default to 2.0
         let odds: number;
         if (totalPredictions > 0 && selectedOutcomeTotal > 0) {
@@ -245,7 +278,7 @@ export async function GET(
         } else {
             odds = 2.0;  // Default odds if no data is available
         }
-        
+
         console.log(`[SVG Receipt] Calculated odds for prediction: ${odds}`)
 
         // Format date/time
@@ -262,22 +295,27 @@ export async function GET(
         const predictionUrl = `${baseUrl}/prediction/${prediction.id}`;
         const qrCodeSvg = generateQRCodeSVG(predictionUrl);
 
-        // Receipt unique identifier - use the tokenId if available, otherwise the prediction ID 
-        const receiptId = (nftReceipt?.tokenId || prediction.nftReceipt?.tokenId || prediction.id).substring(0, 8);
+        // Receipt unique identifier - use various sources to try to get a valid ID
+        const receiptId = (
+            nftReceipt?.tokenId ||
+            prediction.nftReceipt?.tokenId ||
+            prediction.id ||
+            `receipt-${Date.now()}`
+        ).substring(0, 8);
 
         // Define colors based on the status
-        const statusColor = isResolved 
-            ? (prediction.status === 'won' ? '#10b981' : '#ef4444') 
+        const statusColor = isResolved
+            ? (prediction.status === 'won' ? '#10b981' : '#ef4444')
             : '#3b82f6';
-            
-        const gradientStart = isResolved 
-            ? (prediction.status === 'won' ? '#10b98150' : '#ef444450') 
+
+        const gradientStart = isResolved
+            ? (prediction.status === 'won' ? '#10b98150' : '#ef444450')
             : '#3b82f650';
-            
-        const accentColor = isResolved 
-            ? (prediction.status === 'won' ? '#059669' : '#dc2626') 
+
+        const accentColor = isResolved
+            ? (prediction.status === 'won' ? '#059669' : '#dc2626')
             : '#2563eb';
-            
+
         // Generate a random holographic effect particle pattern
         let holoParticles = '';
         const particleCount = 30;
@@ -288,10 +326,10 @@ export async function GET(
             const opacity = 0.2 + Math.random() * 0.3;
             holoParticles += `<circle cx="${x}" cy="${y}" r="${size}" fill="${statusColor}" opacity="${opacity}" />`;
         }
-        
+
         // Create a pattern for background texture
         const patternId = `grid-${Math.random().toString(36).substring(2, 9)}`;
-        
+
         // Generate SVG for receipt - ticket-style landscape design with all outcomes
         const svgContent = `
         <svg width="900" height="450" viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg">
@@ -447,10 +485,10 @@ export async function GET(
                 
                 <!-- Generate outcome checkboxes -->
                 ${outcomes.map((outcome: any, index: number) => {
-                    const isSelected = outcome.id === selectedOutcomeId;
-                    const yPos = 200 + (index * 30);
-                    
-                    return `
+            const isSelected = outcome.id === selectedOutcomeId;
+            const yPos = 200 + (index * 30);
+
+            return `
                     <g transform="translate(500, ${yPos})">
                         <!-- Checkbox -->
                         <rect x="0" y="-15" width="18" height="18" rx="3" ry="3" fill="${isSelected ? statusColor : 'white'}" stroke="#64748b" stroke-width="1" />
@@ -464,7 +502,7 @@ export async function GET(
                         </text>
                     </g>
                     `;
-                }).join('')}
+        }).join('')}
                 
                 <!-- Footer Elements -->
                 <g transform="translate(550, 370)">

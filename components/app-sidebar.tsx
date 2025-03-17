@@ -5,11 +5,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetTrigger, 
-  SheetClose 
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose
 } from "@/components/ui/sheet"
 import {
   Menu,
@@ -22,7 +22,9 @@ import {
   Settings,
   BarChart,
   Bug,
-  X
+  X,
+  Map,
+  MapPinned
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,6 +40,10 @@ export function AppSidebar({ className }: SidebarProps) {
   useEffect(() => {
     setIsOpen(false)
   }, [pathname])
+
+  const categories = [
+    { href: "/find-to-earn", icon: MapPinned, text: "Find-to-Earn" },
+  ]
 
   const navigationItems = [
     { href: "/", icon: Home, text: "Home" },
@@ -64,6 +70,22 @@ export function AppSidebar({ className }: SidebarProps) {
           </h2>
           <div className="space-y-1">
             {navigationItems.map((item) => (
+              <NavItem
+                key={item.href}
+                href={item.href}
+                icon={item.icon}
+                text={item.text}
+                isActive={pathname.startsWith(item.href) && (item.href !== "/" || pathname === "/")}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-sm font-medium tracking-tight text-muted-foreground uppercase">
+            Categories
+          </h2>
+          <div className="space-y-1">
+            {categories.map((item) => (
               <NavItem
                 key={item.href}
                 href={item.href}
@@ -108,8 +130,8 @@ export function AppSidebar({ className }: SidebarProps) {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent 
-          side="left" 
+        <SheetContent
+          side="left"
           className="w-[280px] sm:w-[320px] p-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative overflow-hidden"
         >
           <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10">
@@ -122,7 +144,7 @@ export function AppSidebar({ className }: SidebarProps) {
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={cn("hidden md:block", className)}
         aria-label="Main navigation"
       >
@@ -157,7 +179,7 @@ function NavItem({ href, icon: Icon, text, isActive }: NavItemProps) {
       <Link href={href}>
         <span className="flex items-center w-full">
           <Icon className={cn(
-            "mr-2 h-4 w-4 transition-colors duration-medium", 
+            "mr-2 h-4 w-4 transition-colors duration-medium",
             isActive ? "text-cyber-blue/80" : "text-muted-foreground"
           )} />
           <span className={cn("transition-colors duration-medium")}>
