@@ -24,7 +24,8 @@ import {
   Bug,
   X,
   Map,
-  MapPinned
+  MapPinned,
+  Rocket
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -55,6 +56,7 @@ export function AppSidebar({ className }: SidebarProps) {
 
   const accountItems = [
     { href: "/create", icon: PlusCircle, text: "Create Market" },
+    // { href: "/launchpad", icon: Rocket, text: "Launchpad" },
     { href: "/portfolio", icon: Wallet, text: "Portfolio" },
     { href: "/bug-reports", icon: Bug, text: "Bug Reports" },
     { href: "/settings", icon: Settings, text: "Settings" },
@@ -80,7 +82,7 @@ export function AppSidebar({ className }: SidebarProps) {
             ))}
           </div>
         </div>
-        <div className="px-3 py-2">
+        {/* <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-sm font-medium tracking-tight text-muted-foreground uppercase">
             Categories
           </h2>
@@ -95,7 +97,7 @@ export function AppSidebar({ className }: SidebarProps) {
               />
             ))}
           </div>
-        </div>
+        </div> */}
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-sm font-medium tracking-tight text-muted-foreground uppercase">
             Your Account

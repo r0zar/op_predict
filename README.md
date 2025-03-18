@@ -12,10 +12,11 @@ OP_PREDICT is a decentralized prediction market platform built on blockchain tec
 - **Community Trust**: Choose vaults hosted by trusted community members
 - **Fair Payouts**: 95% to winning participants, 5% to vault administrators
 - **Interactive UI**: Modern, responsive interface with intuitive navigation
+- **Self-service Contract Deployment**: Deploy your own prediction market contracts for subnet-compatible tokens
 
 ## The Prediction Process
 
-1. **Create a Prediction Vault**: Become a vault administrator
+1. **Create a Prediction Vault**: Become a vault administrator by deploying your own contract in the Launchpad
 2. **Create Prediction Markets**: Set up markets for various events
 3. **Place Predictions**: Wager tokens on predicted outcomes
 4. **Receive Prediction Receipt NFTs**: Get proof of participation
@@ -137,6 +138,7 @@ pnpm start
 - **Explore**: Browse and filter prediction markets
 - **How It Works**: Educational content about prediction markets
 - **Leaderboard**: Top performing vaults and users
+- **Launchpad**: Self-service deployment of prediction market contracts
 
 ## Contributing
 

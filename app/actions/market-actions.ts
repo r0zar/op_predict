@@ -17,7 +17,6 @@ import {
 } from 'wisdom-sdk/dist/utils.cjs';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
-import { MARKET_CATEGORIES } from '../components/markets-table';
 
 // Define the validation schema for market creation
 const marketFormSchema = z.object({
@@ -35,8 +34,8 @@ const marketFormSchema = z.object({
     endDate: z.string().min(1, {
         message: "Voting deadline is required"
     }),
-    category: z.enum(MARKET_CATEGORIES, {
-        errorMap: () => ({ message: "Please select a valid category" })
+    category: z.string().min(1, {
+        message: "Please select a valid category"
     }).default('general'),
     outcomes: z.array(
         z.object({
@@ -79,7 +78,7 @@ export async function createMarket(formData: CreateMarketFormData) {
             market: newMarket
         };
     } catch (error) {
-        console.error('Error creating market:', error);
+        console.error('Error creating market from actions:', error);
 
         if (error instanceof z.ZodError) {
             return {
