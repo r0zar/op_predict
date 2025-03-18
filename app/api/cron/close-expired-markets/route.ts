@@ -3,14 +3,14 @@ import { marketStore } from 'wisdom-sdk';
 import { revalidatePath } from 'next/cache';
 
 // Allowed cron API key
-const CRON_API_KEY = process.env.CRON_API_KEY;
+const CRON_SECRET = process.env.CRON_SECRET;
 
 /**
  * API route to handle automated closing of expired markets.
  * This should be called by a cron job (e.g., Vercel Cron).
  * 
  * Required auth:
- * - Authorization header with the CRON_API_KEY
+ * - Authorization header with the CRON_SECRET
  * 
  * @param req Next.js request object
  * @returns Response with results of the auto-close operation
@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
     const authHeader = req.headers.get('authorization');
     const apiKey = authHeader ? authHeader.replace('Bearer ', '') : '';
 
-    // If CRON_API_KEY is not set, only allow in development
-    if (CRON_API_KEY && apiKey !== CRON_API_KEY) {
+    // If CRON_SECRET is not set, only allow in development
+    if (CRON_SECRET && apiKey !== CRON_SECRET) {
       console.error('Invalid API key provided for cron job');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
 
     // Return the results
     return NextResponse.json(
-      { 
-        success: true, 
+      {
+        success: true,
         processed: result.processed,
         closed: result.closed,
         errors: result.errors,
@@ -59,10 +59,10 @@ export async function GET(req: NextRequest) {
     );
   } catch (error) {
     console.error('Error in close-expired-markets cron job:', error);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       },

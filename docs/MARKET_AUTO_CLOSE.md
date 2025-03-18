@@ -24,7 +24,7 @@ The auto-close functionality can be configured through the following environment
 | `ENABLE_AUTO_CLOSE_MARKETS` | Enable/disable the auto-close functionality | `true` |
 | `AUTO_CLOSE_BATCH_SIZE` | Number of markets to process in each batch | `50` |
 | `AUTO_CLOSE_ON_CHAIN` | Whether to close markets on-chain as well | `false` |
-| `CRON_API_KEY` | Secret key for authenticating cron API requests | Required in production |
+| `CRON_SECRET` | Secret key for authenticating cron API requests | Required in production |
 
 ## Integration with Blockchain
 
@@ -56,7 +56,7 @@ The auto-close functionality is implemented as a cron job that runs every 15 min
 The cron job API endpoint is secured with an API key that must be provided in the Authorization header:
 
 ```
-Authorization: Bearer <CRON_API_KEY>
+Authorization: Bearer <CRON_SECRET>
 ```
 
 ## Monitoring
