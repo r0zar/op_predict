@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { marketStore, userBalanceStore, userStatsStore, custodyStore } from 'wisdom-sdk';
+import { marketStore, userBalanceStore, userStatsStore, custodyStore, getSetMembers, CustodyTransaction } from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
 
@@ -279,9 +279,13 @@ export async function getCustodyNFTReceipt(id: string): Promise<{
 }
 
 /**
- * Find transactions by criteria
+ * Find transactions by status, type, and marketId
  */
-export async function findCustodyTransactions(criteria: Record<string, any>): Promise<{
+export async function findCustodyTransactions(criteria: {
+    status?: string,
+    type?: string,
+    marketId?: string
+}): Promise<{
     success: boolean;
     transactions?: any[];
     error?: string;
@@ -291,8 +295,38 @@ export async function findCustodyTransactions(criteria: Record<string, any>): Pr
             return { success: false, error: 'Search criteria are required' };
         }
 
-        // Find transactions matching criteria
-        const transactions = await custodyStore.findByCriteria(criteria);
+        let transactions: any[] = [];
+
+        // If we have a marketId, get market transactions
+        if (criteria.marketId) {
+            if (criteria.status === 'pending' && criteria.type === 'predict') {
+                // Use the specific function for pending predictions
+                transactions = await custodyStore.getPendingPredictionsForMarket(criteria.marketId);
+            } else {
+                // Get all market transactions and filter manually
+                const marketTransactions = await custodyStore.getMarketTransactions(criteria.marketId);
+                transactions = marketTransactions.filter((tx: any) => {
+                    // Filter by status if specified
+                    if (criteria.status && tx.status !== criteria.status) {
+                        return false;
+                    }
+                    // Filter by type if specified
+                    if (criteria.type && tx.type !== criteria.type) {
+                        return false;
+                    }
+                    return true;
+                });
+            }
+        }
+        // If we only have status=pending and type=predict, use getAllPendingPredictions
+        else if (criteria.status === 'pending' && criteria.type === 'predict') {
+            transactions = await custodyStore.getAllPendingPredictions();
+        }
+        // For other cases, we'll need to get transactions from all users and filter
+        else {
+            console.log('Advanced filtering not supported - please specify marketId, or status=pending + type=predict');
+            return { success: false, error: 'Advanced filtering not supported' };
+        }
 
         return {
             success: true,
@@ -458,31 +492,198 @@ export async function getAllCustodyTransactions(): Promise<{
             };
         }
 
-        // For admin, we'll need to get transactions for all users
-        // This is an expensive operation and should be paginated in production
-        // For simplicity in this demo, we'll get the first 100 transactions
+        // Get all markets
+        const marketsResult = await marketStore.getMarkets();
+        const markets = marketsResult.items;
+        console.log(`Found ${markets.length} markets to check for transactions`);
 
-        // Get all users and their transactions
-        const allUsers = await custodyStore.findByCriteria({});
-
-        if (!allUsers || allUsers.length === 0) {
+        if (markets.length === 0) {
             return { success: true, transactions: [] };
         }
 
+        // Get transactions for each market
+        const allTransactions = [];
+        for (const market of markets) {
+            const marketTransactions = await custodyStore.getMarketTransactions(market.id);
+            if (marketTransactions.length > 0) {
+                console.log(`Found ${marketTransactions.length} transactions for market ${market.id}`);
+                //@ts-ignore
+                allTransactions.push(...marketTransactions);
+            }
+        }
+
+        if (allTransactions.length === 0) {
+            console.log('No transactions found across all markets');
+            return { success: true, transactions: [] };
+        }
+
+        console.log(`Found ${allTransactions.length} total transactions across all markets`);
+
         // Sort by creation date (newest first)
-        const sortedTransactions = allUsers.sort((a, b) =>
+        const sortedTransactions = allTransactions.sort((a: CustodyTransaction, b: CustodyTransaction) =>
             new Date(b.takenCustodyAt).getTime() - new Date(a.takenCustodyAt).getTime()
         );
 
         return {
             success: true,
-            transactions: sortedTransactions.slice(0, 100) // Limit to first 100
+            transactions: sortedTransactions.slice(0, 200) // Limit to first 200
         };
     } catch (error) {
         console.error('Error getting all custody transactions:', error);
         return {
             success: false,
             error: 'Failed to get transactions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get pending prediction transactions for a market (admin only)
+ * These are predictions that have been taken custody of but not yet submitted to the blockchain
+ */
+export async function getPendingPredictions(marketId: string): Promise<{
+    success: boolean;
+    pendingCount: number;
+    pendingTransactions?: any[];
+    error?: string;
+    debug?: any;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, pendingCount: 0, error: 'User not authenticated' };
+        }
+
+        // Check if user is an admin
+        if (!isAdmin(user.id)) {
+            return {
+                success: false,
+                pendingCount: 0,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        console.log(`Looking for pending transactions for market: ${marketId}`);
+
+        // Using our new specific function instead of generic criteria
+        const pendingTransactions = await custodyStore.getPendingPredictionsForMarket(marketId);
+
+        // Log some debug info
+        if (!pendingTransactions || pendingTransactions.length === 0) {
+            console.log(`No pending transactions found for market: ${marketId}`);
+
+            // Debug: Get ALL pending transactions to see if any exist
+            const allPendingTx = await custodyStore.getAllPendingPredictions();
+
+            console.log(`Total pending transactions across all markets: ${allPendingTx.length}`);
+
+            // If we have some pendingTx but none for this market, check if marketId format is the issue
+            if (allPendingTx.length > 0) {
+                const distinctMarketIds = new Set(allPendingTx.map(tx => tx.marketId));
+                console.log(`Found pending transactions for these market IDs:`, Array.from(distinctMarketIds));
+                console.log(`Comparing with requested marketId: ${marketId} (${typeof marketId})`);
+            }
+        } else {
+            console.log(`Found ${pendingTransactions.length} pending transactions for market ${marketId}`);
+        }
+
+        if (!pendingTransactions) {
+            return {
+                success: true,
+                pendingCount: 0,
+                pendingTransactions: []
+            };
+        }
+
+        return {
+            success: true,
+            pendingCount: pendingTransactions.length,
+            pendingTransactions
+        };
+    } catch (error) {
+        console.error('Error getting pending predictions:', error);
+        return {
+            success: false,
+            pendingCount: 0,
+            error: 'Failed to get pending predictions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Manually trigger batch processing for predictions (admin only)
+ * This is similar to what the cron job does but can be triggered manually for testing
+ */
+export async function triggerBatchProcessing(marketId: string): Promise<{
+    success: boolean;
+    processed?: number;
+    batched?: number;
+    txid?: string;
+    error?: string;
+    processedForMarket?: number;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Check if user is an admin
+        if (!isAdmin(user.id)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        // For market-specific stats, count pending transactions for this market before processing
+        let marketPendingBefore = 0;
+        if (marketId) {
+            const pendingTransactions = await custodyStore.getPendingPredictionsForMarket(marketId);
+            marketPendingBefore = pendingTransactions?.length || 0;
+            console.log(`Before batch processing: ${marketPendingBefore} pending transactions for market ${marketId}`);
+        }
+
+        // Call the batch processing function with forceProcess option
+        // to process all pending predictions regardless of age
+        const result = await custodyStore.batchProcessPredictions({ forceProcess: true, marketId });
+
+        if (!result.success) {
+            return {
+                success: false,
+                error: result.error || 'Failed to process predictions'
+            };
+        }
+
+        // For market-specific stats, count remaining pending transactions after processing
+        let processedForMarket = 0;
+        if (marketId) {
+            const pendingTransactionsAfter = await custodyStore.getPendingPredictionsForMarket(marketId);
+            const marketPendingAfter = pendingTransactionsAfter?.length || 0;
+            processedForMarket = marketPendingBefore - marketPendingAfter;
+            console.log(`After batch processing: ${marketPendingAfter} pending transactions for market ${marketId}`);
+            console.log(`Processed ${processedForMarket} transactions for market ${marketId}`);
+        }
+
+        // Revalidate paths
+        revalidatePath('/markets');
+        if (marketId) {
+            revalidatePath(`/markets/${marketId}`);
+        }
+        revalidatePath('/portfolio');
+
+        return {
+            success: true,
+            processed: result.processed,
+            batched: result.batched,
+            txid: result.txid,
+            processedForMarket: marketId ? processedForMarket : undefined
+        };
+    } catch (error) {
+        console.error('Error triggering batch processing:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
         };
     }
 }

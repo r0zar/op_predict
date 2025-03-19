@@ -214,24 +214,24 @@ export default async function PortfolioPage() {
                         <CardContent>
                             {userPredictionsWithCreatorNames.length > 0 ? (
                                 <>
-                                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-6 shadow-sm">
+                                    <div className="bg-primary/50 border border-primary dark:border-primary rounded-lg p-4 mb-6 shadow-sm">
                                         <div className="flex items-start">
-                                            <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-full mr-4 flex-shrink-0">
-                                                <RefreshCcw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                            <div className="bg-secondary dark:bg-secondary/50 p-2 rounded-full mr-4 flex-shrink-0">
+                                                <RefreshCcw className="h-5 w-5 text-secondary dark:text-secondary" />
                                             </div>
                                             <div>
-                                                <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">Return Predictions</h3>
-                                                <p className="text-sm text-blue-700/90 dark:text-blue-300 mb-3">
+                                                <h3 className="text-sm font-semibold text-secondary dark:text-secondary mb-2">Return Predictions</h3>
+                                                <p className="text-sm dark:text-secondary mb-3">
                                                     You can return predictions within 15 minutes of creation if they haven't been submitted to the blockchain yet.
                                                 </p>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    <div className="flex items-center bg-white/40 dark:bg-blue-900/20 rounded-md p-2">
-                                                        <Clock className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400 flex-shrink-0" />
-                                                        <span className="text-xs text-blue-700 dark:text-blue-300">15-minute window</span>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold">
+                                                    <div className="flex items-center dark:bg-secondary/20 rounded-md p-2">
+                                                        <Clock className="h-4 w-4 mr-2 text-secondary dark:text-secondary flex-shrink-0" />
+                                                        <span className="text-xs text-primary dark:text-primary">15-minute window</span>
                                                     </div>
-                                                    <div className="flex items-center bg-white/40 dark:bg-blue-900/20 rounded-md p-2">
-                                                        <CheckCircle className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400 flex-shrink-0" />
-                                                        <span className="text-xs text-blue-700 dark:text-blue-300">Full refund to balance</span>
+                                                    <div className="flex items-center dark:bg-secondary/20 rounded-md p-2">
+                                                        <CheckCircle className="h-4 w-4 mr-2 text-secondary dark:text-secondary flex-shrink-0" />
+                                                        <span className="text-xs text-primary dark:text-primary">Full refund to balance</span>
                                                     </div>
                                                 </div>
                                             </div>

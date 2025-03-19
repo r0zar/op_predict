@@ -1,6 +1,6 @@
 import { getMarket } from "@/app/actions/market-actions";
 import { getRelatedMarkets } from "@/app/actions/prediction-actions";
-import { getMarketCustodyTransactions } from "@/app/actions/custody-actions";
+import { getMarketCustodyTransactions, getPendingPredictions } from "@/app/actions/custody-actions";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,10 @@ import {
     Info,
     Trophy,
     Check,
-    AlertTriangle
+    AlertTriangle,
+    Server,
+    RefreshCw,
+    Database
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -27,6 +30,7 @@ import { PredictionForm } from "@/components/prediction-form";
 import { cn, isAdmin, calculateOutcomePercentages } from "@/lib/utils";
 import { ResolveMarketButton } from "@/components/resolve-market-button";
 import { MarketDeadlineSection } from "@/components/market-deadline-section";
+import { BatchProcessingPanel } from "@/components/batch-processing-panel";
 import { Metadata } from "next";
 import { Suspense } from "react";
 import { MarketCountdown } from "@/components/market-countdown";
@@ -233,10 +237,12 @@ async function RelatedMarkets({ marketId }: { marketId: string }) {
 }
 
 export default async function MarketPage({ params }: { params: { id: string } }) {
-    const [user, marketData, transactions] = await Promise.all([
+    // Get current user, market data, and transactions in parallel
+    const [user, marketData, transactions, pendingPredictionsData] = await Promise.all([
         currentUser(),
         getMarket(params.id),
-        getMarketCustodyTransactions(params.id)
+        getMarketCustodyTransactions(params.id),
+        getPendingPredictions(params.id)
     ]);
 
     if (!marketData) {
@@ -245,6 +251,10 @@ export default async function MarketPage({ params }: { params: { id: string } })
 
     // Use type assertion for the market data
     const market = marketData as any;
+
+    // Get pending predictions count and transactions
+    const pendingCount = pendingPredictionsData?.pendingCount || 0;
+    const pendingTransactions = pendingPredictionsData?.pendingTransactions || [];
 
     // Calculate actual votes and amounts from custody transactions
     const predictionsByOutcome = transactions.transactions?.reduce((acc, transaction) => {
@@ -527,20 +537,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                             />
                                         </div>
 
-                                        {/* Admin resolve section */}
-                                        {isUserAdmin && (
-                                            <div className="mt-auto pt-4 border-t border-muted">
-                                                <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                                                    Admin Controls
-                                                </h2>
-                                                <ResolveMarketButton
-                                                    marketName={market.name}
-                                                    marketId={market.id}
-                                                    outcomes={market.outcomes}
-                                                    isAdmin={isUserAdmin}
-                                                />
-                                            </div>
-                                        )}
+                                        {/* No admin controls here anymore */}
                                     </>
                                 ) : isMarketExpired && !isMarketResolved && !isMarketCancelled ? (
                                     <div className="h-full flex flex-col justify-center items-center text-center p-6">
@@ -598,6 +595,78 @@ export default async function MarketPage({ params }: { params: { id: string } })
                 </div>
             </div>
 
+            {/* Admin Controls Section - Only visible to admins */}
+            {isUserAdmin && (
+                <div className="mb-8">
+                    <div className="rounded-lg border bg-card shadow-sm backdrop-blur overflow-hidden">
+                        <div className="border-b bg-muted/30 px-6 py-3 flex items-center">
+                            <Server className="h-5 w-5 text-cyber-blue mr-2" />
+                            <h2 className="text-lg font-bold">Admin Controls</h2>
+                            <span className="px-2 py-0.5 text-xs rounded-full bg-cyber-blue/10 border border-cyber-blue/20 ml-auto">
+                                Admin Only
+                            </span>
+                        </div>
+
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                                            Market Resolution
+                                        </h3>
+                                        {isMarketResolved && <Badge variant="outline" className="text-xs">Resolved</Badge>}
+                                        {isMarketExpired && !isMarketResolved && <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/30">Action Needed</Badge>}
+                                    </div>
+
+                                    <div className="p-4 border rounded-lg bg-card/70">
+                                        <p className="text-sm mb-4">
+                                            {isMarketResolved
+                                                ? `This market was resolved on ${new Date(market.resolvedAt || '').toLocaleDateString()} with outcome "${market.outcomes.find((o: any) => o.id === market.resolvedOutcomeId)?.name}".`
+                                                : isMarketExpired
+                                                    ? "This market has expired and should be resolved to distribute rewards to winning predictions."
+                                                    : "When the outcome of this market is known, use the button below to resolve it and distribute rewards."}
+                                        </p>
+
+                                        <ResolveMarketButton
+                                            marketName={market.name}
+                                            marketId={market.id}
+                                            outcomes={market.outcomes}
+                                            isAdmin={isUserAdmin}
+                                            variant={isMarketExpired ? "warning" : "default"}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                                            Batch Processing Status
+                                        </h3>
+                                        {pendingCount > 0 && <Badge variant="outline" className="text-xs bg-cyber-blue/10 border-cyber-blue/30">
+                                            {pendingCount} Pending
+                                        </Badge>}
+                                    </div>
+
+                                    <Suspense fallback={
+                                        <div className="h-[180px] border rounded-lg bg-card/70 flex items-center justify-center">
+                                            <div className="flex flex-col items-center">
+                                                <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground mb-2" />
+                                                <span className="text-xs text-muted-foreground">Loading batch status...</span>
+                                            </div>
+                                        </div>
+                                    }>
+                                        <BatchProcessingPanel
+                                            marketId={market.id}
+                                            pendingCount={pendingCount}
+                                            pendingTransactions={pendingTransactions}
+                                        />
+                                    </Suspense>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Suspense fallback={<LoadingState />}>
                 <MarketPredictions marketId={market.id} />

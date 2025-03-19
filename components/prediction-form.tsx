@@ -132,9 +132,9 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
             const result = await createPredictionWithCustody({
                 // Signet signature details
                 signature: custodyResponse.transaction.data.signature,
-                nonce: signetResponse.nonce,
-                signer: signetResponse.signer,
-                subnetId: signetResponse.subnetId,
+                nonce: signetResponse.transaction.nonce,
+                signer: signetResponse.transaction.signer,
+                subnetId: signetResponse.transaction.subnetId,
 
                 // Prediction details
                 marketId: market.id,

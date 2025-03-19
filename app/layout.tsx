@@ -24,6 +24,7 @@ import {
 import { ThemeProvider as NextThemeProvider } from "@/components/theme-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ThemeProvider } from "@/lib/hooks/use-theme"
+import { Toaster } from "@/components/ui/toaster"
 import Image from "next/image"
 import crystalBallLogo from "@/public/images/crystal-ball-no-bg.png"
 
@@ -214,6 +215,8 @@ export default function RootLayout({
                     </div>
                   </footer>
                 </div>
+                {/* Toast notifications */}
+                <Toaster />
               </ThemeProvider>
             </NextThemeProvider>
           </body>
