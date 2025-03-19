@@ -13,12 +13,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ADMIN_USER_IDS } from "@/lib/utils";
-import { 
-  getAllCustodyTransactions, 
-  findCustodyTransactions, 
-  deleteCustodyTransaction, 
-  triggerBatchProcessing,
-  getPendingPredictions
+import {
+    getAllCustodyTransactions,
+    findCustodyTransactions,
+    deleteCustodyTransaction,
+    triggerBatchProcessing,
+    getPendingPredictions
 } from '@/app/actions/custody-actions';
 
 export default function AdminPage() {
@@ -27,7 +27,7 @@ export default function AdminPage() {
     const [userId, setUserId] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [adminUsers, setAdminUsers] = useState<string[]>([]);
-    
+
     // Data debugging states
     const [marketId, setMarketId] = useState('');
     const [transactionId, setTransactionId] = useState('');
@@ -68,7 +68,7 @@ export default function AdminPage() {
         setTransactions([]);
         setErrorMessage('');
         setResultMessage('');
-        
+
         try {
             const result = await getAllCustodyTransactions();
             if (result.success && result.transactions) {
@@ -84,19 +84,19 @@ export default function AdminPage() {
             setLoading(false);
         }
     };
-    
+
     // Handler to find transactions by market
     const handleFindMarketTransactions = async () => {
         if (!marketId) {
             setErrorMessage('Please enter a market ID');
             return;
         }
-        
+
         setLoading(true);
         setTransactions([]);
         setErrorMessage('');
         setResultMessage('');
-        
+
         try {
             const result = await findCustodyTransactions({ marketId });
             if (result.success && result.transactions) {
@@ -112,19 +112,19 @@ export default function AdminPage() {
             setLoading(false);
         }
     };
-    
+
     // Handler to get pending predictions
     const handleGetPendingPredictions = async () => {
         if (!marketId) {
             setErrorMessage('Please enter a market ID');
             return;
         }
-        
+
         setLoading(true);
         setTransactions([]);
         setErrorMessage('');
         setResultMessage('');
-        
+
         try {
             const result = await getPendingPredictions(marketId);
             if (result.success) {
@@ -141,18 +141,18 @@ export default function AdminPage() {
             setLoading(false);
         }
     };
-    
+
     // Handler to process batch
     const handleProcessBatch = async () => {
         if (!marketId) {
             setErrorMessage('Please enter a market ID');
             return;
         }
-        
+
         setLoading(true);
         setErrorMessage('');
         setResultMessage('');
-        
+
         try {
             const result = await triggerBatchProcessing(marketId);
             if (result.success) {
@@ -169,13 +169,13 @@ export default function AdminPage() {
             setLoading(false);
         }
     };
-    
+
     // Handler to delete a transaction
     const handleDeleteTransaction = async (id: string) => {
         if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
             return;
         }
-        
+
         setLoading(true);
         try {
             const result = await deleteCustodyTransaction(id);
@@ -192,12 +192,12 @@ export default function AdminPage() {
             setLoading(false);
         }
     };
-    
+
     // Format JSON for display
     const formatJson = (data: any) => {
         return JSON.stringify(data, null, 2);
     };
-    
+
     const handleSetAdmin = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -249,7 +249,7 @@ export default function AdminPage() {
                         <TabsTrigger value="batch">Batch Processing</TabsTrigger>
                     </TabsList>
                 </div>
-                
+
                 {/* Admin Management Tab */}
                 <TabsContent value="admin">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -310,7 +310,7 @@ export default function AdminPage() {
                         </Card>
                     </div>
                 </TabsContent>
-                
+
                 {/* Data Debugging Tab */}
                 <TabsContent value="debug">
                     <div className="grid grid-cols-1 gap-6">
@@ -337,14 +337,14 @@ export default function AdminPage() {
                                                 />
                                             </div>
                                             <div className="flex items-end space-x-2">
-                                                <Button 
+                                                <Button
                                                     onClick={handleFindMarketTransactions}
                                                     disabled={loading || !marketId}
                                                     variant="outline"
                                                 >
                                                     Find Market Transactions
                                                 </Button>
-                                                <Button 
+                                                <Button
                                                     onClick={handleFetchAllTransactions}
                                                     disabled={loading}
                                                 >
@@ -353,34 +353,34 @@ export default function AdminPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Results */}
                                     {resultMessage && (
                                         <div className="p-3 rounded border">
                                             {resultMessage}
                                         </div>
                                     )}
-                                    
+
                                     {errorMessage && (
                                         <div className="p-3 rounded border border-destructive">
                                             {errorMessage}
                                         </div>
                                     )}
-                                    
+
                                     {loading && (
                                         <div className="p-3 rounded border">
                                             Loading...
                                         </div>
                                     )}
-                                    
+
                                     {/* Transaction List */}
                                     {transactions.length > 0 && (
                                         <div>
                                             <div className="flex justify-between items-center mb-4">
                                                 <h3 className="text-lg font-medium">Transaction Results ({transactions.length})</h3>
                                                 <div className="flex space-x-2">
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => {
                                                             // Group transactions by market ID
@@ -392,11 +392,11 @@ export default function AdminPage() {
                                                                 acc[marketId].push(tx);
                                                                 return acc;
                                                             }, {} as Record<string, any[]>);
-                                                            
+
                                                             // Create summary
                                                             const summary = {
                                                                 total: transactions.length,
-                                                                byMarket: Object.entries(marketGroups).map(([marketId, txs]) => ({
+                                                                byMarket: Object.entries(marketGroups).map(([marketId, txs]: any) => ({
                                                                     marketId,
                                                                     count: txs.length,
                                                                     pendingCount: txs.filter(tx => tx.status === 'pending').length,
@@ -416,14 +416,14 @@ export default function AdminPage() {
                                                                     claimReward: transactions.filter(tx => tx.type === 'claim-reward').length,
                                                                 }
                                                             };
-                                                            
+
                                                             setDebugOutput(formatJson(summary));
                                                         }}
                                                     >
                                                         View Summary
                                                     </Button>
-                                                    <Button 
-                                                        variant="ghost" 
+                                                    <Button
+                                                        variant="ghost"
                                                         size="sm"
                                                         onClick={() => window.print()}
                                                     >
@@ -431,7 +431,7 @@ export default function AdminPage() {
                                                     </Button>
                                                 </div>
                                             </div>
-                                            
+
                                             {/* Debug output area */}
                                             {debugOutput && (
                                                 <div className="mb-4 p-4 border rounded">
@@ -440,9 +440,9 @@ export default function AdminPage() {
                                                         {debugOutput}
                                                     </pre>
                                                     <div className="flex justify-end mt-2">
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm" 
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
                                                             onClick={() => setDebugOutput('')}
                                                         >
                                                             Close
@@ -450,7 +450,7 @@ export default function AdminPage() {
                                                     </div>
                                                 </div>
                                             )}
-                                            
+
                                             {/* Table view for transactions */}
                                             <div className="overflow-x-auto">
                                                 <table className="w-full border-collapse">
@@ -473,9 +473,9 @@ export default function AdminPage() {
                                                                 <td className="p-2">
                                                                     <span className={
                                                                         tx.status === 'pending' ? 'text-yellow-500' :
-                                                                        tx.status === 'confirmed' ? 'text-green-500' :
-                                                                        tx.status === 'rejected' ? 'text-red-500' :
-                                                                        'text-blue-500'
+                                                                            tx.status === 'confirmed' ? 'text-green-500' :
+                                                                                tx.status === 'rejected' ? 'text-red-500' :
+                                                                                    'text-blue-500'
                                                                     }>
                                                                         {tx.status}
                                                                     </span>
@@ -484,9 +484,9 @@ export default function AdminPage() {
                                                                 <td className="p-2">{new Date(tx.takenCustodyAt).toLocaleString()}</td>
                                                                 <td className="p-2 font-mono text-xs">{tx.userId.substring(0, 8)}...</td>
                                                                 <td className="p-2 text-right">
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="sm" 
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
                                                                         onClick={() => {
                                                                             // Toggle expanded state for this transaction
                                                                             const txIndex = transactions.findIndex(t => t.id === tx.id);
@@ -501,8 +501,8 @@ export default function AdminPage() {
                                                                     >
                                                                         Details
                                                                     </Button>
-                                                                    <Button 
-                                                                        variant="destructive" 
+                                                                    <Button
+                                                                        variant="destructive"
                                                                         size="sm"
                                                                         onClick={() => handleDeleteTransaction(tx.id)}
                                                                         disabled={loading}
@@ -516,7 +516,7 @@ export default function AdminPage() {
                                                     </tbody>
                                                 </table>
                                             </div>
-                                            
+
                                             {/* Selected transaction details */}
                                             {transactions.some(tx => tx.expanded) && (
                                                 <div className="mt-4 p-4 border rounded">
@@ -537,7 +537,7 @@ export default function AdminPage() {
                         </Card>
                     </div>
                 </TabsContent>
-                
+
                 {/* Transaction Management Tab */}
                 <TabsContent value="transactions">
                     <div className="grid grid-cols-1 gap-6">
@@ -564,7 +564,7 @@ export default function AdminPage() {
                                                 />
                                             </div>
                                             <div className="flex items-end space-x-2">
-                                                <Button 
+                                                <Button
                                                     variant="destructive"
                                                     onClick={() => transactionId && handleDeleteTransaction(transactionId)}
                                                     disabled={loading || !transactionId}
@@ -574,14 +574,14 @@ export default function AdminPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Results */}
                                     {resultMessage && (
                                         <div className="p-3 rounded border">
                                             {resultMessage}
                                         </div>
                                     )}
-                                    
+
                                     {errorMessage && (
                                         <div className="p-3 rounded border border-destructive">
                                             {errorMessage}
@@ -592,7 +592,7 @@ export default function AdminPage() {
                         </Card>
                     </div>
                 </TabsContent>
-                
+
                 {/* Batch Processing Tab */}
                 <TabsContent value="batch">
                     <div className="grid grid-cols-1 gap-6">
@@ -618,14 +618,14 @@ export default function AdminPage() {
                                                 />
                                             </div>
                                             <div className="flex items-end space-x-2">
-                                                <Button 
+                                                <Button
                                                     variant="outline"
                                                     onClick={handleGetPendingPredictions}
                                                     disabled={loading || !marketId}
                                                 >
                                                     Check Pending
                                                 </Button>
-                                                <Button 
+                                                <Button
                                                     onClick={handleProcessBatch}
                                                     disabled={loading || !marketId}
                                                 >
@@ -634,35 +634,35 @@ export default function AdminPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Results */}
                                     {resultMessage && (
                                         <div className="p-3 rounded border">
                                             {resultMessage}
                                         </div>
                                     )}
-                                    
+
                                     {errorMessage && (
                                         <div className="p-3 rounded border border-destructive">
                                             {errorMessage}
                                         </div>
                                     )}
-                                    
+
                                     {/* Pending Predictions */}
                                     {pendingCount > 0 && (
                                         <div className="p-3 rounded border">
                                             Found {pendingCount} pending predictions that need processing.
                                         </div>
                                     )}
-                                    
+
                                     {/* Transaction List */}
                                     {transactions.length > 0 && (
                                         <div>
                                             <div className="flex justify-between items-center mb-4">
                                                 <h3 className="text-lg font-medium">Pending Predictions ({transactions.length})</h3>
                                                 <div className="flex space-x-2">
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => {
                                                             // Group transactions by market ID
@@ -674,11 +674,11 @@ export default function AdminPage() {
                                                                 acc[marketId].push(tx);
                                                                 return acc;
                                                             }, {} as Record<string, any[]>);
-                                                            
+
                                                             // Create summary
                                                             const summary = {
                                                                 total: transactions.length,
-                                                                byMarket: Object.entries(marketGroups).map(([marketId, txs]) => ({
+                                                                byMarket: Object.entries(marketGroups).map(([marketId, txs]: any) => ({
                                                                     marketId,
                                                                     count: txs.length,
                                                                     totalAmount: txs.reduce((sum, tx) => sum + (tx.amount || 0), 0),
@@ -692,22 +692,22 @@ export default function AdminPage() {
                                                                     }, {} as Record<string, number>)
                                                                 })),
                                                                 pendingAge: {
-                                                                    averageMinutes: Math.round(transactions.reduce((sum, tx) => 
+                                                                    averageMinutes: Math.round(transactions.reduce((sum, tx) =>
                                                                         sum + Math.floor((Date.now() - new Date(tx.takenCustodyAt).getTime()) / (1000 * 60)), 0) / transactions.length),
-                                                                    oldest: Math.max(...transactions.map(tx => 
+                                                                    oldest: Math.max(...transactions.map(tx =>
                                                                         Math.floor((Date.now() - new Date(tx.takenCustodyAt).getTime()) / (1000 * 60)))),
-                                                                    newest: Math.min(...transactions.map(tx => 
+                                                                    newest: Math.min(...transactions.map(tx =>
                                                                         Math.floor((Date.now() - new Date(tx.takenCustodyAt).getTime()) / (1000 * 60))))
                                                                 }
                                                             };
-                                                            
+
                                                             setDebugOutput(formatJson(summary));
                                                         }}
                                                     >
                                                         View Summary
                                                     </Button>
-                                                    <Button 
-                                                        variant="ghost" 
+                                                    <Button
+                                                        variant="ghost"
                                                         size="sm"
                                                         onClick={() => window.print()}
                                                     >
@@ -715,7 +715,7 @@ export default function AdminPage() {
                                                     </Button>
                                                 </div>
                                             </div>
-                                            
+
                                             {/* Debug output area */}
                                             {debugOutput && (
                                                 <div className="mb-4 p-4 border rounded">
@@ -724,9 +724,9 @@ export default function AdminPage() {
                                                         {debugOutput}
                                                     </pre>
                                                     <div className="flex justify-end mt-2">
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="sm" 
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
                                                             onClick={() => setDebugOutput('')}
                                                         >
                                                             Close
@@ -734,7 +734,7 @@ export default function AdminPage() {
                                                     </div>
                                                 </div>
                                             )}
-                                            
+
                                             {/* Table view for transactions */}
                                             <div className="overflow-x-auto">
                                                 <table className="w-full border-collapse">
@@ -759,9 +759,9 @@ export default function AdminPage() {
                                                                 <td className="p-2">{Math.floor((Date.now() - new Date(tx.takenCustodyAt).getTime()) / (1000 * 60))}</td>
                                                                 <td className="p-2 font-mono text-xs">{tx.userId.substring(0, 8)}...</td>
                                                                 <td className="p-2 text-right">
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        size="sm" 
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
                                                                         onClick={() => {
                                                                             // Toggle expanded state for this transaction
                                                                             const txIndex = transactions.findIndex(t => t.id === tx.id);
@@ -776,8 +776,8 @@ export default function AdminPage() {
                                                                     >
                                                                         Details
                                                                     </Button>
-                                                                    <Button 
-                                                                        variant="destructive" 
+                                                                    <Button
+                                                                        variant="destructive"
                                                                         size="sm"
                                                                         onClick={() => handleDeleteTransaction(tx.id)}
                                                                         disabled={loading}
@@ -791,7 +791,7 @@ export default function AdminPage() {
                                                     </tbody>
                                                 </table>
                                             </div>
-                                            
+
                                             {/* Selected transaction details */}
                                             {transactions.some(tx => tx.expanded) && (
                                                 <div className="mt-4 p-4 border rounded">
