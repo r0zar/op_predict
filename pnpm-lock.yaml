@@ -123,8 +123,8 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@20.17.22)(typescript@5.8.2)))
       wisdom-sdk:
-        specifier: ^0.1.9
-        version: 0.1.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.1.10
+        version: 0.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod:
         specifier: ^3.24.2
         version: 3.24.2
@@ -4177,8 +4177,8 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
-  wisdom-sdk@0.1.9:
-    resolution: {integrity: sha512-IZABcVomrcrs7MhrvHmTK2Xhwyk2oR6ucGoQlRgUQUkvWbv3Z48sfRVqgVT4wza25nafC0AgJK6r3vBRkylSlQ==}
+  wisdom-sdk@0.1.10:
+    resolution: {integrity: sha512-uswG21keJJw994Wc3l4Mm5TOQBOMhy0Gaec7OpUDJN/xg1CPmeOL95icIosf63vwCGXw/laQB1QLu69xnePAHA==}
     engines: {node: '>=18.0.0'}
 
   word-wrap@1.2.5:
@@ -8650,7 +8650,7 @@ snapshots:
       siginfo: 2.0.0
       stackback: 0.0.2
 
-  wisdom-sdk@0.1.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  wisdom-sdk@0.1.10(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@clerk/backend': 1.25.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stacks/network': 7.0.2

@@ -50,54 +50,6 @@ export async function getRelatedMarkets(marketId: string): Promise<any[]> {
 }
 
 /**
- * Take custody of a signed transaction
- */
-export async function takeCustodyOfTransaction(formData: CustodyFormData): Promise<{
-    success: boolean;
-    transaction?: any;
-    error?: string;
-}> {
-    try {
-        // Validate input data
-        const validatedData = custodyFormSchema.parse(formData);
-
-        // Ensure the user is authorized
-        const user = await currentUser();
-        if (!user || user.id !== validatedData.userId) {
-            return { success: false, error: 'Unauthorized: User ID mismatch' };
-        }
-
-        // Take custody of the transaction
-        const result = await custodyStore.takeCustody(validatedData);
-
-        // Revalidate relevant paths
-        revalidatePath('/portfolio');
-
-        // If this is a prediction, also revalidate markets page
-        if (validatedData.type === TransactionType.PREDICT && validatedData.marketId) {
-            revalidatePath(`/markets/${validatedData.marketId}`);
-            revalidatePath('/markets');
-        }
-
-        return result;
-    } catch (error) {
-        console.error('Error taking custody of transaction:', error);
-
-        if (error instanceof z.ZodError) {
-            return {
-                success: false,
-                error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ')
-            };
-        }
-
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to take custody of transaction'
-        };
-    }
-}
-
-/**
  * Create a prediction with custody of a signed transaction
  * This is the primary function that should be used for creating predictions with Signet
  */

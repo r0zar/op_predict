@@ -437,12 +437,12 @@ export default async function MarketPage({ params }: { params: { id: string } })
                     )}
 
                     {isMarketExpired && !isMarketResolved && !isMarketCancelled && (
-                        <div className="mx-6 mb-6 bg-amber-950/30 border border-amber-500/30 rounded-lg p-4 backdrop-blur">
+                        <div className="mx-6 mb-6 bg-amber-500/10 border border-amber-500/90 rounded-lg p-4 backdrop-blur">
                             <div className="flex items-start">
                                 <AlertTriangle className="h-5 w-5 text-amber-400 mr-3 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <h3 className="font-medium text-amber-300 mb-1">Market Expired</h3>
-                                    <p className="text-sm text-amber-400/80">
+                                    <h3 className="font-medium mb-1">Market Expired</h3>
+                                    <p className="text-sm">
                                         This market has reached its end date but hasn't been resolved yet.
                                         {isUserAdmin && " As an admin, you can resolve this market using the admin controls."}
                                     </p>

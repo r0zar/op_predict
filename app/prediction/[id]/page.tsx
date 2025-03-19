@@ -3,12 +3,14 @@ import { currentUser } from '@clerk/nextjs/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, XCircle, DollarSign, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, DollarSign, Clock, RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import PredictionShare from '@/components/prediction-share';
+import ReturnPredictionButton from '@/components/return-prediction-button';
 // Use any type instead of defining explicit types
 import { calculateOutcomePercentages } from "@/lib/utils";
 import { marketStore, custodyStore } from 'wisdom-sdk';
+import { canReturnPrediction } from '@/app/actions/prediction-actions';
 
 // Dynamic metadata for the page
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -113,7 +115,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
                 <Card className="bg-slate-800 border-slate-700">
                     <CardHeader>
                         <CardTitle className="text-xl text-slate-100">Prediction Not Found</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardDescription className="">
                             This prediction might have been deleted or does not exist.
                         </CardDescription>
                     </CardHeader>
@@ -136,7 +138,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
                 <Card className="bg-slate-800 border-slate-700">
                     <CardHeader>
                         <CardTitle className="text-xl text-slate-100">Prediction Not Found</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardDescription className="">
                             This prediction might have been deleted or does not exist.
                         </CardDescription>
                     </CardHeader>
@@ -166,7 +168,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
                 <Card className="bg-slate-800 border-slate-700">
                     <CardHeader>
                         <CardTitle className="text-xl text-slate-100">Market Not Found</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardDescription className="">
                             The market for this prediction might have been deleted or does not exist.
                         </CardDescription>
                     </CardHeader>
@@ -189,7 +191,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
                 <Card className="bg-slate-800 border-slate-700">
                     <CardHeader>
                         <CardTitle className="text-xl text-slate-100">Market Not Found</CardTitle>
-                        <CardDescription className="text-slate-400">
+                        <CardDescription className="">
                             The market for this prediction might have been deleted or does not exist.
                         </CardDescription>
                     </CardHeader>
@@ -257,7 +259,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
     try {
         // For custody transactions, use takenCustodyAt, otherwise fall back to createdAt
         const dateString = prediction.takenCustodyAt || prediction.createdAt;
-        
+
         if (typeof dateString === 'string' && dateString.includes('-')) {
             // Handle ISO format string
             createdAt = new Date(dateString);
@@ -337,6 +339,10 @@ export default async function PredictionPage({ params }: { params: { id: string 
 
     // Check if user owns the prediction
     const isOwner = user?.id === prediction.userId;
+    
+    // Check if the prediction can be returned
+    const canReturn = isOwner && prediction.status === 'pending' ? 
+        await canReturnPrediction(id) : { canReturn: false };
 
     return (
         <div className="container mx-auto py-10">
@@ -350,23 +356,31 @@ export default async function PredictionPage({ params }: { params: { id: string 
                     </Link>
 
                     {isOwner && (
-                        <PredictionShare
-                            predictionId={id}
-                            marketName={marketName}
-                            isResolved={isResolved}
-                            outcomeSelected={selectedOutcome?.name || 'Unknown'}
-                            amount={amount}
-                            pnl={isResolved ? actualPnl : undefined}
-                        />
+                        <div className="flex space-x-2">
+                            {canReturn.canReturn && (
+                                <ReturnPredictionButton 
+                                    predictionId={id} 
+                                    tooltip={canReturn.reason || 'Return this prediction'}
+                                />
+                            )}
+                            <PredictionShare
+                                predictionId={id}
+                                marketName={marketName}
+                                isResolved={isResolved}
+                                outcomeSelected={selectedOutcome?.name || 'Unknown'}
+                                amount={amount}
+                                pnl={isResolved ? actualPnl : undefined}
+                            />
+                        </div>
                     )}
                 </div>
 
-                <Card className="bg-slate-800 border-slate-700">
+                <Card className="">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-2xl text-slate-100">{marketName}</CardTitle>
-                                <CardDescription className="text-slate-400 mt-1">
+                                <CardTitle className="text-2xl">{marketName}</CardTitle>
+                                <CardDescription className=" mt-1">
                                     Prediction made on {formatDate(createdAt)}
                                 </CardDescription>
                             </div>
@@ -385,12 +399,12 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                                     : 'bg-blue-600'
                                 }
                             >
-                                {isResolved 
-                                    ? (isWinner ? 'Won' : 'Lost') 
+                                {isResolved
+                                    ? (isWinner ? 'Won' : 'Lost')
                                     : prediction.status === 'submitted'
                                         ? 'Submitted'
                                         : prediction.status === 'confirmed'
-                                            ? 'Confirmed' 
+                                            ? 'Confirmed'
                                             : prediction.status === 'rejected'
                                                 ? 'Rejected'
                                                 : 'Pending'
@@ -404,7 +418,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="text-sm font-medium text-slate-400">Selected Outcome</h3>
+                                    <h3 className="text-sm font-medium ">Selected Outcome</h3>
                                     <div className="mt-1 flex items-center gap-2">
                                         {isResolved && (
                                             <span>
@@ -415,18 +429,18 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                                 )}
                                             </span>
                                         )}
-                                        <p className="text-xl font-semibold text-slate-100">{selectedOutcome?.name || 'Unknown'}</p>
+                                        <p className="text-xl font-semibold">{selectedOutcome?.name || 'Unknown'}</p>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-sm font-medium text-slate-400">Prediction Amount</h3>
-                                    <p className="mt-1 text-xl font-semibold text-slate-100">{formatCurrency(amount)}</p>
+                                    <h3 className="text-sm font-medium ">Prediction Amount</h3>
+                                    <p className="mt-1 text-xl font-semibold">{formatCurrency(amount)}</p>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-sm font-medium text-slate-400">Odds</h3>
-                                    <p className="mt-1 text-xl font-semibold text-slate-100">{odds.toFixed(2)}x</p>
+                                    <h3 className="text-sm font-medium ">Odds</h3>
+                                    <p className="mt-1 text-xl font-semibold">{odds.toFixed(2)}x</p>
                                 </div>
                             </div>
 
@@ -434,14 +448,14 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                 {isResolved ? (
                                     <>
                                         <div>
-                                            <h3 className="text-sm font-medium text-slate-400">Result</h3>
+                                            <h3 className="text-sm font-medium ">Result</h3>
                                             <p className={`mt-1 text-xl font-semibold ${isWinner ? 'text-green-500' : 'text-red-500'}`}>
                                                 {isWinner ? 'Prediction Correct' : 'Prediction Incorrect'}
                                             </p>
                                         </div>
 
                                         <div>
-                                            <h3 className="text-sm font-medium text-slate-400">Profit/Loss</h3>
+                                            <h3 className="text-sm font-medium ">Profit/Loss</h3>
                                             <p className={`mt-1 text-xl font-semibold flex items-center gap-1 ${actualPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                                                 <DollarSign className="h-5 w-5" />
                                                 {actualPnl >= 0 ? '+' : ''}{formatCurrency(actualPnl).slice(1)}
@@ -450,8 +464,8 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                         </div>
 
                                         <div>
-                                            <h3 className="text-sm font-medium text-slate-400">Total Payout</h3>
-                                            <p className="mt-1 text-xl font-semibold text-slate-100">
+                                            <h3 className="text-sm font-medium ">Total Payout</h3>
+                                            <p className="mt-1 text-xl font-semibold">
                                                 {formatCurrency(actualPnl > 0 ? amount + actualPnl : 0)}
                                             </p>
                                         </div>
@@ -459,7 +473,7 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                 ) : (
                                     <>
                                         <div>
-                                            <h3 className="text-sm font-medium text-slate-400">Status</h3>
+                                            <h3 className="text-sm font-medium ">Status</h3>
                                             <p className="mt-1 text-xl font-semibold text-blue-500 flex items-center gap-1">
                                                 <Clock className="h-5 w-5" />
                                                 Awaiting Resolution
@@ -467,16 +481,16 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                         </div>
 
                                         <div>
-                                            <h3 className="text-sm font-medium text-slate-400">Potential Profit</h3>
-                                            <p className="mt-1 text-xl font-semibold text-slate-100 flex items-center gap-1">
+                                            <h3 className="text-sm font-medium ">Potential Profit</h3>
+                                            <p className="mt-1 text-xl font-semibold flex items-center gap-1">
                                                 <DollarSign className="h-5 w-5" />
                                                 {formatCurrency(potentialPnl).slice(1)}
                                             </p>
                                         </div>
 
                                         <div>
-                                            <h3 className="text-sm font-medium text-slate-400">Potential Payout</h3>
-                                            <p className="mt-1 text-xl font-semibold text-slate-100">
+                                            <h3 className="text-sm font-medium ">Potential Payout</h3>
+                                            <p className="mt-1 text-xl font-semibold">
                                                 {formatCurrency(amount + potentialPnl)}
                                             </p>
                                         </div>
@@ -491,8 +505,8 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                 <div className="rounded-md bg-slate-700 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h3 className="text-lg font-medium text-slate-100">Make your own predictions</h3>
-                                            <p className="text-slate-400 mt-1">
+                                            <h3 className="text-lg font-medium">Make your own predictions</h3>
+                                            <p className=" mt-1">
                                                 Sign up to make predictions on various topics and win rewards!
                                             </p>
                                         </div>

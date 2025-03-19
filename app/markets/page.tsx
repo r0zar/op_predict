@@ -77,9 +77,9 @@ export default async function MarketsPage({
                         initialMarkets={initialMarkets}
                         defaultCategory={searchParams.category}
                         defaultSearch={searchParams.search}
-                        defaultStatus={(searchParams.status as 'active' | 'resolved' | 'all') || 'active'}
-                        defaultSortBy={sortBy || 'poolAmount'}
-                        defaultSortDirection={sortDirection || 'desc'}
+                        defaultStatus={(searchParams.status as 'active' | 'resolved' | 'all')}
+                        defaultSortBy={sortBy}
+                        defaultSortDirection={sortDirection}
                     />
                 </div>
             </div>

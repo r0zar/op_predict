@@ -21,11 +21,18 @@ import {
   DollarSign,
   Calendar,
   Trophy,
-  Loader2
+  Loader2,
+  RefreshCcw,
+  Clock,
+  Search
 } from "lucide-react";
 import { RedeemPredictionButton } from "./redeem-prediction-button";
+import ReturnPredictionButton from "./return-prediction-button";
 import { getMultipleUserStats } from "@/app/actions/leaderboard-actions";
+import { checkMultiplePredictionsReturnable } from "@/app/actions/prediction-actions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import Link from 'next/link';
 
 type SortField = "date" | "amount" | "outcome" | "user";
 type SortDirection = "asc" | "desc";
@@ -44,6 +51,13 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
   // State for user stats from API
   const [userStats, setUserStats] = useState<Record<string, any>>({});
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // State for tracking which predictions can be returned
+  const [returnablePredictions, setReturnablePredictions] = useState<Record<string, { canReturn: boolean, reason?: string }>>({});
+  const [isCheckingReturnable, setIsCheckingReturnable] = useState(true);
+
+  // Create a dialog state for this specific prediction
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Extract unique user IDs from predictions
   useEffect(() => {
@@ -83,6 +97,46 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
     }
 
     fetchUserStats();
+  }, [predictions]);
+
+  // Check which predictions can be returned using a single server action call
+  useEffect(() => {
+    async function checkReturnablePredictions() {
+      setIsCheckingReturnable(true);
+
+      try {
+        // Only check predictions with pending status, as those are potentially returnable
+        const pendingPredictions = predictions.filter(
+          p => p.status === 'pending'
+        );
+
+        if (pendingPredictions.length === 0) {
+          setReturnablePredictions({});
+          setIsCheckingReturnable(false);
+          return;
+        }
+
+        // Get all pending prediction IDs
+        const pendingPredictionIds = pendingPredictions.map(p => p.id);
+
+        // Make a single server call to check all pending predictions at once
+        const response = await checkMultiplePredictionsReturnable(pendingPredictionIds);
+
+        if (response.success && response.results) {
+          setReturnablePredictions(response.results);
+        } else {
+          console.error("Failed to check returnable predictions:", response.error);
+          setReturnablePredictions({});
+        }
+      } catch (error) {
+        console.error("Error checking returnable predictions:", error);
+        setReturnablePredictions({});
+      } finally {
+        setIsCheckingReturnable(false);
+      }
+    }
+
+    checkReturnablePredictions();
   }, [predictions]);
 
   // Handle sorting
@@ -151,28 +205,6 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
     });
   };
 
-  // Get status badge styling
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-      case 'pending':
-        return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Active</Badge>;
-      case 'won':
-        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Won</Badge>;
-      case 'lost':
-        return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Lost</Badge>;
-      case 'redeemed':
-      case 'confirmed':
-        return <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20">Redeemed</Badge>;
-      case 'submitted':
-        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Submitted</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Rejected</Badge>;
-      default:
-        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">{status}</Badge>;
-    }
-  };
-
   // Pagination controls
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -197,120 +229,123 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
   };
 
   return (
-    <Card className="w-full overflow-hidden overflow-x-auto">
-      <div className="rounded-md min-w-[800px]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead
-                className="w-[120px] cursor-pointer"
-                onClick={() => handleSort("date")}
-              >
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Date
-                  <SortIcon field="date" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer w-[120px]"
-                onClick={() => handleSort("user")}
-              >
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  User
-                  <SortIcon field="user" />
-                </div>
-              </TableHead>
-              <TableHead className="w-[70px] text-right">Accuracy</TableHead>
-              <TableHead className="w-[70px] text-right">P&L</TableHead>
-              <TableHead
-                className="cursor-pointer w-[90px]"
-                onClick={() => handleSort("outcome")}
-              >
-                <div className="flex items-center gap-2">
-                  Outcome
-                  <SortIcon field="outcome" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="cursor-pointer text-right w-[90px]"
-                onClick={() => handleSort("amount")}
-              >
-                <div className="flex items-center gap-2 justify-end">
-                  <DollarSign className="h-4 w-4" />
-                  Amount
-                  <SortIcon field="amount" />
-                </div>
-              </TableHead>
-              <TableHead className="w-[80px]">Status</TableHead>
-              <TableHead className="w-[80px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedPredictions.length > 0 ? (
-              paginatedPredictions.map((prediction) => {
-                const isResolved = prediction.status === 'won' || prediction.status === 'lost';
-                const isRedeemed = prediction.status === 'redeemed';
-                const isWinner = prediction.status === 'won';
+    <TooltipProvider>
+      <Card className="w-full overflow-hidden overflow-x-auto">
+        <div className="rounded-md min-w-[800px]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead
+                  className="w-[120px] cursor-pointer"
+                  onClick={() => handleSort("date")}
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date
+                    <SortIcon field="date" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer w-[120px]"
+                  onClick={() => handleSort("user")}
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    User
+                    <SortIcon field="user" />
+                  </div>
+                </TableHead>
+                <TableHead className="w-[70px] text-right"><div className='text-center'>Accuracy</div></TableHead>
+                <TableHead className="w-[70px] text-right"><div className='text-center'>PnL</div></TableHead>
+                <TableHead
+                  className="cursor-pointer w-[90px]"
+                  onClick={() => handleSort("outcome")}
+                >
+                  <div className="flex items-center gap-2">
+                    Outcome
+                    <SortIcon field="outcome" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer text-right w-[90px]"
+                  onClick={() => handleSort("amount")}
+                >
+                  <div className="flex items-center gap-2 justify-end">
+                    <DollarSign className="h-4 w-4" />
+                    Amount
+                    <SortIcon field="amount" />
+                  </div>
+                </TableHead>
+                <TableHead className="w-[80px]">Status</TableHead>
+                <TableHead className="w-[80px]"><div className='text-center'>Actions</div></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedPredictions.length > 0 ? (
+                paginatedPredictions.map((prediction) => {
+                  const isResolved = prediction.status === 'won' || prediction.status === 'lost';
+                  const isRedeemed = prediction.status === 'redeemed';
+                  const isWinner = prediction.status === 'won';
 
-                return (
-                  <TableRow key={prediction.id}>
-                    <TableCell className="font-medium">
-                      {formatDate(prediction.createdAt || prediction.takenCustodyAt)}
-                    </TableCell>
-                    <TableCell>
-                      {prediction.creatorName || prediction.userId?.substring(0, 8)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {isLoadingStats ? (
-                        <div className="flex justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (() => {
-                        // Get the userId from any available field
-                        const userId = prediction.userId || prediction.createdBy;
-                        if (!userId || !userStats[userId]) return 'N/A';
+                  return (
+                    <TableRow
+                      key={prediction.id}
+                      className={returnablePredictions[prediction.id]?.canReturn ? "bg-blue-50/30 dark:bg-blue-950/10 hover:bg-blue-50/50 dark:hover:bg-blue-950/20" : ""}
+                    >
+                      <TableCell className="font-medium">
+                        {formatDate(prediction.createdAt || prediction.takenCustodyAt)}
+                      </TableCell>
+                      <TableCell>
+                        {prediction.creatorName || prediction.userId?.substring(0, 8)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {isLoadingStats ? (
+                          <div className="flex justify-center">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (() => {
+                          // Get the userId from any available field
+                          const userId = prediction.userId || prediction.createdBy;
+                          if (!userId || !userStats[userId]) return 'N/A';
 
-                        // Use proper accuracy from the server
-                        const accuracy = userStats[userId].accuracy || 0;
-                        const totalPreds = userStats[userId].totalPredictions || 0;
-                        const correctPreds = userStats[userId].correctPredictions || 0;
+                          // Use proper accuracy from the server
+                          const accuracy = userStats[userId].accuracy || 0;
+                          const totalPreds = userStats[userId].totalPredictions || 0;
+                          const correctPreds = userStats[userId].correctPredictions || 0;
 
-                        return (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="cursor-help">{`${accuracy.toFixed(1)}%`}</span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <div className="text-xs space-y-1">
-                                  <div className="font-medium">Prediction Accuracy</div>
-                                  <div>{`${correctPreds} correct out of ${totalPreds} total`}</div>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {isLoadingStats ? (
-                        <div className="flex justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : (() => {
-                        // Get the userId from any available field
-                        const userId = prediction.userId || prediction.createdBy;
-                        if (!userId || !userStats[userId]) return '$0.00';
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="cursor-help">{`${accuracy.toFixed(1)}%`}</span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  <div className="text-xs space-y-1">
+                                    <div className="font-medium">Prediction Accuracy</div>
+                                    <div>{`${correctPreds} correct out of ${totalPreds} total`}</div>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {isLoadingStats ? (
+                          <div className="flex justify-center">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (() => {
+                          // Get the userId from any available field
+                          const userId = prediction.userId || prediction.createdBy;
+                          if (!userId || !userStats[userId]) return '$0.00';
 
-                        // Use proper P&L from the server
-                        const pnl = userStats[userId].pnl || 0;
-                        const totalEarnings = userStats[userId].totalEarnings || 0;
-                        const totalAmount = userStats[userId].totalAmount || 0;
+                          // Use proper P&L from the server
+                          const pnl = userStats[userId].pnl || 0;
+                          const totalEarnings = userStats[userId].totalEarnings || 0;
+                          const totalAmount = userStats[userId].totalAmount || 0;
 
-                        return (
-                          <TooltipProvider>
+                          return (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span className={`cursor-help ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
@@ -325,105 +360,126 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                                 </div>
                               </TooltipContent>
                             </Tooltip>
-                          </TooltipProvider>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={prediction.outcomeName === 'Yes' ? 'default' :
-                        prediction.outcomeName === 'No' ? 'destructive' : 'secondary'}>
-                        {prediction.outcomeName}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-right">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help">
-                              ${prediction.amount?.toFixed(2) || "0.00"}
-                              {isWinner && <Trophy className="inline-block h-3 w-3 ml-1 text-green-600" />}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            <div className="text-xs space-y-1">
-                              <div className="font-medium">Prediction Amount</div>
-                              {isWinner && (
-                                <div className="text-green-500">
-                                  {`Potential payout: $${prediction.potentialPayout?.toFixed(2) || "0.00"}`}
-                                </div>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(prediction.status)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {isResolved && !isRedeemed ? (
-                        <RedeemPredictionButton
-                          predictionId={prediction.id}
-                          predictionStatus={prediction.status}
-                          marketName={prediction.nftReceipt.marketName}
-                          outcomeName={prediction.outcomeName}
-                          potentialPayout={prediction.potentialPayout || 0}
-                        />
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="items-center"
-                          asChild
-                        >
-                          <a href={`/prediction/${prediction.id}`}>
-                            View
-                          </a>
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-6">
-                  No predictions found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={prediction.outcomeName === 'Yes' ? 'default' :
+                          prediction.outcomeName === 'No' ? 'destructive' : 'default'}>
+                          {prediction.outcomeName}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-right">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">
+                                ${prediction.amount?.toFixed(2) || "0.00"}
+                                {isWinner && <Trophy className="inline-block h-3 w-3 ml-1 text-green-600" />}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <div className="text-xs space-y-1">
+                                <div className="font-medium">Prediction Amount</div>
+                                {isWinner && (
+                                  <div className="text-green-500">
+                                    {`Potential payout: $${prediction.potentialPayout?.toFixed(2) || "0.00"}`}
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell>
+                        {prediction.status === 'pending' && returnablePredictions[prediction.id]?.canReturn ? (
+                          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Badge
+                                className="space-x-1 cursor-pointer"
+                                variant="default"
+                                onClick={() => setIsDialogOpen(true)}
+                              >
+                                <RefreshCcw className="h-3 w-3" /> <div>Returnable</div>
+                              </Badge>
+                            </DialogTrigger>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t">
-          <div className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="items-center"
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="items-center"
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+                            <ReturnPredictionButton
+                              predictionId={prediction.id}
+                              isOpen={isDialogOpen}
+                              setIsOpen={setIsDialogOpen}
+                            />
+                          </Dialog >) : (
+                          <Badge>
+                            {(prediction.status).charAt(0).toUpperCase() + (prediction.status).slice(1)}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isResolved && !isRedeemed ? (
+                          <RedeemPredictionButton
+                            predictionId={prediction.id}
+                            predictionStatus={prediction.status}
+                            marketName={prediction.nftReceipt.marketName}
+                            outcomeName={prediction.outcomeName}
+                            potentialPayout={prediction.potentialPayout || 0}
+                          />
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="items-center"
+                            asChild
+                          >
+                            <a href={`/prediction/${prediction.id}`}>
+                              View
+                            </a>
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-6">
+                    No predictions found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
-      )}
-    </Card>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-2 border-t">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="items-center"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="items-center"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+    </TooltipProvider>
   );
 }

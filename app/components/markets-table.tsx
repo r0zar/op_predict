@@ -90,7 +90,7 @@ export default function MarketsTable({
   defaultCategory,
   defaultSearch = '',
   defaultStatus = 'active',
-  defaultSortBy = 'poolAmount',
+  defaultSortBy = 'createdAt',
   defaultSortDirection = 'desc'
 }: MarketsTableProps) {
   // Router for URL management
@@ -114,9 +114,6 @@ export default function MarketsTable({
   const [cursorHistory, setCursorHistory] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-
-  // Animation states for cyberpunk effects
-  const [showPulse, setShowPulse] = useState(false)
 
   // Update URL when filters change
   const updateUrl = (params: Record<string, string | undefined>) => {

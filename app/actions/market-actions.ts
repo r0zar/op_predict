@@ -8,6 +8,7 @@ import {
     userBalanceStore,
     userStatsStore,
     Market,
+    custodyStore,
 } from 'wisdom-sdk';
 import {
     MarketQueryOptions,
@@ -323,7 +324,7 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
         }
 
         // Get all predictions for this market
-        const marketPredictions: any[] = await predictionStore.getMarketPredictions(market.id);
+        const marketPredictions: any[] = await custodyStore.getMarketTransactions(market.id);
 
         if (marketPredictions.length === 0) {
             return { success: false, error: 'No predictions found for this market' };

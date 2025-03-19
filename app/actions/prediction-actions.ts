@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { marketStore, predictionStore, userBalanceStore, userStatsStore } from 'wisdom-sdk';
+import { marketStore, predictionStore, userBalanceStore, userStatsStore, custodyStore } from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
 
@@ -434,6 +434,199 @@ export async function redeemPredictionReceipt(predictionId: string): Promise<{
         return {
             success: false,
             error: 'Failed to redeem prediction. Please try again.'
+        };
+    }
+}
+
+/**
+ * Define the validation schema for returning a prediction
+ */
+const returnPredictionSchema = z.object({
+    transactionId: z.string().min(1, { message: "Transaction ID is required" }),
+});
+
+export type ReturnPredictionData = z.infer<typeof returnPredictionSchema>;
+
+/**
+ * Return a prediction receipt 
+ * This allows the user to "undo" their prediction as long as:
+ * 1. It hasn't been submitted to the blockchain yet (still has 'pending' status)
+ * 2. It's less than 15 minutes old (configurable time window)
+ * 3. The user is the one who made the prediction
+ * 
+ * @param formData The return prediction request data
+ * @returns Result indicating success or failure with error details
+ */
+export async function returnPrediction(formData: ReturnPredictionData): Promise<{
+    success: boolean;
+    error?: string;
+    transaction?: any;
+}> {
+    try {
+        // Validate input data
+        const validatedData = returnPredictionSchema.parse(formData);
+
+        // Get the current user
+        const user = await currentUser();
+        if (!user) {
+            return {
+                success: false,
+                error: 'Authentication required'
+            };
+        }
+
+        // Call the custody store to return the prediction
+        const result = await custodyStore.returnPrediction(
+            user.id,
+            validatedData.transactionId
+        );
+
+        // Revalidate relevant paths if successful
+        if (result.success) {
+            // Revalidate portfolio and other relevant pages
+            revalidatePath('/portfolio');
+            revalidatePath('/markets');
+            
+            // If we know the market ID, revalidate the specific market page
+            if (result.transaction?.marketId) {
+                revalidatePath(`/markets/${result.transaction.marketId}`);
+            }
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Error returning prediction:', error);
+        
+        if (error instanceof z.ZodError) {
+            return {
+                success: false,
+                error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ')
+            };
+        }
+        
+        return {
+            success: false,
+            error: 'Failed to return prediction. Please try again.'
+        };
+    }
+}
+
+/**
+ * Check if a prediction can be returned
+ * This is useful for UI to determine if a "Return" button should be shown
+ * 
+ * @param transactionId The ID of the transaction to check
+ * @returns Result indicating if the prediction can be returned with reason if not
+ */
+export async function canReturnPrediction(transactionId: string): Promise<{
+    canReturn: boolean;
+    reason?: string;
+}> {
+    try {
+        // Get the current user
+        const user = await currentUser();
+        if (!user) {
+            return {
+                canReturn: false,
+                reason: 'Authentication required'
+            };
+        }
+
+        // Call the custody store to check if the prediction can be returned
+        const result = await custodyStore.canReturnPrediction(transactionId);
+        
+        // If the transaction exists but doesn't belong to this user, add that check here
+        if (result.transaction && result.transaction.userId !== user.id) {
+            return {
+                canReturn: false,
+                reason: 'This prediction belongs to another user'
+            };
+        }
+        
+        return {
+            canReturn: result.canReturn,
+            reason: result.reason
+        };
+    } catch (error) {
+        console.error('Error checking if prediction can be returned:', error);
+        
+        return {
+            canReturn: false,
+            reason: 'Error checking prediction status'
+        };
+    }
+}
+
+/**
+ * Check multiple predictions for return eligibility in a single server call
+ * This is more efficient than making individual requests from the client
+ * 
+ * @param predictionIds Array of prediction IDs to check
+ * @returns Record mapping prediction IDs to their eligibility status
+ */
+export async function checkMultiplePredictionsReturnable(predictionIds: string[]): Promise<{
+    success: boolean;
+    results?: Record<string, { canReturn: boolean; reason?: string }>;
+    error?: string;
+}> {
+    try {
+        // Get the current user
+        const user = await currentUser();
+        if (!user) {
+            return {
+                success: false,
+                error: 'Authentication required'
+            };
+        }
+
+        // Deduplicate prediction IDs
+        const uniqueIds = Array.from(new Set(predictionIds));
+        
+        if (uniqueIds.length === 0) {
+            return {
+                success: true,
+                results: {}
+            };
+        }
+
+        // Call the canReturnPrediction function for each prediction ID
+        const results = await Promise.all(
+            uniqueIds.map(async (id) => {
+                const result = await custodyStore.canReturnPrediction(id);
+                
+                // Add user ownership check
+                if (result.transaction && result.transaction.userId !== user.id) {
+                    return {
+                        id,
+                        canReturn: false,
+                        reason: 'This prediction belongs to another user'
+                    };
+                }
+                
+                return {
+                    id,
+                    canReturn: result.canReturn,
+                    reason: result.reason
+                };
+            })
+        );
+
+        // Convert results array to a record keyed by prediction ID
+        const resultsRecord = results.reduce((acc, { id, canReturn, reason }) => {
+            acc[id] = { canReturn, reason };
+            return acc;
+        }, {} as Record<string, { canReturn: boolean; reason?: string }>);
+
+        return {
+            success: true,
+            results: resultsRecord
+        };
+    } catch (error) {
+        console.error('Error checking multiple predictions returnable status:', error);
+        
+        return {
+            success: false,
+            error: 'Error checking prediction statuses'
         };
     }
 }

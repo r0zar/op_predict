@@ -2,7 +2,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowDown, ArrowUp, DollarSign, PieChart, TrendingUp, Wallet, ChevronRight } from "lucide-react";
+import { ArrowDown, ArrowUp, DollarSign, PieChart, TrendingUp, Wallet, ChevronRight, RefreshCcw, Clock, CheckCircle } from "lucide-react";
 
 import {
     Card,
@@ -119,7 +119,7 @@ export default async function PortfolioPage() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
                 {/* Total Balance Card */}
-                <Card className="bg-secondary-gradient">
+                <Card className="">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-primary-foreground/80">Total Balance</CardDescription>
                         <CardTitle className="text-3xl font-bold">
@@ -130,8 +130,8 @@ export default async function PortfolioPage() {
                         <div className="flex items-center text-sm">
                             {totalProfitLoss >= 0 ? (
                                 <div className="flex items-center">
-                                    <ArrowUp className="mr-1 h-4 w-4 text-green-100" />
-                                    <span className="text-green-100">
+                                    <ArrowUp className="mr-1 h-4 w-4 text-green-500/90" />
+                                    <span className="text-green-500/90">
                                         ${totalProfitLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({profitLossPercentage.toFixed(2)}%)
                                     </span>
                                 </div>
@@ -213,10 +213,35 @@ export default async function PortfolioPage() {
                         </CardHeader>
                         <CardContent>
                             {userPredictionsWithCreatorNames.length > 0 ? (
-                                <PredictionsTable 
-                                    predictions={userPredictionsWithCreatorNames}
-                                    isAdmin={isUserAdmin}
-                                />
+                                <>
+                                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-4 mb-6 shadow-sm">
+                                        <div className="flex items-start">
+                                            <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-full mr-4 flex-shrink-0">
+                                                <RefreshCcw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">Return Predictions</h3>
+                                                <p className="text-sm text-blue-700/90 dark:text-blue-300 mb-3">
+                                                    You can return predictions within 15 minutes of creation if they haven't been submitted to the blockchain yet.
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div className="flex items-center bg-white/40 dark:bg-blue-900/20 rounded-md p-2">
+                                                        <Clock className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                                                        <span className="text-xs text-blue-700 dark:text-blue-300">15-minute window</span>
+                                                    </div>
+                                                    <div className="flex items-center bg-white/40 dark:bg-blue-900/20 rounded-md p-2">
+                                                        <CheckCircle className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                                                        <span className="text-xs text-blue-700 dark:text-blue-300">Full refund to balance</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <PredictionsTable
+                                        predictions={userPredictionsWithCreatorNames}
+                                        isAdmin={isUserAdmin}
+                                    />
+                                </>
                             ) : (
                                 <div className="text-center py-10">
                                     <p className="text-muted-foreground mb-4">You don't have any prediction receipts yet</p>
@@ -243,7 +268,7 @@ export default async function PortfolioPage() {
                                         <div className="text-sm text-muted-foreground mb-4">
                                             Showing {allPredictions.length} prediction receipts from all users
                                         </div>
-                                        <PredictionsTable 
+                                        <PredictionsTable
                                             predictions={allPredictionsWithCreatorNames}
                                             isAdmin={true}
                                         />
