@@ -58,11 +58,8 @@ export function BatchProcessingPanel({ marketId, pendingCount, pendingTransactio
         toast({
           title: "Batch processing successful",
           description: result.processedForMarket !== undefined
-            ? `Processed ${result.processedForMarket} prediction${result.processedForMarket !== 1 ? 's' : ''} for this market${result?.processed! > 0
-              ? ` (${result.processed} total across all markets)`
-              : ''
-            }`
-            : `Processed ${result.processed} prediction${result.processed !== 1 ? 's' : ''} in ${result.batched} batch${result.batched !== 1 ? 'es' : ''}`,
+            ? `Processed ${result.processedForMarket} predictions for this market (${result.processed} total across all markets)`
+            : `Processed ${result.processed} predictions in ${result.batched} batches`,
           variant: "default",
         });
 
