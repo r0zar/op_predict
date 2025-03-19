@@ -507,7 +507,7 @@ export async function getAllCustodyTransactions(): Promise<{
             const marketTransactions = await custodyStore.getMarketTransactions(market.id);
             if (marketTransactions.length > 0) {
                 console.log(`Found ${marketTransactions.length} transactions for market ${market.id}`);
-                //@ts-ignore
+                //@ts-expect-error
                 allTransactions.push(...marketTransactions);
             }
         }
