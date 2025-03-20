@@ -687,3 +687,58 @@ export async function triggerBatchProcessing(marketId: string): Promise<{
         };
     }
 }
+
+/**
+ * Manually trigger synchronization of prediction statuses with blockchain (admin only)
+ * This is similar to what the cron job does but can be triggered manually for testing
+ */
+export async function triggerPredictionStatusSync(): Promise<{
+    success: boolean;
+    updated?: number;
+    details?: any;
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Check if user is an admin
+        if (!isAdmin(user.id)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        // Call the sync function from custody store
+        const result = await custodyStore.syncSubmittedPredictionStatuses();
+
+        if (!result.success) {
+            return {
+                success: false,
+                error: result.error || 'Failed to synchronize prediction statuses'
+            };
+        }
+
+        // Revalidate paths
+        if (result.updated > 0) {
+            revalidatePath('/portfolio');
+            revalidatePath('/markets');
+            revalidatePath('/admin');
+        }
+
+        return {
+            success: true,
+            updated: result.updated,
+            details: result.details
+        };
+    } catch (error) {
+        console.error('Error triggering prediction status sync:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}

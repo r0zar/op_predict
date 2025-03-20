@@ -23,14 +23,14 @@ export async function getUserNameById(userId: string): Promise<string> {
     // If this were a full implementation, we'd lookup the user in Clerk
     // Since that's not possible here, we just return a formatted ID
     const shortUserId = userId.substring(0, 5) + '...' + userId.substring(userId.length - 5);
-    const username = `User_${shortUserId}`;
-    
+    const username = `${shortUserId}`;
+
     // Cache the result
     userCache.set(userId, username);
-    
+
     return username;
   } catch (error) {
     console.error('Error getting username:', error);
-    return `User_${userId.substring(0, 8)}...`;
+    return `${userId.substring(0, 8)}...`;
   }
 }

@@ -84,36 +84,6 @@ export default async function MarketsPage({
                 </div>
             </div>
 
-            {initialMarkets.items.length === 0 && !searchParams.search && !searchParams.category && (
-                <div className="relative mt-8 py-16 border border-[hsl(var(--cyber-blue)/20)] rounded-lg bg-gradient-to-b from-[hsl(var(--space-dark)/50)] to-[hsl(var(--space-void)/50)] text-center overflow-hidden">
-                    {/* Decorative corner accents */}
-                    <span className="absolute top-0 left-0 w-4 h-4 border-t border-l border-[hsl(var(--cyber-blue))]"></span>
-                    <span className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-[hsl(var(--cyber-blue))]"></span>
-
-                    {/* Subtle grid background - more subtle */}
-                    <div className="absolute inset-0 opacity-2" style={{
-                        backgroundImage: `repeating-linear-gradient(0deg, hsl(var(--cyber-blue)/40), hsl(var(--cyber-blue)/40) 1px, transparent 1px, transparent 40px), 
-                                        repeating-linear-gradient(90deg, hsl(var(--cyber-blue)/40), hsl(var(--cyber-blue)/40) 1px, transparent 1px, transparent 40px)`
-                    }}></div>
-
-                    <h2 className="text-2xl font-display font-bold text-glow mb-2">Prediction Database Empty</h2>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">Initiate the first market prediction and establish the foundation for future forecasts</p>
-
-                    <Link href="/create">
-                        <Button size="lg" className="relative overflow-hidden group bg-gradient-to-r from-[hsl(var(--space-dark))] to-[hsl(var(--space-void))] border border-[hsl(var(--neon-green)/40)]">
-                            {/* Add a subtle shimmer effect */}
-                            <span className="animate-shimmer absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-[hsl(var(--neon-green)/15)] to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
-
-                            <span className="relative z-10 text-[hsl(var(--neon-green))]">Create First Market</span>
-
-                            {/* Corner accents */}
-                            <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--neon-green))]"></span>
-                            <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--neon-green))]"></span>
-                        </Button>
-                    </Link>
-                </div>
-            )}
-
             {/* Admin section */}
             {isUserAdmin && <AdminControls className="mt-12" />}
         </div>

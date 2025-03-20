@@ -55,21 +55,60 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
         setAmount(value);
     };
 
-    // Calculate potential payout for an outcome
-    const calculatePotentialPayout = (outcome: MarketOutcome & { percentage: number }) => {
-        // If no percentage data or amount is not set, return 0
-        if (!outcome.percentage || amount <= 0) return 0;
-
+    // Calculate potential payout for an outcome that factors in the user's own prediction
+    const calculatePotentialPayout = (outcome: MarketOutcome & { percentage: number }, predictAmount = amount) => {
+        // If amount is not set, we can't calculate a payout
+        if (predictAmount <= 0) return 0;
+        
+        // Get the current total pool amount across all outcomes
+        const totalPoolAmount = outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) || 0.1; // Avoid division by zero
+        
+        // Calculate what the new total pool will be after adding this prediction
+        const newTotalPoolAmount = totalPoolAmount + predictAmount;
+        
+        // Calculate what the new amount for this outcome will be
+        const currentOutcomeAmount = outcome.amount || 0;
+        const newOutcomeAmount = currentOutcomeAmount + (outcome.id === selectedOutcome ? predictAmount : 0);
+        
+        // Calculate the new percentage for this outcome
         // For very small percentages (< 0.1%), use a minimum value to avoid extremely high multipliers
-        const safePercentage = Math.max(outcome.percentage, 0.1);
-
-        // Simplified payout calculation based on odds
+        const newPercentage = Math.max((newOutcomeAmount / newTotalPoolAmount) * 100, 0.1);
+        
+        // Calculate the payout based on the new percentages after this prediction
         // Formula: amount * (100/outcome_percentage)
         // Higher percentage = lower payout, Lower percentage = higher payout
-        // 5% admin fee is subtracted
-        const rawPayout = amount * (100 / safePercentage);
+        const rawPayout = predictAmount * (100 / newPercentage);
         const adminFee = rawPayout * 0.05; // 5% fee
         return rawPayout - adminFee;
+    };
+    
+    // Get the multiplier for an outcome, handling the zero case correctly
+    const getMultiplier = (outcome: MarketOutcome & { percentage: number }) => {
+        // If no amount is set, calculate with a small default amount to show potential
+        if (amount <= 0) {
+            const defaultAmount = 1; // Use $1 as a default for multiplier display
+            const payout = calculatePotentialPayout(outcome, defaultAmount);
+            return (payout / defaultAmount).toFixed(1);
+        }
+        
+        // Regular case with user-set amount
+        const payout = calculatePotentialPayout(outcome);
+        return (payout / amount).toFixed(1);
+    };
+    
+    // Calculate percentage for an outcome with the user's selection factored in
+    const getAdjustedPercentage = (outcome: MarketOutcome & { percentage: number }) => {
+        // Total pool plus the user's potential contribution
+        const totalPoolAmount = outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) || 0.1; // Avoid division by zero
+        const newTotalPoolAmount = totalPoolAmount + (amount > 0 ? amount : 0);
+        
+        // The outcome amount including user's prediction if selected
+        const currentOutcomeAmount = outcome.amount || 0;
+        const newOutcomeAmount = currentOutcomeAmount + 
+            (selectedOutcome === outcome.id && amount > 0 ? amount : 0);
+        
+        // Calculate percentage with minimum threshold
+        return Math.max((newOutcomeAmount / newTotalPoolAmount) * 100, 0.1).toFixed(1);
     };
 
     // Navigate to portfolio
@@ -237,7 +276,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                                     "text-sm font-semibold",
                                                     isSelected ? "text-primary" : "text-primary/80"
                                                 )}>
-                                                    x{amount > 0 ? (calculatePotentialPayout(outcome) / amount).toFixed(1) : ((100 / outcome.percentage) * 0.95).toFixed(1)}
+                                                    x{getMultiplier(outcome)}
                                                 </span>
 
                                                 <Badge
@@ -250,7 +289,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                                         }
                                                     )}
                                                 >
-                                                    {outcome.percentage?.toFixed(1) || "0.0"}%
+                                                    {getAdjustedPercentage(outcome)}%
                                                 </Badge>
                                             </div>
                                         </TooltipTrigger>
@@ -260,15 +299,27 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                             className="max-w-xs bg-background border border-border text-foreground p-3 shadow-md"
                                         >
                                             <div className="space-y-2 text-xs">
-                                                <p className="font-semibold">Multiplier: x{amount > 0 ? (calculatePotentialPayout(outcome) / amount).toFixed(1) : ((100 / outcome.percentage) * 0.95).toFixed(1)}</p>
+                                                <p className="font-semibold">Multiplier: x{getMultiplier(outcome)}</p>
                                                 <p>Your stake will be multiplied by this amount if this outcome wins.</p>
                                                 <div className="text-muted-foreground">
-                                                    <p>• Raw odds multiplier: x{(100 / outcome.percentage).toFixed(1)}</p>
-                                                    <p>• After 5% fee: x{((100 / outcome.percentage) * 0.95).toFixed(1)}</p>
+                                                    {/* Always show current percentages for context */}
+                                                    <p>• Current odds: {outcome.percentage?.toFixed(1) || "0.0"}%</p>
+                                                    <p>• Current pool: ${(outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) || 0).toFixed(2)}</p>
+                                                    
+                                                    {/* Show updated odds when an outcome is selected */}
+                                                    {selectedOutcome !== null && (
+                                                        <>
+                                                            <p>• Predicted odds: {getAdjustedPercentage(outcome)}%</p>
+                                                            <p>• New total pool: ${(outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) + (amount > 0 ? amount : 1)).toFixed(2)}</p>
+                                                        </>
+                                                    )}
+                                                    
+                                                    {/* Show payout details when amount is set */}
                                                     {amount > 0 && (
                                                         <>
                                                             <p className="mt-1">• Your stake: ${amount.toFixed(2)}</p>
                                                             <p>• Potential payout: ${calculatePotentialPayout(outcome).toFixed(2)}</p>
+                                                            <p>• After 5% platform fee</p>
                                                         </>
                                                     )}
                                                 </div>

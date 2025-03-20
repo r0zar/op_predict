@@ -238,9 +238,10 @@ async function RelatedMarkets({ marketId }: { marketId: string }) {
 
 export default async function MarketPage({ params }: { params: { id: string } }) {
     // Get current user, market data, and transactions in parallel
+    // Always verify market with blockchain to ensure we have the latest state
     const [user, marketData, transactions, pendingPredictionsData] = await Promise.all([
         currentUser(),
-        getMarket(params.id),
+        getMarket(params.id, { verifyWithBlockchain: true }),
         getMarketCustodyTransactions(params.id),
         getPendingPredictions(params.id)
     ]);
@@ -425,7 +426,7 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                     <h3 className="font-medium text-green-300 mb-1">Market Resolved</h3>
                                     <p className="text-sm text-green-600/90">
                                         This market was resolved on {new Date(market.resolvedAt || '').toLocaleDateString()}.
-                                        The winning outcome was <strong>{market.outcomes.find((o: any) => o.id === market.resolvedOutcomeId)?.name}</strong>.
+                                        The winning outcome was <strong>{market.outcomes.find((o: any) => o.id === Number(market.resolvedOutcomeId))?.name}</strong>.
                                     </p>
                                 </div>
                             </div>
@@ -486,10 +487,10 @@ export default async function MarketPage({ params }: { params: { id: string } })
                                             <div key={outcome.id} className="space-y-1 p-2 rounded-md hover:bg-muted/20 transition-colors">
                                                 <div className="flex justify-between items-center">
                                                     <span className={cn("font-medium text-sm",
-                                                        isMarketResolved && market.resolvedOutcomeId === outcome.id && "text-green-400"
+                                                        isMarketResolved && Number(market.resolvedOutcomeId) === outcome.id && "text-green-400"
                                                     )}>
                                                         {outcome.name}
-                                                        {isMarketResolved && market.resolvedOutcomeId === outcome.id && (
+                                                        {isMarketResolved && Number(market.resolvedOutcomeId) === outcome.id && (
                                                             <Check className="inline h-4 w-4 ml-1" />
                                                         )}
                                                     </span>

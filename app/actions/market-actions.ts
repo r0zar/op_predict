@@ -9,6 +9,7 @@ import {
     userStatsStore,
     Market,
     custodyStore,
+    logger,
 } from 'wisdom-sdk';
 import {
     MarketQueryOptions,
@@ -139,18 +140,6 @@ export async function getMarkets(params: MarketQueryParams = {}): Promise<Pagina
     try {
         result = await marketStore.getMarkets(queryOptions);
         console.log(`Found ${result.items.length} markets of ${result.total} total`);
-
-        // If no results found, try getting all markets without filters as fallback
-        if (result.items.length === 0 && (params.category || params.status)) {
-            console.log("No markets found with filters, trying without filters");
-            const allMarkets = await marketStore.getMarkets({
-                limit: params.limit || 20
-            });
-            console.log(`Found ${allMarkets.items.length} markets without filters`);
-            if (allMarkets.items.length > 0) {
-                return allMarkets;
-            }
-        }
     } catch (error) {
         console.error("Error fetching markets:", error);
 
@@ -174,10 +163,10 @@ export async function getAllMarkets(): Promise<PaginatedResult<Market>> {
 }
 
 /**
- * Get a specific market by ID
+ * Get a specific market by ID with optional blockchain verification
  */
-export async function getMarket(id: string): Promise<any> {
-    return marketStore.getMarket(id);
+export async function getMarket(id: string, options?: { verifyWithBlockchain?: boolean }): Promise<any> {
+    return marketStore.getMarket(id, { verifyWithBlockchain: options?.verifyWithBlockchain || true });
 }
 
 /**
@@ -292,10 +281,13 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
     success: boolean;
     adminFee?: number;
     error?: string;
+    info?: string;
 }> {
+    console.log("Starting market resolution with data:", formData);
+
+    // Validate input data
+    const validatedData = marketResolutionSchema.parse(formData);
     try {
-        // Validate input data
-        const validatedData = marketResolutionSchema.parse(formData);
 
         // Check if user is admin
         const user = await currentUser();
@@ -306,48 +298,84 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
             };
         }
 
-        // Get the market
-        const market: any = await marketStore.getMarket(validatedData.marketId);
-        if (!market) {
-            return { success: false, error: 'Market not found' };
+        // SIMPLER APPROACH: First check blockchain state - this is our source of truth
+        const onChainMarket = await marketStore.getMarket(validatedData.marketId, { verifyWithBlockchain: true });
+        console.log("On-chain market state:", onChainMarket);
+
+        // 1. Handle blockchain-resolved markets first
+        if (onChainMarket && onChainMarket['is-resolved']) {
+            const winningOutcomeOnChain = onChainMarket.resolvedOutcomeId;
+            console.log("Market is already resolved on blockchain with outcome:", winningOutcomeOnChain);
+
+            // Always sync to our database with the blockchain state
+            await marketStore.updateMarket(validatedData.marketId, {
+                resolvedOutcomeId: winningOutcomeOnChain,
+                resolvedAt: new Date().toISOString(),
+                status: 'resolved',
+            });
+
+            // Force revalidation of ALL relevant paths
+            revalidatePath('/');
+            revalidatePath(`/markets/${validatedData.marketId}`);
+            revalidatePath('/markets');
+            revalidatePath('/admin');
+            revalidatePath('/explore');
+
+            // Tell admin what happened
+            if (winningOutcomeOnChain === validatedData.winningOutcomeId) {
+                console.log("Admin selected same outcome as blockchain");
+                return {
+                    success: true,
+                    adminFee: 0,
+                    info: `Market was already resolved on blockchain with this outcome. Database updated.`
+                };
+            } else {
+                console.log("Admin selected different outcome than blockchain");
+                return {
+                    success: false,
+                    error: `Cannot resolve: Market is already resolved on blockchain with outcome #${winningOutcomeOnChain}`
+                };
+            }
         }
 
-        // Check if market is already resolved
-        if (market.resolvedOutcomeId !== undefined) {
-            return { success: false, error: 'Market is already resolved' };
-        }
+        // 3. Proceed with normal resolution flow
+        console.log("Proceeding with normal market resolution");
+
+        const resolutionResult = await marketStore.resolveMarketOnChain(onChainMarket!.id, validatedData.winningOutcomeId)
+        console.log(resolutionResult)
 
         // Find the winning outcome
-        const winningOutcome = market.outcomes.find((o: any) => o.id === validatedData.winningOutcomeId);
+        const winningOutcome = onChainMarket!.outcomes.find((o: any) => o.id === validatedData.winningOutcomeId);
         if (!winningOutcome) {
             return { success: false, error: 'Winning outcome not found' };
         }
 
         // Get all predictions for this market
-        const marketPredictions: any[] = await custodyStore.getMarketTransactions(market.id);
-
-        if (marketPredictions.length === 0) {
-            return { success: false, error: 'No predictions found for this market' };
-        }
+        const marketPredictions: any[] = await custodyStore.getMarketTransactions(onChainMarket!.id);
+        console.log(`Found ${marketPredictions.length} predictions for this market`);
 
         // Calculate total pot and admin fee (5%)
         const totalPot: any = marketPredictions.reduce((sum, prediction: any) => sum + prediction.amount, 0);
         const adminFee = totalPot * 0.05; // 5% of the total pot
         const remainingPot = totalPot - adminFee;
+        console.log(`Total pot: ${totalPot}, Admin fee: ${adminFee}, Remaining pot: ${remainingPot}`);
 
         // Find winning predictions
         const winningPredictions = marketPredictions.filter(
             (p: any) => p.outcomeId === validatedData.winningOutcomeId
         );
+        console.log(`Found ${winningPredictions.length} winning predictions`);
 
         // Calculate total winning amount
         const totalWinningAmount = winningPredictions.reduce(
             (sum, prediction: any) => sum + prediction.amount,
             0
         );
+        console.log(`Total winning amount: ${totalWinningAmount}`);
 
+        console.log("Updating market as resolved in database...");
         // Update market as resolved
-        await marketStore.updateMarket(market.id, {
+        await marketStore.updateMarket(onChainMarket!.id, {
             resolvedOutcomeId: validatedData.winningOutcomeId,
             resolvedAt: new Date().toISOString(),
             status: 'resolved',
@@ -358,9 +386,11 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
         });
 
         // Add admin fee to admin's balance
+        console.log(`Adding ${adminFee} to admin balance...`);
         await userBalanceStore.addFunds(user.id, adminFee);
 
         // Mark all predictions for this market as won or lost
+        console.log("Updating prediction statuses...");
         for (const prediction of marketPredictions) {
             const isWinner = prediction.outcomeId === validatedData.winningOutcomeId;
 
@@ -386,19 +416,37 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
             );
         }
 
-        // Revalidate relevant paths
-        revalidatePath(`/markets/${market.id}`);
-        revalidatePath('/markets');
-        revalidatePath('/portfolio');
-        revalidatePath('/explore');
-        revalidatePath('/leaderboard');
+        // Aggressive revalidation of ALL relevant paths
+        console.log("Revalidating all relevant paths...");
+        revalidatePath('/'); // Home page
+        revalidatePath(`/markets/${onChainMarket!.id}`); // Market detail page
+        revalidatePath('/markets'); // Markets listing
+        revalidatePath('/portfolio'); // User portfolio
+        revalidatePath('/explore'); // Explore page
+        revalidatePath('/leaderboard'); // Leaderboard
+        revalidatePath('/admin'); // Admin page
 
+        console.log("Market resolution completed successfully!");
         return {
             success: true,
             adminFee: adminFee
         };
     } catch (error) {
         console.error('Error resolving market:', error);
+
+        // Attempt to revalidate paths even on error to refresh the UI
+        try {
+            console.log("Revalidating paths after error...");
+            revalidatePath('/');
+            revalidatePath('/markets');
+            revalidatePath('/admin');
+
+            if (validatedData?.marketId) {
+                revalidatePath(`/markets/${validatedData.marketId}`);
+            }
+        } catch (revalidateError) {
+            console.error("Error during revalidation after failure:", revalidateError);
+        }
 
         if (error instanceof z.ZodError) {
             return {
@@ -409,7 +457,59 @@ export async function resolveMarket(formData: MarketResolutionData): Promise<{
 
         return {
             success: false,
-            error: 'Failed to resolve market. Please try again.'
+            error: 'Failed to resolve market. Please try again.' + (error instanceof Error ? ` (${error.message})` : '')
         };
     }
-} 
+}
+
+/**
+ * Synchronize market statuses with blockchain state (admin only)
+ * This checks all markets against their on-chain state and updates them if they don't match
+ */
+export async function syncMarketsWithBlockchain(): Promise<{
+    success: boolean;
+    processed?: number;
+    updated?: number;
+    errors?: number;
+    syncResults?: any[];
+    error?: string;
+}> {
+    try {
+        // Check if user is admin
+        const user = await currentUser();
+        if (!user || !isAdmin(user.id)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Only admins can synchronize markets with blockchain'
+            };
+        }
+
+        // Call the market store's syncMarketsWithBlockchain function
+        const result = await marketStore.syncMarketsWithBlockchain();
+
+        if (!result.success) {
+            return {
+                success: false,
+                error: 'Failed to synchronize markets with blockchain'
+            };
+        }
+
+        // Revalidate relevant paths
+        revalidatePath('/markets');
+        revalidatePath('/admin');
+
+        return {
+            success: true,
+            processed: result.processed,
+            updated: result.updated,
+            errors: result.errors,
+            syncResults: result.syncResults
+        };
+    } catch (error) {
+        console.error('Error synchronizing markets with blockchain:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+    }
+}

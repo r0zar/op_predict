@@ -8,7 +8,7 @@ export async function GET(
   try {
     const marketId = params.id;
     const market = await getMarket(marketId);
-    
+
     if (!market) {
       return new NextResponse(JSON.stringify({ error: 'Market not found' }), {
         status: 404,
@@ -17,7 +17,7 @@ export async function GET(
         },
       });
     }
-    
+
     return NextResponse.json(market);
   } catch (error) {
     return new NextResponse(JSON.stringify({ error: 'Failed to fetch market' }), {

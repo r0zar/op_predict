@@ -110,6 +110,8 @@ export default function MarketsTable({
   const [marketsResult, setMarketsResult] = useState<PaginatedResult<Market> | null>(initialMarkets || null)
   const [isLoading, setIsLoading] = useState(!initialMarkets)
 
+  console.log(marketsResult)
+
   // Pagination state
   const [cursorHistory, setCursorHistory] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -534,64 +536,34 @@ export default function MarketsTable({
         </div>
       )}
 
-      {/* Empty state with theme-aware styling */}
-      {!isLoading && marketsResult?.items.length === 0 && (
-        <div className="relative rounded-lg overflow-hidden bg-panel-gradient border border-muted/30 data-[theme='cyberpunk']:border-[hsl(var(--cyber-blue)/15)]">
+      {/* Empty state - shown when no markets are available */}
+      {!isLoading && (!marketsResult?.items || marketsResult?.items.length === 0) && !searchQuery && !category && (
+        <div className="relative mt-8 py-16 border border-[hsl(var(--cyber-blue)/20)] rounded-lg bg-gradient-to-b from-[hsl(var(--space-dark)/50)] to-[hsl(var(--space-void)/50)] text-center overflow-hidden">
           {/* Decorative corner accents */}
-          <span className="absolute top-0 left-0 w-4 h-4 border-t border-l border-destructive/60 data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/60)]"></span>
-          <span className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-destructive/60 data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/60)]"></span>
+          <span className="absolute top-0 left-0 w-4 h-4 border-t border-l border-[hsl(var(--cyber-blue))]"></span>
+          <span className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-[hsl(var(--cyber-blue))]"></span>
 
-          {/* Warning pattern stripes - Cyberpunk only */}
-          <div className="absolute inset-0 opacity-5 data-[theme='cyberpunk']:bg-stripes" style={{
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, hsl(var(--destructive)) 10px, hsl(var(--destructive)) 20px)`
+          {/* Subtle grid background - more subtle */}
+          <div className="absolute inset-0 opacity-2" style={{
+            backgroundImage: `repeating-linear-gradient(0deg, hsl(var(--cyber-blue)/40), hsl(var(--cyber-blue)/40) 1px, transparent 1px, transparent 40px), 
+                              repeating-linear-gradient(90deg, hsl(var(--cyber-blue)/40), hsl(var(--cyber-blue)/40) 1px, transparent 1px, transparent 40px)`
           }}></div>
 
-          <div className="flex flex-col items-center justify-center py-12 px-4 text-center relative z-10">
-            {/* Error icon */}
-            <div className="w-16 h-16 mb-4 relative">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-10 h-10 border-2 border-destructive/70 data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/70)] rounded-full flex items-center justify-center">
-                  <span className="text-destructive data-[theme='cyberpunk']:text-[hsl(var(--neon-red))] text-2xl font-bold">!</span>
-                </div>
-              </div>
+          <h2 className="text-2xl font-display font-bold text-glow mb-2">Prediction Database Empty</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">Initiate the first market prediction and establish the foundation for future forecasts</p>
 
-              {/* Pulsing glow effect */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-destructive/10 data-[theme='cyberpunk']:bg-[hsl(var(--neon-red)/10)] animate-pulse"></div>
-              </div>
-            </div>
+          <Link href="/create">
+            <Button size="lg" className="relative overflow-hidden group bg-gradient-to-r from-[hsl(var(--space-dark))] to-[hsl(var(--space-void))] border border-[hsl(var(--neon-green)/40)]">
+              {/* Add a subtle shimmer effect */}
+              <span className="animate-shimmer absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-[hsl(var(--neon-green)/15)] to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
 
-            <h3 className="text-xl font-mono text-destructive data-[theme='cyberpunk']:text-[hsl(var(--neon-red)/90)] mb-2">No Results Found</h3>
-            <p className="text-muted-foreground max-w-md">No market entities found matching your filter parameters.</p>
+              <span className="relative z-10 text-[hsl(var(--neon-green))]">Create First Market</span>
 
-            <Button
-              variant="outline"
-              className="mt-6 relative overflow-hidden group border-destructive/50 hover:border-destructive data-[theme='cyberpunk']:border-[hsl(var(--neon-red)/50)] data-[theme='cyberpunk']:hover:border-[hsl(var(--neon-red))] hover:bg-destructive/10 data-[theme='cyberpunk']:hover:bg-[hsl(var(--neon-red)/10)] text-destructive/80 data-[theme='cyberpunk']:text-[hsl(var(--neon-red)/80)] hover:text-destructive data-[theme='cyberpunk']:hover:text-[hsl(var(--neon-red))]"
-              onClick={() => {
-                setSearchQuery('')
-                setCategory(undefined)
-                setStatus('active')
-                setSortBy('createdAt')
-                setSortDirection('desc')
-                updateUrl({
-                  category: undefined,
-                  search: undefined,
-                  status: 'active',
-                  sort: 'createdAt',
-                  direction: 'desc'
-                })
-              }}
-            >
-              {/* Decorative corner accents - Cyberpunk only */}
-              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-destructive data-[theme='cyberpunk']:border-[hsl(var(--neon-red))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-destructive data-[theme='cyberpunk']:border-[hsl(var(--neon-red))] opacity-0 group-hover:opacity-100 transition-opacity"></span>
-
-              {/* Add a subtle shimmer effect - Cyberpunk only */}
-              <span className="animate-shimmer absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-destructive/15 data-[theme='cyberpunk']:via-[hsl(var(--neon-red)/15)] to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
-
-              <span className="relative z-10 flex items-center">Reset Filters</span>
+              {/* Corner accents */}
+              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[hsl(var(--neon-green))]"></span>
+              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[hsl(var(--neon-green))]"></span>
             </Button>
-          </div>
+          </Link>
         </div>
       )}
 

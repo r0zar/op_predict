@@ -1,8 +1,10 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowDown, ArrowUp, DollarSign, PieChart, TrendingUp, Wallet, ChevronRight, RefreshCcw, Clock, CheckCircle } from "lucide-react";
+import {
+    ArrowDown, ArrowUp, PieChart, Wallet, RefreshCcw, Clock, CheckCircle, InfoIcon,
+    Trophy, PercentIcon, BarChart, Target, Gift, AlertTriangle, CreditCard
+} from "lucide-react";
 
 import {
     Card,
@@ -10,39 +12,13 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-    CardFooter,
 } from "@/components/ui/card";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { getUserCustodyTransactions, getAllCustodyTransactions } from "../actions/custody-actions";
-import { isAdmin } from "@/lib/utils";
+import { getUserCustodyTransactions } from "../actions/custody-actions";
+import { getCurrentUserStats } from "../actions/leaderboard-actions";
 import { userBalanceStore } from "wisdom-sdk";
 import { PredictionsTable } from "@/components/predictions-table";
-
-// Mock data - used only for transactions and active markets until we implement those fully
-const mockPortfolioData = {
-    recentTransactions: [
-        { id: 1, type: "deposit", amount: 500, date: "2023-07-15", status: "completed" },
-        { id: 2, type: "prediction", amount: -200, date: "2023-07-16", market: "Will Bitcoin reach $100k by end of 2025?", status: "active" },
-        { id: 3, type: "prediction", amount: -350, date: "2023-07-18", market: "Will Ethereum 2.0 launch before July 2025?", status: "active" },
-        { id: 4, type: "withdrawal", amount: -100, date: "2023-07-20", status: "completed" },
-        { id: 5, type: "prediction", amount: -625.25, date: "2023-07-22", market: "Will Apple release a foldable device in 2025?", status: "active" },
-    ],
-    activeMarkets: [
-        { id: 1, title: "Will Bitcoin reach $100k by end of 2025?", invested: 200, currentValue: 320, prediction: "Yes", endDate: "2025-12-31" },
-        { id: 2, title: "Will Ethereum 2.0 launch before July 2025?", invested: 350, currentValue: 280, prediction: "Yes", endDate: "2025-06-30" },
-        { id: 3, title: "Will Apple release a foldable device in 2025?", invested: 625.25, currentValue: 575.25, prediction: "No", endDate: "2025-12-31" },
-    ]
-};
 
 export default async function PortfolioPage() {
     const user = await currentUser();
@@ -52,45 +28,32 @@ export default async function PortfolioPage() {
         redirect("/");
     }
 
-    // Check if user is an admin
-    const isUserAdmin = isAdmin(user.id);
-
     // Fetch user's transactions/predictions
     const predictionsResult = await getUserCustodyTransactions();
     const userPredictions = predictionsResult.success ? predictionsResult.transactions || [] : [];
 
-    // For admin users, fetch all transactions/predictions
-    const allPredictionsResult = isUserAdmin
-        ? await getAllCustodyTransactions()
-        : { success: false, transactions: [] };
+    // Count and calculate unclaimed winnings
+    const unclaimedPredictions = userPredictions.filter(p => p.status === 'won' && !p.redeemed);
+    const totalUnclaimedAmount = unclaimedPredictions.reduce((sum, p) => sum + (p.potentialPayout || 0), 0);
 
-    const allPredictions = allPredictionsResult.success
-        ? allPredictionsResult.transactions || []
-        : [];
+    // Get user stats for the dashboard
+    const userStatsResult = await getCurrentUserStats();
+    const userStats = userStatsResult.success ? userStatsResult.stats : {
+        totalPredictions: 0,
+        correctPredictions: 0,
+        accuracy: 0,
+        totalAmount: 0,
+        totalEarnings: 0,
+        pnl: 0
+    };
 
-    // Import function to get user names
-    const { getUserNameById } = await import("@/lib/clerk-user");
-
-    // Get creator names for the user's predictions
-    const userPredictionsWithCreatorNames = await Promise.all(
-        userPredictions.map(async (prediction) => {
-            const creatorName = await getUserNameById(prediction.userId);
-            return { ...prediction, creatorName };
-        })
-    );
-
-    // Get creator names for all predictions (admin view)
-    const allPredictionsWithCreatorNames = isUserAdmin
-        ? await Promise.all(
-            allPredictions.map(async (prediction) => {
-                const creatorName = await getUserNameById(prediction.userId);
-                return { ...prediction, creatorName };
-            })
-        )
-        : [];
+    // Calculate PnL if not present
+    if (userStats && !userStats.pnl) {
+        userStats.pnl = (userStats.totalEarnings || 0) - (userStats.totalAmount || 0);
+    }
 
     // Get user balance data
-    const userBalance: any = await userBalanceStore.getUserBalance(user.id);
+    const userBalance = await userBalanceStore.getUserBalance(user.id);
 
     // Set default values if balance doesn't exist (should never happen since we initialize on get)
     const availableBalance = (userBalance && userBalance.availableBalance) || 1000;
@@ -103,14 +66,10 @@ export default async function PortfolioPage() {
         0
     );
 
-    // Use mock data for profit/loss calculation until we have real data
-    const totalProfitLoss = mockPortfolioData.activeMarkets.reduce(
-        (sum, market) => sum + (market.currentValue - market.invested),
-        0
-    );
-
-    const profitLossPercentage = totalPredictionAmount > 0
-        ? (totalProfitLoss / totalPredictionAmount) * 100
+    // Use the actual profit/loss from user stats
+    const totalProfitLoss = userStats.pnl || 0;
+    const profitLossPercentage = userStats.totalAmount > 0
+        ? (totalProfitLoss / userStats.totalAmount) * 100
         : 0;
 
     return (
@@ -118,10 +77,45 @@ export default async function PortfolioPage() {
             <h1 className="text-3xl font-bold mb-6">Your Portfolio</h1>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+                {/* Unclaimed Winnings Card - Only show if there are unclaimed winnings */}
+                {unclaimedPredictions.length > 0 && (
+                    <Card className="bg-gradient-to-br from-green-50 to-teal-50 dark:from-green-950/30 dark:to-teal-950/30 border-green-200 dark:border-green-800 shadow-md">
+                        <CardHeader className="pb-2">
+                            <CardDescription className="text-green-700 dark:text-green-400 font-medium flex items-center">
+                                <Gift className="h-4 w-4 mr-1" />
+                                Unclaimed Winnings
+                            </CardDescription>
+                            <CardTitle className="text-3xl font-bold text-green-700 dark:text-green-400">
+                                ${totalUnclaimedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col gap-2">
+                                <div className="text-sm text-green-700 dark:text-green-400">
+                                    {unclaimedPredictions.length} winning prediction{unclaimedPredictions.length !== 1 ? 's' : ''} ready to claim
+                                </div>
+                                <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => {
+                                        // Add smooth scroll to the predictions table
+                                        document.getElementById('predictions-table')?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start'
+                                        });
+                                    }}
+                                >
+                                    View & Redeem
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Total Balance Card */}
-                <Card className="">
+                <Card>
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-primary-foreground/80">Total Balance</CardDescription>
+                        <CardDescription>Total Balance</CardDescription>
                         <CardTitle className="text-3xl font-bold">
                             ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </CardTitle>
@@ -179,6 +173,28 @@ export default async function PortfolioPage() {
                     </CardContent>
                 </Card>
 
+                {/* Total Earnings Card */}
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardDescription>Total Earnings</CardDescription>
+                        <CardTitle className="text-2xl font-bold flex items-center">
+                            <Trophy className="mr-2 h-5 w-5 text-muted-foreground" />
+                            ${userStats.totalEarnings?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "0.00"}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-sm text-muted-foreground">
+                            {userStats.totalEarnings > 0 ? (
+                                <span className="text-green-500/90">
+                                    Won {userStats.correctPredictions || 0} predictions
+                                </span>
+                            ) : (
+                                <span>No earnings yet</span>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* In Markets Card */}
                 <Card>
                     <CardHeader className="pb-2">
@@ -190,99 +206,166 @@ export default async function PortfolioPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-sm text-muted-foreground">
-                            Active in {userPredictions.length} markets
+                            {(() => {
+                                // Count unique market IDs for active predictions
+                                const activeMarketIds = new Set(
+                                    userPredictions
+                                        .filter(p => p.status === 'pending')
+                                        .map(p => p.marketId)
+                                );
+                                return `Active in ${activeMarketIds.size} markets`;
+                            })()}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Accuracy Card */}
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardDescription>Prediction Accuracy</CardDescription>
+                        <CardTitle className="text-2xl font-bold flex items-center">
+                            <Target className="mr-2 h-5 w-5 text-muted-foreground" />
+                            {userStats.accuracy?.toFixed(1) || "0.0"}%
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-sm text-muted-foreground">
+                            {userStats.correctPredictions || 0} correct out of {userStats.totalPredictions || 0} total
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <Tabs defaultValue="prediction-receipts" className="w-full">
-                <TabsList className="mb-4">
-                    <TabsTrigger value="prediction-receipts">Prediction Receipts</TabsTrigger>
-                    {isUserAdmin && (
-                        <TabsTrigger value="admin-management">Admin</TabsTrigger>
-                    )}
-                </TabsList>
-
-                {/* Prediction Receipts Tab */}
-                <TabsContent value="prediction-receipts">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Prediction Receipt NFTs</CardTitle>
-                            <CardDescription>Your collection of prediction receipt NFTs</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {userPredictionsWithCreatorNames.length > 0 ? (
-                                <>
-                                    <div className="bg-primary/50 border border-primary dark:border-primary rounded-lg p-4 mb-6 shadow-sm">
-                                        <div className="flex items-start">
-                                            <div className="bg-secondary dark:bg-secondary/50 p-2 rounded-full mr-4 flex-shrink-0">
-                                                <RefreshCcw className="h-5 w-5 text-secondary dark:text-secondary" />
+            <Card id="predictions-table">
+                <CardHeader>
+                    <CardTitle>Prediction Receipt NFTs</CardTitle>
+                    <CardDescription>Your collection of prediction receipt NFTs</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {userPredictions.length > 0 ? (
+                        <>
+                            <div className="bg-primary/50 border border-primary dark:border-primary rounded-lg p-4 mb-6 shadow-sm">
+                                <div className="flex items-start">
+                                    <div className="bg-secondary dark:bg-secondary/50 p-2 rounded-full mr-4 flex-shrink-0">
+                                        <RefreshCcw className="h-5 w-5 text-secondary dark:text-secondary" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-secondary dark:text-secondary mb-2">Return Predictions</h3>
+                                        <p className="text-sm dark:text-secondary mb-3">
+                                            You can return predictions within 15 minutes of creation if they haven't been submitted to the blockchain yet.
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold">
+                                            <div className="flex items-center dark:bg-secondary/20 rounded-md p-2">
+                                                <Clock className="h-4 w-4 mr-2 text-secondary dark:text-secondary flex-shrink-0" />
+                                                <span className="text-xs text-primary dark:text-primary">15-minute window</span>
                                             </div>
-                                            <div>
-                                                <h3 className="text-sm font-semibold text-secondary dark:text-secondary mb-2">Return Predictions</h3>
-                                                <p className="text-sm dark:text-secondary mb-3">
-                                                    You can return predictions within 15 minutes of creation if they haven't been submitted to the blockchain yet.
-                                                </p>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold">
-                                                    <div className="flex items-center dark:bg-secondary/20 rounded-md p-2">
-                                                        <Clock className="h-4 w-4 mr-2 text-secondary dark:text-secondary flex-shrink-0" />
-                                                        <span className="text-xs text-primary dark:text-primary">15-minute window</span>
-                                                    </div>
-                                                    <div className="flex items-center dark:bg-secondary/20 rounded-md p-2">
-                                                        <CheckCircle className="h-4 w-4 mr-2 text-secondary dark:text-secondary flex-shrink-0" />
-                                                        <span className="text-xs text-primary dark:text-primary">Full refund to balance</span>
-                                                    </div>
-                                                </div>
+                                            <div className="flex items-center dark:bg-secondary/20 rounded-md p-2">
+                                                <CheckCircle className="h-4 w-4 mr-2 text-secondary dark:text-secondary flex-shrink-0" />
+                                                <span className="text-xs text-primary dark:text-primary">Full refund to balance</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <PredictionsTable
-                                        predictions={userPredictionsWithCreatorNames}
-                                        isAdmin={isUserAdmin}
-                                    />
-                                </>
-                            ) : (
-                                <div className="text-center py-10">
-                                    <p className="text-muted-foreground mb-4">You don't have any prediction receipts yet</p>
-                                    <Link href="/markets">
-                                        <Button>Explore Markets</Button>
-                                    </Link>
                                 </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                            </div>
 
-                {/* Admin Management Tab */}
-                {isUserAdmin && (
-                    <TabsContent value="admin-management">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Admin: All Predictions</CardTitle>
-                                <CardDescription>Manage all prediction receipts from all users</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {allPredictions.length > 0 ? (
-                                    <div className="space-y-4">
-                                        <div className="text-sm text-muted-foreground mb-4">
-                                            Showing {allPredictions.length} prediction receipts from all users
-                                        </div>
+                            <Tabs defaultValue={unclaimedPredictions.length > 0 ? "redeemable" : "all"} className="w-full">
+                                <TabsList className="mb-4">
+                                    <TabsTrigger value="all">All ({userPredictions.length})</TabsTrigger>
+                                    <TabsTrigger value="active">Active ({userPredictions.filter(p => p.status === 'pending').length})</TabsTrigger>
+                                    <TabsTrigger value="redeemable" className={unclaimedPredictions.length ? "bg-green-100 text-green-700 data-[state=active]:bg-green-200" : ""}>
+                                        Ready to Redeem ({unclaimedPredictions.length})
+                                        {unclaimedPredictions.length > 0 && (
+                                            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-700 text-white text-xs font-bold">
+                                                ${totalUnclaimedAmount.toFixed(2)}
+                                            </span>
+                                        )}
+                                    </TabsTrigger>
+                                    <TabsTrigger value="resolved">Resolved ({userPredictions.filter(p => p.status === 'won' || p.status === 'lost' || p.status === 'redeemed').length})</TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="all">
+                                    <PredictionsTable
+                                        predictions={userPredictions}
+                                        isAdmin={false}
+                                    />
+                                </TabsContent>
+
+                                <TabsContent value="active">
+                                    {userPredictions.filter(p => p.status === 'pending').length > 0 ? (
                                         <PredictionsTable
-                                            predictions={allPredictionsWithCreatorNames}
-                                            isAdmin={true}
+                                            predictions={userPredictions.filter(p => p.status === 'pending')}
+                                            isAdmin={false}
                                         />
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-10">
-                                        <p className="text-muted-foreground mb-4">No prediction receipts found</p>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                )}
-            </Tabs>
+                                    ) : (
+                                        <div className="text-center py-10">
+                                            <p className="text-muted-foreground mb-4">You don't have any active predictions</p>
+                                            <Link href="/markets">
+                                                <Button>Explore Markets</Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </TabsContent>
+
+                                <TabsContent value="redeemable">
+                                    {unclaimedPredictions.length > 0 ? (
+                                        <div>
+                                            {unclaimedPredictions.length > 1 && (
+                                                <div className="bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300 p-4 rounded-lg mb-4 flex justify-between items-center">
+                                                    <div className="flex items-center">
+                                                        <Gift className="h-5 w-5 mr-2" />
+                                                        <span>You have {unclaimedPredictions.length} winning predictions totaling ${totalUnclaimedAmount.toFixed(2)}</span>
+                                                    </div>
+                                                    <Button
+                                                        className="bg-green-600 hover:bg-green-700"
+                                                        disabled={true} // Not implemented yet
+                                                    >
+                                                        Redeem All
+                                                    </Button>
+                                                </div>
+                                            )}
+
+                                            <PredictionsTable
+                                                predictions={unclaimedPredictions}
+                                                isAdmin={false}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-10">
+                                            <p className="text-muted-foreground mb-4">You don't have any predictions ready to redeem</p>
+                                            <Link href="/markets">
+                                                <Button>Explore Markets</Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </TabsContent>
+
+                                <TabsContent value="resolved">
+                                    {userPredictions.filter(p => p.status === 'won' || p.status === 'lost' || p.status === 'redeemed').length > 0 ? (
+                                        <PredictionsTable
+                                            predictions={userPredictions.filter(p => p.status === 'won' || p.status === 'lost' || p.status === 'redeemed')}
+                                            isAdmin={false}
+                                        />
+                                    ) : (
+                                        <div className="text-center py-10">
+                                            <p className="text-muted-foreground mb-4">You don't have any resolved predictions yet</p>
+                                            <Link href="/markets">
+                                                <Button>Explore Markets</Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
+                        </>
+                    ) : (
+                        <div className="text-center py-10">
+                            <p className="text-muted-foreground mb-4">You don't have any prediction receipts yet</p>
+                            <Link href="/markets">
+                                <Button>Explore Markets</Button>
+                            </Link>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

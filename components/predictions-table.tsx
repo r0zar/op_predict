@@ -28,13 +28,12 @@ import {
 } from "lucide-react";
 import { RedeemPredictionButton } from "./redeem-prediction-button";
 import ReturnPredictionButton from "./return-prediction-button";
-import { getMultipleUserStats } from "@/app/actions/leaderboard-actions";
 import { checkMultiplePredictionsReturnable } from "@/app/actions/prediction-actions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import Link from 'next/link';
 
-type SortField = "date" | "amount" | "outcome" | "user";
+type SortField = "date" | "amount" | "outcome" | "market";
 type SortDirection = "asc" | "desc";
 
 interface PredictionsTableProps {
@@ -48,56 +47,12 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const itemsPerPage = 10;
 
-  // State for user stats from API
-  const [userStats, setUserStats] = useState<Record<string, any>>({});
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
-
   // State for tracking which predictions can be returned
   const [returnablePredictions, setReturnablePredictions] = useState<Record<string, { canReturn: boolean, reason?: string }>>({});
   const [isCheckingReturnable, setIsCheckingReturnable] = useState(true);
 
   // Create a dialog state for this specific prediction
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Extract unique user IDs from predictions
-  useEffect(() => {
-    async function fetchUserStats() {
-      setIsLoadingStats(true);
-
-      try {
-        // Extract unique user IDs
-        const userIds = predictions
-          .map(p => p.userId || p.createdBy)
-          .filter(id => !!id); // Remove any undefined/null
-
-        // Remove duplicates
-        const uniqueUserIds = Array.from(new Set(userIds));
-
-        if (uniqueUserIds.length === 0) {
-          setUserStats({});
-          setIsLoadingStats(false);
-          return;
-        }
-
-        // Fetch stats for all users at once
-        const response = await getMultipleUserStats(uniqueUserIds);
-
-        if (response.success && response.stats) {
-          setUserStats(response.stats);
-        } else {
-          console.error("Failed to fetch user stats:", response.error);
-          setUserStats({});
-        }
-      } catch (error) {
-        console.error("Error fetching user stats:", error);
-        setUserStats({});
-      } finally {
-        setIsLoadingStats(false);
-      }
-    }
-
-    fetchUserStats();
-  }, [predictions]);
 
   // Check which predictions can be returned using a single server action call
   useEffect(() => {
@@ -167,9 +122,9 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
         aValue = a.outcomeName;
         bValue = b.outcomeName;
         break;
-      case "user":
-        aValue = a.creatorName || a.userId;
-        bValue = b.creatorName || b.userId;
+      case "market":
+        aValue = a.marketName || '';
+        bValue = b.marketName || '';
         break;
       default:
         aValue = new Date(a.createdAt || a.takenCustodyAt).getTime();
@@ -246,17 +201,15 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                   </div>
                 </TableHead>
                 <TableHead
-                  className="cursor-pointer w-[120px]"
-                  onClick={() => handleSort("user")}
+                  className="cursor-pointer"
+                  onClick={() => handleSort("market")}
                 >
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    User
-                    <SortIcon field="user" />
+                    <Search className="h-4 w-4" />
+                    Market
+                    <SortIcon field="market" />
                   </div>
                 </TableHead>
-                <TableHead className="w-[70px] text-right"><div className='text-center'>Accuracy</div></TableHead>
-                <TableHead className="w-[70px] text-right"><div className='text-center'>PnL</div></TableHead>
                 <TableHead
                   className="cursor-pointer w-[90px]"
                   onClick={() => handleSort("outcome")}
@@ -296,72 +249,24 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                         {formatDate(prediction.createdAt || prediction.takenCustodyAt)}
                       </TableCell>
                       <TableCell>
-                        {prediction.creatorName || prediction.userId?.substring(0, 8)}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {isLoadingStats ? (
-                          <div className="flex justify-center">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : (() => {
-                          // Get the userId from any available field
-                          const userId = prediction.userId || prediction.createdBy;
-                          if (!userId || !userStats[userId]) return 'N/A';
-
-                          // Use proper accuracy from the server
-                          const accuracy = userStats[userId].accuracy || 0;
-                          const totalPreds = userStats[userId].totalPredictions || 0;
-                          const correctPreds = userStats[userId].correctPredictions || 0;
-
-                          return (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="cursor-help">{`${accuracy.toFixed(1)}%`}</span>
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                  <div className="text-xs space-y-1">
-                                    <div className="font-medium">Prediction Accuracy</div>
-                                    <div>{`${correctPreds} correct out of ${totalPreds} total`}</div>
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {isLoadingStats ? (
-                          <div className="flex justify-center">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : (() => {
-                          // Get the userId from any available field
-                          const userId = prediction.userId || prediction.createdBy;
-                          if (!userId || !userStats[userId]) return '$0.00';
-
-                          // Use proper P&L from the server
-                          const pnl = userStats[userId].pnl || 0;
-                          const totalEarnings = userStats[userId].totalEarnings || 0;
-                          const totalAmount = userStats[userId].totalAmount || 0;
-
-                          return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className={`cursor-help ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
-                                  {`$${pnl.toFixed(2)}`}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent side="top">
-                                <div className="text-xs space-y-1">
-                                  <div className="font-medium">Profit & Loss</div>
-                                  <div className="text-green-500">{`Winnings: $${totalEarnings.toFixed(2)}`}</div>
-                                  <div className="text-red-500">{`Spent: $${totalAmount.toFixed(2)}`}</div>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        })()}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link
+                                href={`/markets/${prediction.marketId}`}
+                                className="hover:underline text-primary max-w-[360px] truncate block"
+                              >
+                                {prediction.marketName || "Unknown Market"}
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <div className="text-xs space-y-1">
+                                <div className="font-medium">View Market Details</div>
+                                <div className="text-muted-foreground">{prediction.marketId}</div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell>
                         <Badge variant={prediction.outcomeName === 'Yes' ? 'default' :

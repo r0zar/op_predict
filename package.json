@@ -57,7 +57,7 @@
     "signet-sdk": "^0.1.7",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "wisdom-sdk": "^0.1.16",
+    "wisdom-sdk": "file:../wisdom",
     "zod": "^3.24.2"
   },
   "devDependencies": {
