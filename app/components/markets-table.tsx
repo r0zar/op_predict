@@ -110,8 +110,6 @@ export default function MarketsTable({
   const [marketsResult, setMarketsResult] = useState<PaginatedResult<Market> | null>(initialMarkets || null)
   const [isLoading, setIsLoading] = useState(!initialMarkets)
 
-  console.log(marketsResult)
-
   // Pagination state
   const [cursorHistory, setCursorHistory] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)

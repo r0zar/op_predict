@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 
 interface ReturnPredictionButtonProps {
   predictionId: string;
+  predictionNonce?: number; // Add this for on-chain operations
   tooltip?: string;
   isOpen?: boolean;
   setIsOpen?: (open: boolean) => void;
@@ -31,6 +32,7 @@ interface ReturnPredictionButtonProps {
 
 export default function ReturnPredictionButton({
   predictionId,
+  predictionNonce,
   tooltip = 'Return this prediction',
   isOpen: externalIsOpen,
   setIsOpen: externalSetIsOpen

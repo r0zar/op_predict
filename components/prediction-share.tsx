@@ -10,6 +10,7 @@ import { getBaseUrl } from "@/lib/utils";
 
 interface PredictionShareProps {
     predictionId: string;
+    predictionNonce: number;
     marketName: string;
     isResolved: boolean;
     outcomeSelected: string;
@@ -23,6 +24,7 @@ const isBrowser = typeof window !== 'undefined';
 
 export default function PredictionShare({
     predictionId,
+    predictionNonce,
     marketName,
     isResolved,
     outcomeSelected,

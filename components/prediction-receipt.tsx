@@ -172,6 +172,7 @@ export function PredictionReceipt({
                         <div className="flex-1">
                             <PredictionShare
                                 predictionId={receipt.predictionId || receipt.tokenId}
+                                predictionNonce={receipt.nonce}
                                 marketName={receipt.marketName}
                                 isResolved={false}
                                 outcomeSelected={receipt.outcomeName}

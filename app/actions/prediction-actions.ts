@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { marketStore, predictionStore, userBalanceStore, userStatsStore, custodyStore } from 'wisdom-sdk';
+import { marketStore, predictionStore, userBalanceStore, userStatsStore, custodyStore, predictionContractStore, storeEntity } from 'wisdom-sdk';
 import { currentUser } from '@clerk/nextjs/server';
 import { isAdmin } from "@/lib/utils";
 
@@ -486,7 +486,7 @@ export async function returnPrediction(formData: ReturnPredictionData): Promise<
             // Revalidate portfolio and other relevant pages
             revalidatePath('/portfolio');
             revalidatePath('/markets');
-            
+
             // If we know the market ID, revalidate the specific market page
             if (result.transaction?.marketId) {
                 revalidatePath(`/markets/${result.transaction.marketId}`);
@@ -496,14 +496,14 @@ export async function returnPrediction(formData: ReturnPredictionData): Promise<
         return result;
     } catch (error) {
         console.error('Error returning prediction:', error);
-        
+
         if (error instanceof z.ZodError) {
             return {
                 success: false,
                 error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ')
             };
         }
-        
+
         return {
             success: false,
             error: 'Failed to return prediction. Please try again.'
@@ -534,7 +534,7 @@ export async function canReturnPrediction(transactionId: string): Promise<{
 
         // Call the custody store to check if the prediction can be returned
         const result = await custodyStore.canReturnPrediction(transactionId);
-        
+
         // If the transaction exists but doesn't belong to this user, add that check here
         if (result.transaction && result.transaction.userId !== user.id) {
             return {
@@ -542,14 +542,14 @@ export async function canReturnPrediction(transactionId: string): Promise<{
                 reason: 'This prediction belongs to another user'
             };
         }
-        
+
         return {
             canReturn: result.canReturn,
             reason: result.reason
         };
     } catch (error) {
         console.error('Error checking if prediction can be returned:', error);
-        
+
         return {
             canReturn: false,
             reason: 'Error checking prediction status'
@@ -581,7 +581,7 @@ export async function checkMultiplePredictionsReturnable(predictionIds: string[]
 
         // Deduplicate prediction IDs
         const uniqueIds = Array.from(new Set(predictionIds));
-        
+
         if (uniqueIds.length === 0) {
             return {
                 success: true,
@@ -593,7 +593,7 @@ export async function checkMultiplePredictionsReturnable(predictionIds: string[]
         const results = await Promise.all(
             uniqueIds.map(async (id) => {
                 const result = await custodyStore.canReturnPrediction(id);
-                
+
                 // Add user ownership check
                 if (result.transaction && result.transaction.userId !== user.id) {
                     return {
@@ -602,7 +602,7 @@ export async function checkMultiplePredictionsReturnable(predictionIds: string[]
                         reason: 'This prediction belongs to another user'
                     };
                 }
-                
+
                 return {
                     id,
                     canReturn: result.canReturn,
@@ -623,10 +623,262 @@ export async function checkMultiplePredictionsReturnable(predictionIds: string[]
         };
     } catch (error) {
         console.error('Error checking multiple predictions returnable status:', error);
-        
+
         return {
             success: false,
             error: 'Error checking prediction statuses'
+        };
+    }
+}
+
+/**
+ * Create a signed claim reward transaction with custody
+ * This is for claiming rewards from winning predictions via Signet
+ */
+export async function claimRewardWithCustody(formData: {
+    // Transaction data
+    signature: string;
+    nonce: number;
+    signer: string;
+    subnetId: string;
+
+    // Claim data
+    predictionId: string;
+}): Promise<{
+    success: boolean;
+    transaction?: any;
+    error?: string;
+}> {
+    try {
+        // Ensure the user is authorized
+        const user = await currentUser();
+
+        // Get the prediction to verify it exists
+        const predictionResult = await custodyStore.getTransaction(formData.predictionId);
+        if (!predictionResult.id) {
+            return { success: false, error: 'Prediction not found' };
+        }
+
+        const prediction = predictionResult;
+
+        // Verify the prediction belongs to the user
+        if (!user?.id) {
+            return { success: false, error: 'Unauthorized: This prediction does not belong to you' };
+        }
+
+        // Check if prediction is eligible for claiming rewards
+        if (prediction.blockchainStatus !== 'won') {
+            return { success: false, error: 'Only winning predictions can claim rewards' };
+        }
+
+        // Get the prediction nonce since that's what's used on-chain, not the database ID
+        const predictionNonce = prediction.nonce || prediction.receiptId;
+
+        if (!predictionNonce) {
+            return { success: false, error: 'Prediction nonce not found. Cannot claim rewards.' };
+        }
+
+        // Create the claim reward transaction with custody
+        // Using the prediction nonce as the receiptId for on-chain interaction
+        const result = await custodyStore.createClaimRewardWithCustody({
+            signature: formData.signature,
+            nonce: formData.nonce, // This is the transaction nonce
+            signer: formData.signer,
+            subnetId: formData.subnetId,
+            predictionId: formData.predictionId, // Database ID for lookup
+            receiptId: predictionNonce, // On-chain identifier
+            userId: user.id
+        });
+
+        if (!result.success || !result.transaction) {
+            return {
+                success: false,
+                error: result.error || 'Failed to create claim reward transaction'
+            };
+        }
+
+        // Update the prediction status in the custody store to mark it as redeemed
+        // This ensures the UI will correctly show the prediction as claimed after refresh
+        await custodyStore.updateTransactionStatus(formData.predictionId, 'confirmed');
+
+        // Also update the blockchain status to ensure consistency
+        const updatedPrediction = await custodyStore.getTransaction(formData.predictionId);
+        if (updatedPrediction && !updatedPrediction.blockchainStatus || updatedPrediction.blockchainStatus !== 'redeemed') {
+            // Create an updated transaction object with blockchainStatus set to 'redeemed'
+            const updatedTx = {
+                ...updatedPrediction,
+                blockchainStatus: 'redeemed' as 'unresolved' | 'won' | 'lost' | 'redeemed',
+                verifiedAt: new Date().toISOString()
+            };
+
+            // Store the updated transaction with blockchain data
+            await storeEntity('CUSTODY_TRANSACTION', formData.predictionId, updatedTx);
+        }
+
+        // Revalidate relevant paths
+        revalidatePath(`/prediction/${formData.predictionId}`);
+        if (prediction.marketId) {
+            revalidatePath(`/markets/${prediction.marketId}`);
+        }
+        revalidatePath('/portfolio');
+        revalidatePath('/leaderboard');
+
+        return {
+            success: true,
+            transaction: result.transaction
+        };
+    } catch (error) {
+        console.error('Error creating claim reward transaction with custody:', error);
+
+        return {
+            success: false,
+            error: error instanceof Error
+                ? error.message
+                : 'Failed to create claim reward transaction'
+        };
+    }
+}
+
+/**
+ * Check if a prediction is eligible for claiming rewards
+ */
+/**
+ * Mark a prediction as redeemed without actually submitting a claim transaction
+ * This is useful for administrative purposes or to fix database inconsistencies
+ */
+export async function markPredictionRedeemed(predictionId: string): Promise<{
+    success: boolean;
+    error?: string;
+}> {
+    try {
+        // Ensure the user is authorized as an admin
+        const user = await currentUser();
+        if (!user?.id || !isAdmin(user.id)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        // Get the prediction transaction
+        const prediction = await custodyStore.getTransaction(predictionId);
+        if (!prediction) {
+            return {
+                success: false,
+                error: 'Prediction not found'
+            };
+        }
+
+        // Update the transaction status to confirmed (redeemed)
+        await custodyStore.updateTransactionStatus(predictionId, 'confirmed');
+
+        // Also update the blockchain status
+        const updatedPrediction = await custodyStore.getTransaction(predictionId);
+        if (updatedPrediction) {
+            // Create an updated transaction object with blockchainStatus set to 'redeemed'
+            const updatedTx = {
+                ...updatedPrediction,
+                blockchainStatus: 'redeemed' as 'unresolved' | 'won' | 'lost' | 'redeemed',
+                verifiedAt: new Date().toISOString()
+            };
+
+            // Store the updated transaction with blockchain data
+            await storeEntity('CUSTODY_TRANSACTION', predictionId, updatedTx);
+        }
+
+        // Revalidate relevant paths
+        revalidatePath(`/prediction/${predictionId}`);
+        if (prediction.marketId) {
+            revalidatePath(`/markets/${prediction.marketId}`);
+        }
+        revalidatePath('/portfolio');
+        revalidatePath('/leaderboard');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error marking prediction as redeemed:', error);
+
+        return {
+            success: false,
+            error: error instanceof Error
+                ? error.message
+                : 'Failed to mark prediction as redeemed'
+        };
+    }
+}
+
+export async function canClaimReward(nftId: number): Promise<{
+    canClaim: boolean;
+    reason?: string;
+    prediction?: any;
+    market?: any;
+}> {
+    try {
+        // Get the current user
+        const user = await currentUser();
+        if (!user) {
+            return {
+                canClaim: false,
+                reason: 'Authentication required'
+            };
+        }
+
+        // Check if the transaction with this receipt ID has been already claimed
+        // This provides an additional layer of verification beyond the blockchain check
+        try {
+            // Get all claim reward transactions for this user
+            const claimTransactions = await custodyStore.getUserClaimRewardTransactions(user.id);
+
+            // Check if any transaction has this receiptId (nftId)
+            const existingClaim = claimTransactions.find(tx =>
+                tx.receiptId === nftId ||
+                tx.nonce === nftId
+            );
+
+            if (existingClaim) {
+                return {
+                    canClaim: false,
+                    reason: 'Rewards already claimed through a previous transaction',
+                };
+            }
+        } catch (err) {
+            // If there's an error checking claim transactions, log but continue
+            console.warn('Error checking existing claim transactions:', err);
+        }
+
+        // Get the prediction status from the blockchain
+        const predictionResult = await predictionContractStore.getPredictionStatus(nftId);
+
+        if (predictionResult === 'lost') {
+            return {
+                canClaim: false,
+                reason: 'This prediction did not win',
+            };
+        }
+
+        // Check if prediction is already redeemed or in process
+        if (predictionResult === 'redeemed') {
+            return {
+                canClaim: false,
+                reason: 'Rewards already claimed',
+            };
+        }
+
+        if (predictionResult === 'unresolved') {
+            return {
+                canClaim: false,
+                reason: 'Claim already in process',
+            };
+        }
+
+        // All checks passed
+        return { canClaim: true };
+    } catch (error) {
+        console.error('Error checking if prediction can claim reward:', error);
+
+        return {
+            canClaim: false,
+            reason: 'Error checking claim eligibility'
         };
     }
 }

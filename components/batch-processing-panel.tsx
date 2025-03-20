@@ -226,7 +226,7 @@ export function BatchProcessingPanel({ marketId, pendingCount, pendingTransactio
                               <>Processed {processResult.processed} prediction{processResult.processed !== 1 ? 's' : ''} in {processResult.batched} batch{processResult.batched !== 1 ? 'es' : ''}</>
                             )}.
                             {processResult.txid && (
-                              <span className="block mt-1">Transaction ID: {processResult.txid.substring(0, 10)}...</span>
+                              <span className="block mt-1">Transaction ID: {processResult.txid}</span>
                             )}
                           </p>
                         ) : (

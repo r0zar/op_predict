@@ -7,10 +7,11 @@ import { ArrowLeft, CheckCircle, XCircle, DollarSign, Clock, RefreshCcw } from '
 import Link from 'next/link';
 import PredictionShare from '@/components/prediction-share';
 import ReturnPredictionButton from '@/components/return-prediction-button';
+import { RedeemPredictionButton } from '@/components/redeem-prediction-button';
 // Use any type instead of defining explicit types
 import { calculateOutcomePercentages } from "@/lib/utils";
 import { marketStore, custodyStore } from 'wisdom-sdk';
-import { canReturnPrediction } from '@/app/actions/prediction-actions';
+import { canReturnPrediction, canClaimReward } from '@/app/actions/prediction-actions';
 
 // Dynamic metadata for the page
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -339,10 +340,23 @@ export default async function PredictionPage({ params }: { params: { id: string 
 
     // Check if user owns the prediction
     const isOwner = user?.id === prediction.userId;
-    
+
+    // Get the prediction's on-chain identifier (nonce or receiptId)
+    const nftId = prediction.receiptId || prediction.nonce;
+
+    if (!nftId) {
+        console.warn('Warning: Prediction does not have a valid nonce or receiptId for on-chain identification');
+    }
+
     // Check if the prediction can be returned
-    const canReturn = isOwner && prediction.status === 'pending' ? 
+    // Note: canReturnPrediction will need the database ID for lookup, then use nonce internally
+    const canReturn = isOwner && prediction.status === 'pending' ?
         await canReturnPrediction(id) : { canReturn: false };
+
+    // Check if the prediction can claim rewards
+    // Note: canClaimReward will need the database ID for lookup, then use nonce internally
+    const canClaim = isOwner && isResolved && isWinner ?
+        await canClaimReward(nftId) : { canClaim: false };
 
     return (
         <div className="container mx-auto py-10">
@@ -358,13 +372,25 @@ export default async function PredictionPage({ params }: { params: { id: string 
                     {isOwner && (
                         <div className="flex space-x-2">
                             {canReturn.canReturn && (
-                                <ReturnPredictionButton 
-                                    predictionId={id} 
+                                <ReturnPredictionButton
+                                    predictionId={id}
                                     tooltip={canReturn.reason || 'Return this prediction'}
+                                    predictionNonce={nftId}
+                                />
+                            )}
+                            {canClaim.canClaim && (
+                                <RedeemPredictionButton
+                                    predictionId={id}
+                                    predictionNonce={nftId}
+                                    marketName={marketName}
+                                    outcomeName={selectedOutcome?.name || 'Unknown'}
+                                    potentialPayout={actualPnl}
+                                    tooltip="Claim your winnings for this prediction"
                                 />
                             )}
                             <PredictionShare
                                 predictionId={id}
+                                predictionNonce={nftId}
                                 marketName={marketName}
                                 isResolved={isResolved}
                                 outcomeSelected={selectedOutcome?.name || 'Unknown'}
@@ -469,6 +495,19 @@ export default async function PredictionPage({ params }: { params: { id: string 
                                                 {formatCurrency(actualPnl > 0 ? amount + actualPnl : 0)}
                                             </p>
                                         </div>
+
+                                        {isOwner && isWinner && canClaim?.canClaim && (
+                                            <div className="mt-4">
+                                                <RedeemPredictionButton
+                                                    predictionId={id}
+                                                    marketName={marketName}
+                                                    outcomeName={selectedOutcome?.name || 'Unknown'}
+                                                    potentialPayout={actualPnl}
+                                                    predictionNonce={nftId}
+                                                    tooltip="Claim your winnings for this prediction"
+                                                />
+                                            </div>
+                                        )}
                                     </>
                                 ) : (
                                     <>

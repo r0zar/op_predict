@@ -248,6 +248,39 @@ export async function getCustodyTransaction(id: string): Promise<{
 /**
  * Get NFT receipt for a transaction in custody
  */
+export async function getNFTReceipt(id: string): Promise<{
+    success: boolean;
+    receipt?: any;
+    error?: string;
+}> {
+    try {
+        if (!id) {
+            return { success: false, error: 'NFT Receipt ID is required' };
+        }
+
+        // Get the NFT receipt
+        const receipt = await custodyStore.getNFTReceipt(id);
+
+        if (!receipt) {
+            return { success: false, error: 'NFT Receipt not found' };
+        }
+
+        return {
+            success: true,
+            receipt
+        };
+    } catch (error) {
+        console.error('Error getting custody NFT receipt:', error);
+        return {
+            success: false,
+            error: 'Failed to get NFT receipt. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get NFT receipt for a transaction in custody
+ */
 export async function getCustodyNFTReceipt(id: string): Promise<{
     success: boolean;
     receipt?: any;
@@ -689,13 +722,41 @@ export async function triggerBatchProcessing(marketId: string): Promise<{
 }
 
 /**
- * Manually trigger synchronization of prediction statuses with blockchain (admin only)
- * This is similar to what the cron job does but can be triggered manually for testing
+ * Get all claim reward transactions for the current user
  */
-export async function triggerPredictionStatusSync(): Promise<{
+export async function getUserClaimRewardTransactions(): Promise<{
     success: boolean;
-    updated?: number;
-    details?: any;
+    transactions?: any[];
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Get all claim reward transactions for the user
+        const transactions = await custodyStore.getUserClaimRewardTransactions(user.id);
+
+        return {
+            success: true,
+            transactions
+        };
+    } catch (error) {
+        console.error('Error getting user claim reward transactions:', error);
+        return {
+            success: false,
+            error: 'Failed to get claim reward transactions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get all claim reward transactions (admin only)
+ */
+export async function getAllClaimRewardTransactions(): Promise<{
+    success: boolean;
+    transactions?: any[];
     error?: string;
 }> {
     try {
@@ -712,30 +773,139 @@ export async function triggerPredictionStatusSync(): Promise<{
             };
         }
 
-        // Call the sync function from custody store
-        const result = await custodyStore.syncSubmittedPredictionStatuses();
+        // Get all claim reward transactions
+        const transactions = await custodyStore.getAllPendingClaimRewards();
 
-        if (!result.success) {
+        if (!transactions) {
+            return { success: true, transactions: [] };
+        }
+
+        // Sort by creation date (newest first)
+        const sortedTransactions = transactions.sort((a: any, b: any) =>
+            new Date(b.takenCustodyAt).getTime() - new Date(a.takenCustodyAt).getTime()
+        );
+
+        return {
+            success: true,
+            transactions: sortedTransactions.slice(0, 200) // Limit to first 200
+        };
+    } catch (error) {
+        console.error('Error getting all claim reward transactions:', error);
+        return {
+            success: false,
+            error: 'Failed to get claim reward transactions. Please try again.'
+        };
+    }
+}
+
+/**
+ * Get pending claim reward transactions (admin only)
+ */
+export async function getPendingClaimRewards(): Promise<{
+    success: boolean;
+    pendingCount: number;
+    pendingTransactions?: any[];
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, pendingCount: 0, error: 'User not authenticated' };
+        }
+
+        // Check if user is an admin
+        if (!isAdmin(user.id)) {
             return {
                 success: false,
-                error: result.error || 'Failed to synchronize prediction statuses'
+                pendingCount: 0,
+                error: 'Unauthorized: Admin permissions required'
             };
         }
 
-        // Revalidate paths
-        if (result.updated > 0) {
-            revalidatePath('/portfolio');
-            revalidatePath('/markets');
-            revalidatePath('/admin');
+        // Get pending claim reward transactions
+        const pendingTransactions = await custodyStore.getAllPendingClaimRewards();
+
+        if (!pendingTransactions) {
+            return {
+                success: true,
+                pendingCount: 0,
+                pendingTransactions: []
+            };
         }
 
         return {
             success: true,
-            updated: result.updated,
-            details: result.details
+            pendingCount: pendingTransactions.length,
+            pendingTransactions
         };
     } catch (error) {
-        console.error('Error triggering prediction status sync:', error);
+        console.error('Error getting pending claim rewards:', error);
+        return {
+            success: false,
+            pendingCount: 0,
+            error: 'Failed to get pending claim rewards. Please try again.'
+        };
+    }
+}
+
+/**
+ * Manually trigger sync pendingTransactions statuses
+ */
+export async function syncSubmittedPredictionStatuses() {
+    return custodyStore.syncSubmittedPredictionStatuses()
+}
+
+/**
+ * Manually trigger batch processing for claim rewards (admin only)
+ */
+export async function triggerBatchClaimRewardProcessing(): Promise<{
+    success: boolean;
+    processed?: number;
+    batched?: number;
+    txid?: string;
+    error?: string;
+}> {
+    try {
+        const user = await currentUser();
+        if (!user) {
+            return { success: false, error: 'User not authenticated' };
+        }
+
+        // Check if user is an admin
+        if (!isAdmin(user.id)) {
+            return {
+                success: false,
+                error: 'Unauthorized: Admin permissions required'
+            };
+        }
+
+        // Get count of pending transactions before processing
+        const pendingTransactionsBefore = await custodyStore.getAllPendingClaimRewards();
+        const pendingCountBefore = pendingTransactionsBefore?.length || 0;
+        console.log(`Before batch processing: ${pendingCountBefore} pending claim reward transactions`);
+
+        // Call the batch processing function with forceProcess option
+        const result = await custodyStore.batchProcessClaimRewards({ forceProcess: true });
+
+        if (!result.success) {
+            return {
+                success: false,
+                error: result.error || 'Failed to process claim rewards'
+            };
+        }
+
+        // Revalidate paths
+        revalidatePath('/portfolio');
+        revalidatePath('/markets');
+
+        return {
+            success: true,
+            processed: result.processed,
+            batched: result.batched,
+            txid: result.txid
+        };
+    } catch (error) {
+        console.error('Error triggering batch claim reward processing:', error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'

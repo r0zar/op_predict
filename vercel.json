@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/sync-markets-with-blockchain",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/batch-claim-rewards",
+      "schedule": "0 */12 * * *"
     }
   ]
 }

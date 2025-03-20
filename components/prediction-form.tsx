@@ -10,7 +10,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 type Market = any;
 type MarketOutcome = any;
 type PredictionNFTReceipt = any;
-import { createPrediction } from "@/app/actions/prediction-actions";
 import { createPredictionWithCustody } from "@/app/actions/custody-actions";
 import { PredictionReceipt } from "@/components/prediction-receipt";
 import { cn } from "@/lib/utils";
@@ -59,21 +58,21 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
     const calculatePotentialPayout = (outcome: MarketOutcome & { percentage: number }, predictAmount = amount) => {
         // If amount is not set, we can't calculate a payout
         if (predictAmount <= 0) return 0;
-        
+
         // Get the current total pool amount across all outcomes
         const totalPoolAmount = outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) || 0.1; // Avoid division by zero
-        
+
         // Calculate what the new total pool will be after adding this prediction
         const newTotalPoolAmount = totalPoolAmount + predictAmount;
-        
+
         // Calculate what the new amount for this outcome will be
         const currentOutcomeAmount = outcome.amount || 0;
         const newOutcomeAmount = currentOutcomeAmount + (outcome.id === selectedOutcome ? predictAmount : 0);
-        
+
         // Calculate the new percentage for this outcome
         // For very small percentages (< 0.1%), use a minimum value to avoid extremely high multipliers
         const newPercentage = Math.max((newOutcomeAmount / newTotalPoolAmount) * 100, 0.1);
-        
+
         // Calculate the payout based on the new percentages after this prediction
         // Formula: amount * (100/outcome_percentage)
         // Higher percentage = lower payout, Lower percentage = higher payout
@@ -81,7 +80,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
         const adminFee = rawPayout * 0.05; // 5% fee
         return rawPayout - adminFee;
     };
-    
+
     // Get the multiplier for an outcome, handling the zero case correctly
     const getMultiplier = (outcome: MarketOutcome & { percentage: number }) => {
         // If no amount is set, calculate with a small default amount to show potential
@@ -90,23 +89,23 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
             const payout = calculatePotentialPayout(outcome, defaultAmount);
             return (payout / defaultAmount).toFixed(1);
         }
-        
+
         // Regular case with user-set amount
         const payout = calculatePotentialPayout(outcome);
         return (payout / amount).toFixed(1);
     };
-    
+
     // Calculate percentage for an outcome with the user's selection factored in
     const getAdjustedPercentage = (outcome: MarketOutcome & { percentage: number }) => {
         // Total pool plus the user's potential contribution
         const totalPoolAmount = outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) || 0.1; // Avoid division by zero
         const newTotalPoolAmount = totalPoolAmount + (amount > 0 ? amount : 0);
-        
+
         // The outcome amount including user's prediction if selected
         const currentOutcomeAmount = outcome.amount || 0;
-        const newOutcomeAmount = currentOutcomeAmount + 
+        const newOutcomeAmount = currentOutcomeAmount +
             (selectedOutcome === outcome.id && amount > 0 ? amount : 0);
-        
+
         // Calculate percentage with minimum threshold
         return Math.max((newOutcomeAmount / newTotalPoolAmount) * 100, 0.1).toFixed(1);
     };
@@ -135,7 +134,6 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
             if (!selectedOutcomeData) {
                 throw new Error("Selected outcome not found");
             }
-
 
             const { signPrediction, requestTransactionCustody } = await import('signet-sdk')
 
@@ -305,7 +303,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                                     {/* Always show current percentages for context */}
                                                     <p>• Current odds: {outcome.percentage?.toFixed(1) || "0.0"}%</p>
                                                     <p>• Current pool: ${(outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) || 0).toFixed(2)}</p>
-                                                    
+
                                                     {/* Show updated odds when an outcome is selected */}
                                                     {selectedOutcome !== null && (
                                                         <>
@@ -313,7 +311,7 @@ function PredictionFormContent({ market, outcomes, userId }: PredictionFormProps
                                                             <p>• New total pool: ${(outcomes.reduce((sum, o) => sum + (o.amount || 0), 0) + (amount > 0 ? amount : 1)).toFixed(2)}</p>
                                                         </>
                                                     )}
-                                                    
+
                                                     {/* Show payout details when amount is set */}
                                                     {amount > 0 && (
                                                         <>

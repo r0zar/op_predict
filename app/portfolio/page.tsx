@@ -28,13 +28,14 @@ export default async function PortfolioPage() {
         redirect("/");
     }
 
+
     // Fetch user's transactions/predictions
     const predictionsResult = await getUserCustodyTransactions();
     const userPredictions = predictionsResult.success ? predictionsResult.transactions || [] : [];
 
     // Count and calculate unclaimed winnings
-    const unclaimedPredictions = userPredictions.filter(p => p.status === 'won' && !p.redeemed);
-    const totalUnclaimedAmount = unclaimedPredictions.reduce((sum, p) => sum + (p.potentialPayout || 0), 0);
+    const unclaimedPredictions = userPredictions.filter(p => p.blockchainStatus === 'won' && !p.redeemed);
+    const totalUnclaimedAmount = unclaimedPredictions.reduce((sum, p) => sum + (Number(p.potentialPayout) || 0), 0);
 
     // Get user stats for the dashboard
     const userStatsResult = await getCurrentUserStats();
@@ -72,6 +73,7 @@ export default async function PortfolioPage() {
         ? (totalProfitLoss / userStats.totalAmount) * 100
         : 0;
 
+
     return (
         <div className="container max-w-6xl py-10">
             <h1 className="text-3xl font-bold mb-6">Your Portfolio</h1>
@@ -86,7 +88,7 @@ export default async function PortfolioPage() {
                                 Unclaimed Winnings
                             </CardDescription>
                             <CardTitle className="text-3xl font-bold text-green-700 dark:text-green-400">
-                                ${totalUnclaimedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                ${Number(totalUnclaimedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -94,19 +96,6 @@ export default async function PortfolioPage() {
                                 <div className="text-sm text-green-700 dark:text-green-400">
                                     {unclaimedPredictions.length} winning prediction{unclaimedPredictions.length !== 1 ? 's' : ''} ready to claim
                                 </div>
-                                <Button
-                                    size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={() => {
-                                        // Add smooth scroll to the predictions table
-                                        document.getElementById('predictions-table')?.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'start'
-                                        });
-                                    }}
-                                >
-                                    View & Redeem
-                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -210,7 +199,7 @@ export default async function PortfolioPage() {
                                 // Count unique market IDs for active predictions
                                 const activeMarketIds = new Set(
                                     userPredictions
-                                        .filter(p => p.status === 'pending')
+                                        .filter(p => p.blockchainStatus === 'pending')
                                         .map(p => p.marketId)
                                 );
                                 return `Active in ${activeMarketIds.size} markets`;
@@ -271,16 +260,16 @@ export default async function PortfolioPage() {
                             <Tabs defaultValue={unclaimedPredictions.length > 0 ? "redeemable" : "all"} className="w-full">
                                 <TabsList className="mb-4">
                                     <TabsTrigger value="all">All ({userPredictions.length})</TabsTrigger>
-                                    <TabsTrigger value="active">Active ({userPredictions.filter(p => p.status === 'pending').length})</TabsTrigger>
+                                    <TabsTrigger value="active">Active ({userPredictions.filter(p => p.blockchainStatus === 'pending').length})</TabsTrigger>
                                     <TabsTrigger value="redeemable" className={unclaimedPredictions.length ? "bg-green-100 text-green-700 data-[state=active]:bg-green-200" : ""}>
                                         Ready to Redeem ({unclaimedPredictions.length})
                                         {unclaimedPredictions.length > 0 && (
                                             <span className="ml-1 px-1.5 py-0.5 rounded-full bg-green-700 text-white text-xs font-bold">
-                                                ${totalUnclaimedAmount.toFixed(2)}
+                                                ${Number(totalUnclaimedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </span>
                                         )}
                                     </TabsTrigger>
-                                    <TabsTrigger value="resolved">Resolved ({userPredictions.filter(p => p.status === 'won' || p.status === 'lost' || p.status === 'redeemed').length})</TabsTrigger>
+                                    <TabsTrigger value="resolved">Resolved ({userPredictions.filter(p => p.blockchainStatus === 'won' || p.blockchainStatus === 'lost' || p.blockchainStatus === 'redeemed').length})</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="all">
@@ -291,9 +280,9 @@ export default async function PortfolioPage() {
                                 </TabsContent>
 
                                 <TabsContent value="active">
-                                    {userPredictions.filter(p => p.status === 'pending').length > 0 ? (
+                                    {userPredictions.filter(p => p.blockchainStatus === 'pending').length > 0 ? (
                                         <PredictionsTable
-                                            predictions={userPredictions.filter(p => p.status === 'pending')}
+                                            predictions={userPredictions.filter(p => p.blockchainStatus === 'pending')}
                                             isAdmin={false}
                                         />
                                     ) : (
@@ -313,14 +302,8 @@ export default async function PortfolioPage() {
                                                 <div className="bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300 p-4 rounded-lg mb-4 flex justify-between items-center">
                                                     <div className="flex items-center">
                                                         <Gift className="h-5 w-5 mr-2" />
-                                                        <span>You have {unclaimedPredictions.length} winning predictions totaling ${totalUnclaimedAmount.toFixed(2)}</span>
+                                                        <span>You have {unclaimedPredictions.length} winning predictions totaling ${Number(totalUnclaimedAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                     </div>
-                                                    <Button
-                                                        className="bg-green-600 hover:bg-green-700"
-                                                        disabled={true} // Not implemented yet
-                                                    >
-                                                        Redeem All
-                                                    </Button>
                                                 </div>
                                             )}
 
@@ -340,9 +323,9 @@ export default async function PortfolioPage() {
                                 </TabsContent>
 
                                 <TabsContent value="resolved">
-                                    {userPredictions.filter(p => p.status === 'won' || p.status === 'lost' || p.status === 'redeemed').length > 0 ? (
+                                    {userPredictions.filter(p => p.blockchainStatus === 'won' || p.blockchainStatus === 'lost' || p.blockchainStatus === 'redeemed').length > 0 ? (
                                         <PredictionsTable
-                                            predictions={userPredictions.filter(p => p.status === 'won' || p.status === 'lost' || p.status === 'redeemed')}
+                                            predictions={userPredictions.filter(p => p.blockchainStatus === 'won' || p.blockchainStatus === 'lost' || p.blockchainStatus === 'redeemed')}
                                             isAdmin={false}
                                         />
                                     ) : (

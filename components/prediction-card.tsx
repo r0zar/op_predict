@@ -224,6 +224,7 @@ export function PredictionCard({
                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                             <RedeemPredictionButton
                                 predictionId={prediction.id}
+                                predictionNonce={prediction.nonce}
                                 predictionStatus={prediction.status}
                                 marketName={prediction.nftReceipt.marketName}
                                 outcomeName={prediction.outcomeName}

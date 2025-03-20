@@ -229,6 +229,7 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                     <SortIcon field="amount" />
                   </div>
                 </TableHead>
+                <TableHead className="w-[80px]">NFT ID</TableHead>
                 <TableHead className="w-[80px]">Status</TableHead>
                 <TableHead className="w-[80px]"><div className='text-center'>Actions</div></TableHead>
               </TableRow>
@@ -236,10 +237,10 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
             <TableBody>
               {paginatedPredictions.length > 0 ? (
                 paginatedPredictions.map((prediction) => {
-                  const isResolved = prediction.status === 'won' || prediction.status === 'lost';
-                  const isRedeemed = prediction.status === 'redeemed';
-                  const isWinner = prediction.status === 'won';
-
+                  const statusMessage = prediction.blockchainStatus || prediction.status
+                  const isResolved = statusMessage === 'won' || statusMessage === 'lost';
+                  const isRedeemed = statusMessage === 'redeemed' || statusMessage === 'pending' || prediction.redeemed;
+                  const isWinner = statusMessage === 'won';
                   return (
                     <TableRow
                       key={prediction.id}
@@ -288,7 +289,7 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                                 <div className="font-medium">Prediction Amount</div>
                                 {isWinner && (
                                   <div className="text-green-500">
-                                    {`Potential payout: $${prediction.potentialPayout?.toFixed(2) || "0.00"}`}
+                                    {`Potential payout: $${prediction.potentialPayout || "0.00"}`}
                                   </div>
                                 )}
                               </div>
@@ -297,7 +298,24 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                         </TooltipProvider>
                       </TableCell>
                       <TableCell>
-                        {prediction.status === 'pending' && returnablePredictions[prediction.id]?.canReturn ? (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                                {prediction.nonce || "N/A"}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <div className="text-xs space-y-1">
+                                <div className="font-medium">On-chain NFT Identifier</div>
+                                <div className="text-muted-foreground">Used for blockchain transactions</div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell>
+                        {statusMessage === 'pending' && returnablePredictions[prediction.id]?.canReturn ? (
                           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
                               <Badge
@@ -316,18 +334,21 @@ export function PredictionsTable({ predictions, isAdmin = false }: PredictionsTa
                             />
                           </Dialog >) : (
                           <Badge>
-                            {(prediction.status).charAt(0).toUpperCase() + (prediction.status).slice(1)}
+                            {(statusMessage)?.charAt(0).toUpperCase() + (statusMessage)?.slice(1)}
                           </Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {isResolved && !isRedeemed ? (
+                        {isWinner && !isRedeemed && isResolved ? (
                           <RedeemPredictionButton
                             predictionId={prediction.id}
+                            predictionNonce={prediction.nonce}
                             predictionStatus={prediction.status}
                             marketName={prediction.nftReceipt.marketName}
                             outcomeName={prediction.outcomeName}
                             potentialPayout={prediction.potentialPayout || 0}
+                            variant='small'
+                            tooltip="Claim your winnings for this prediction"
                           />
                         ) : (
                           <Button

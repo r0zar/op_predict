@@ -18,8 +18,11 @@ import {
     findCustodyTransactions,
     deleteCustodyTransaction,
     triggerBatchProcessing,
-    triggerPredictionStatusSync,
-    getPendingPredictions
+    getPendingPredictions,
+    getAllClaimRewardTransactions,
+    syncSubmittedPredictionStatuses,
+    getPendingClaimRewards,
+    triggerBatchClaimRewardProcessing
 } from '@/app/actions/custody-actions';
 import {
     getMarkets,
@@ -27,7 +30,6 @@ import {
     resolveMarket,
     syncMarketsWithBlockchain
 } from '@/app/actions/market-actions';
-
 export default function AdminPage() {
     const { user, isLoaded } = useUser();
     const router = useRouter();
@@ -230,7 +232,7 @@ export default function AdminPage() {
         setResultMessage('');
 
         try {
-            const result = await triggerPredictionStatusSync();
+            const result = await syncSubmittedPredictionStatuses();
 
             if (result.success) {
                 let message = `Successfully synchronized ${result.updated} predictions with blockchain.`;
@@ -424,7 +426,7 @@ export default function AdminPage() {
     };
 
     return (
-        <div className="container max-w-6xl mx-auto py-8 px-4">
+        <div className="container max-w-[1600px] mx-auto py-8 px-4">
             <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
             <Tabs
@@ -452,6 +454,7 @@ export default function AdminPage() {
                         <TabsTrigger value="transactions">Transaction Management</TabsTrigger>
                         <TabsTrigger value="markets">Market Management</TabsTrigger>
                         <TabsTrigger value="batch">Batch Processing</TabsTrigger>
+                        <TabsTrigger value="claim-rewards">Claim Rewards</TabsTrigger>
                     </TabsList>
                 </div>
 
@@ -673,9 +676,9 @@ export default function AdminPage() {
                                                     <tbody>
                                                         {transactions.map((tx, index) => (
                                                             <tr key={tx.id || index} className="border-b hover:bg-muted/50">
-                                                                <td className="p-2 font-mono text-xs">{tx.id.substring(0, 10)}...</td>
-                                                                <td className="p-2">{tx.marketId || 'N/A'}</td>
-                                                                <td className="p-2">
+                                                                <td className="p-2 font-mono text-xs">{tx.id}</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.marketId || 'N/A'}</td>
+                                                                <td className="p-2 font-mono text-xs">
                                                                     <span className={
                                                                         tx.status === 'pending' ? 'text-yellow-500' :
                                                                             tx.status === 'confirmed' ? 'text-green-500' :
@@ -685,9 +688,9 @@ export default function AdminPage() {
                                                                         {tx.status}
                                                                     </span>
                                                                 </td>
-                                                                <td className="p-2">{tx.type}</td>
-                                                                <td className="p-2">{new Date(tx.takenCustodyAt).toLocaleString()}</td>
-                                                                <td className="p-2 font-mono text-xs">{tx.userId.substring(0, 8)}...</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.type}</td>
+                                                                <td className="p-2 text-xs">{new Date(tx.takenCustodyAt).toLocaleString()}</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.userId}</td>
                                                                 <td className="p-2 text-right">
                                                                     <Button
                                                                         variant="ghost"
@@ -938,7 +941,7 @@ export default function AdminPage() {
                                                         {markets.map((market, index) => (
                                                             <>
                                                                 <tr key={market.id || index} className="border-b hover:bg-muted/50">
-                                                                    <td className="p-2 font-mono text-xs">{market.id?.substring(0, 10)}...</td>
+                                                                    <td className="p-2 font-mono text-xs">{market.id}</td>
                                                                     <td className="p-2">{market.name}</td>
                                                                     <td className="p-2">
                                                                         <span className={
@@ -1249,12 +1252,302 @@ export default function AdminPage() {
                                                     <tbody>
                                                         {transactions.map((tx, index) => (
                                                             <tr key={tx.id || index} className="border-b hover:bg-muted/50">
-                                                                <td className="p-2 font-mono text-xs">{tx.id.substring(0, 10)}...</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.id}</td>
                                                                 <td className="p-2">{tx.marketId || 'N/A'}</td>
                                                                 <td className="p-2">${tx.amount || 0}</td>
                                                                 <td className="p-2">{tx.outcomeName || tx.outcomeId || 'N/A'}</td>
                                                                 <td className="p-2">{Math.floor((Date.now() - new Date(tx.takenCustodyAt).getTime()) / (1000 * 60))}</td>
-                                                                <td className="p-2 font-mono text-xs">{tx.userId.substring(0, 8)}...</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.userId}</td>
+                                                                <td className="p-2 text-right">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            // Toggle expanded state for this transaction
+                                                                            const txIndex = transactions.findIndex(t => t.id === tx.id);
+                                                                            if (txIndex !== -1) {
+                                                                                setTransactions(prev => {
+                                                                                    const newTxs = [...prev];
+                                                                                    newTxs[txIndex] = { ...newTxs[txIndex], expanded: !newTxs[txIndex].expanded };
+                                                                                    return newTxs;
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        Details
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="destructive"
+                                                                        size="sm"
+                                                                        onClick={() => handleDeleteTransaction(tx.id)}
+                                                                        disabled={loading}
+                                                                        className="ml-2"
+                                                                    >
+                                                                        Delete
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Selected transaction details */}
+                                            {transactions.some(tx => tx.expanded) && (
+                                                <div className="mt-4 p-4 border rounded">
+                                                    <h4 className="font-medium mb-2">Transaction Details</h4>
+                                                    {transactions.filter(tx => tx.expanded).map(tx => (
+                                                        <div key={`details-${tx.id}`}>
+                                                            <pre className="text-xs p-2 rounded overflow-x-auto border bg-muted">
+                                                                {formatJson(tx)}
+                                                            </pre>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                {/* Claim Rewards Tab */}
+                <TabsContent value="claim-rewards">
+                    <div className="grid grid-cols-1 gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Claim Rewards Management</CardTitle>
+                                <CardDescription>
+                                    Process and monitor claim reward transactions
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-lg font-medium mb-2">Claim Rewards Management</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <div className="flex flex-col space-y-4">
+                                                <p className="text-sm text-muted-foreground">
+                                                    View and process pending claim reward transactions. These are rewards that
+                                                    users have requested to claim, but have not yet been processed on the blockchain.
+                                                </p>
+                                                <div className="flex space-x-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={async () => {
+                                                            setLoading(true);
+                                                            setTransactions([]);
+                                                            setErrorMessage('');
+                                                            setResultMessage('');
+                                                            setPendingCount(0);
+
+                                                            try {
+                                                                const result = await getPendingClaimRewards();
+                                                                if (result.success) {
+                                                                    setTransactions(result.pendingTransactions || []);
+                                                                    setPendingCount(result.pendingCount || 0);
+                                                                    setResultMessage(`Found ${result.pendingCount} pending claim rewards`);
+                                                                } else {
+                                                                    setErrorMessage(result.error || 'Failed to get pending claim rewards');
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error getting pending claim rewards:', error);
+                                                                setErrorMessage('An unexpected error occurred');
+                                                            } finally {
+                                                                setLoading(false);
+                                                            }
+                                                        }}
+                                                        disabled={loading}
+                                                    >
+                                                        Check Pending Claim Rewards
+                                                    </Button>
+                                                    <Button
+                                                        onClick={async () => {
+                                                            setLoading(true);
+                                                            setErrorMessage('');
+                                                            setResultMessage('');
+
+                                                            try {
+                                                                const result = await triggerBatchClaimRewardProcessing();
+                                                                if (result.success) {
+                                                                    setResultMessage(`Successfully processed ${result.batched} claim rewards. Transaction ID: ${result.txid || 'N/A'}`);
+
+                                                                    // Refresh pending claim rewards after processing
+                                                                    const pendingResult = await getPendingClaimRewards();
+                                                                    if (pendingResult.success) {
+                                                                        setTransactions(pendingResult.pendingTransactions || []);
+                                                                        setPendingCount(pendingResult.pendingCount || 0);
+                                                                    }
+                                                                } else {
+                                                                    setErrorMessage(result.error || 'Failed to process claim rewards');
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error processing claim rewards:', error);
+                                                                setErrorMessage('An unexpected error occurred');
+                                                            } finally {
+                                                                setLoading(false);
+                                                            }
+                                                        }}
+                                                        disabled={loading}
+                                                    >
+                                                        Process Pending Claim Rewards
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col space-y-4">
+                                                <p className="text-sm text-muted-foreground flex-auto">
+                                                    View all claim reward transactions in the system, regardless of status.
+                                                </p>
+                                                <div className="flex space-x-2">
+                                                    <Button
+                                                        onClick={async () => {
+                                                            setLoading(true);
+                                                            setTransactions([]);
+                                                            setErrorMessage('');
+                                                            setResultMessage('');
+
+                                                            try {
+                                                                const result = await getAllClaimRewardTransactions();
+                                                                if (result.success && result.transactions) {
+                                                                    setTransactions(result.transactions);
+                                                                    setResultMessage(`Found ${result.transactions.length} claim reward transactions`);
+                                                                } else {
+                                                                    setErrorMessage(result.error || 'Failed to fetch claim reward transactions');
+                                                                }
+                                                            } catch (error) {
+                                                                console.error('Error fetching claim reward transactions:', error);
+                                                                setErrorMessage('An unexpected error occurred');
+                                                            } finally {
+                                                                setLoading(false);
+                                                            }
+                                                        }}
+                                                        disabled={loading}
+                                                    >
+                                                        View All Claim Reward Transactions
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Results */}
+                                    {resultMessage && (
+                                        <div className="p-3 rounded border">
+                                            {resultMessage}
+                                        </div>
+                                    )}
+
+                                    {errorMessage && (
+                                        <div className="p-3 rounded border border-destructive">
+                                            {errorMessage}
+                                        </div>
+                                    )}
+
+                                    {loading && (
+                                        <div className="p-3 rounded border">
+                                            Loading...
+                                        </div>
+                                    )}
+
+                                    {/* Pending Claim Rewards */}
+                                    {pendingCount > 0 && (
+                                        <div className="p-3 rounded border">
+                                            Found {pendingCount} pending claim rewards that need processing.
+                                        </div>
+                                    )}
+
+                                    {/* Transaction List */}
+                                    {transactions.length > 0 && (
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-lg font-medium">Claim Reward Transactions ({transactions.length})</h3>
+                                                <div className="flex space-x-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            // Create summary stats for claim rewards
+                                                            const summary = {
+                                                                total: transactions.length,
+                                                                byStatus: {
+                                                                    pending: transactions.filter(tx => tx.status === 'pending').length,
+                                                                    confirmed: transactions.filter(tx => tx.status === 'confirmed').length,
+                                                                    submitted: transactions.filter(tx => tx.status === 'submitted').length,
+                                                                    rejected: transactions.filter(tx => tx.status === 'rejected').length,
+                                                                },
+                                                                pendingAge: transactions.filter(tx => tx.status === 'pending').length > 0 ? {
+                                                                    averageMinutes: Math.round(transactions.filter(tx => tx.status === 'pending').reduce((sum, tx) =>
+                                                                        sum + Math.floor((Date.now() - new Date(tx.createdAt).getTime()) / (1000 * 60)), 0) /
+                                                                        transactions.filter(tx => tx.status === 'pending').length),
+                                                                    oldest: Math.max(...transactions.filter(tx => tx.status === 'pending').map(tx =>
+                                                                        Math.floor((Date.now() - new Date(tx.createdAt).getTime()) / (1000 * 60)))),
+                                                                    newest: Math.min(...transactions.filter(tx => tx.status === 'pending').map(tx =>
+                                                                        Math.floor((Date.now() - new Date(tx.createdAt).getTime()) / (1000 * 60))))
+                                                                } : 'No pending transactions',
+                                                                totalAmount: transactions.reduce((sum, tx) => sum + (tx.potentialPayout || 0), 0)
+                                                            };
+
+                                                            setDebugOutput(formatJson(summary));
+                                                        }}
+                                                    >
+                                                        View Summary
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            {/* Debug output area */}
+                                            {debugOutput && (
+                                                <div className="mb-4 p-4 border rounded">
+                                                    <h4 className="font-medium mb-2">Summary</h4>
+                                                    <pre className="text-xs p-2 rounded overflow-x-auto border bg-muted">
+                                                        {debugOutput}
+                                                    </pre>
+                                                    <div className="flex justify-end mt-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setDebugOutput('')}
+                                                        >
+                                                            Close
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Table view for transactions */}
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full border-collapse">
+                                                    <thead>
+                                                        <tr className="border-b">
+                                                            <th className="text-left p-2">ID</th>
+                                                            <th className="text-left p-2">Receipt ID</th>
+                                                            <th className="text-left p-2">Status</th>
+                                                            <th className="text-left p-2">Amount</th>
+                                                            <th className="text-left p-2">Age</th>
+                                                            <th className="text-left p-2">User</th>
+                                                            <th className="text-right p-2">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {transactions.map((tx, index) => (
+                                                            <tr key={tx.id || index} className="border-b hover:bg-muted/50">
+                                                                <td className="p-2 font-mono text-xs">{tx.id}</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.receiptId ? `${tx.receiptId}` : '...'}</td>
+                                                                <td className="p-2">
+                                                                    <span className={
+                                                                        tx.status === 'pending' ? 'text-yellow-500' :
+                                                                            tx.status === 'confirmed' ? 'text-green-500' :
+                                                                                tx.status === 'rejected' ? 'text-red-500' :
+                                                                                    'text-blue-500'
+                                                                    }>
+                                                                        {tx.status}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-2">${tx.potentialPayout || 0}</td>
+                                                                <td className="p-2">{Math.floor((Date.now() - new Date(tx.createdAt).getTime()) / (1000 * 60))} min</td>
+                                                                <td className="p-2 font-mono text-xs">{tx.userId}</td>
                                                                 <td className="p-2 text-right">
                                                                     <Button
                                                                         variant="ghost"
