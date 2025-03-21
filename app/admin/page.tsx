@@ -12,6 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the PolymarketImportedMarkets component
+const PolymarketImportedMarkets = dynamic(
+  () => import('@/components/polymarket-imported-markets'),
+  { ssr: false, loading: () => <div className="p-4">Loading Polymarket integration...</div> }
+);
 import { ADMIN_USER_IDS } from "@/lib/utils";
 import {
     getAllCustodyTransactions,
@@ -453,6 +460,7 @@ export default function AdminPage() {
                         <TabsTrigger value="debug">Data Debugging</TabsTrigger>
                         <TabsTrigger value="transactions">Transaction Management</TabsTrigger>
                         <TabsTrigger value="markets">Market Management</TabsTrigger>
+                        <TabsTrigger value="polymarket">Polymarket Integration</TabsTrigger>
                         <TabsTrigger value="batch">Batch Processing</TabsTrigger>
                         <TabsTrigger value="claim-rewards">Claim Rewards</TabsTrigger>
                     </TabsList>
@@ -1305,6 +1313,39 @@ export default function AdminPage() {
                                                     ))}
                                                 </div>
                                             )}
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                {/* Polymarket Integration Tab */}
+                <TabsContent value="polymarket">
+                    <div className="grid grid-cols-1 gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Polymarket Integration</CardTitle>
+                                <CardDescription>
+                                    Import and manage Bitcoin and Stacks-related markets from Polymarket
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-6">
+                                    <p className="text-sm">
+                                        This feature automatically imports relevant markets from Polymarket 
+                                        and creates them as prediction markets in op_predict. The sync runs 
+                                        daily via a cron job.
+                                    </p>
+                                    
+                                    {user && user.id && (
+                                        <div className="mt-6">
+                                            {/* @ts-ignore - Dynamic component import */}
+                                            <PolymarketImportedMarkets 
+                                                userId={user.id} 
+                                                isAdmin={true} 
+                                            />
                                         </div>
                                     )}
                                 </div>
