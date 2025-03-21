@@ -498,7 +498,7 @@ export async function GET(req: NextRequest) {
         const newMarket = await marketStore.createMarket(opPredictMarket);
 
         // Add a small delay between requests to be kind to the API
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         console.log(`Created new market: ${newMarket.name} (ID: ${newMarket.id})`);
 
