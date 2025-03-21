@@ -25,11 +25,11 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
     try {
       setLoading(true);
       const response = await fetch('/api/markets?source=polymarket&limit=10');
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch imported markets: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setMarkets(data.items || []);
     } catch (err) {
@@ -43,10 +43,10 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
   // Function to manually trigger a sync (admin only)
   const triggerSyncNow = async () => {
     if (!isAdmin) return;
-    
+
     try {
       setSyncStatus({ loading: true });
-      
+
       // Get the CRON_SECRET from a secure admin endpoint
       const secretResponse = await fetch('/api/admin/get-cron-secret', {
         method: 'POST',
@@ -55,13 +55,13 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
         },
         body: JSON.stringify({ userId })
       });
-      
+
       if (!secretResponse.ok) {
         throw new Error('Failed to authenticate for sync');
       }
-      
+
       const { secret } = await secretResponse.json();
-      
+
       // Call the sync endpoint with the secret
       const syncResponse = await fetch('/api/cron/sync-polymarket', {
         method: 'GET',
@@ -69,18 +69,18 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
           'Authorization': `Bearer ${secret}`
         }
       });
-      
+
       if (!syncResponse.ok) {
         throw new Error(`Sync failed: ${syncResponse.statusText}`);
       }
-      
+
       const syncResult = await syncResponse.json();
       setSyncStatus({
         loading: false,
         success: syncResult.success,
         result: syncResult
       });
-      
+
       // Refresh the market list
       fetchImportedMarkets();
     } catch (err) {
@@ -92,32 +92,32 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
       console.error('Error triggering sync:', err);
     }
   };
-  
+
   // Function to reset a stuck sync
   const resetSyncState = async (force: boolean = false) => {
     if (!isAdmin) return;
-    
+
     try {
       setResetLoading(true);
-      
+
       // Call the reset endpoint with userId for authentication
       const resetResponse = await fetch('/api/cron/reset-polymarket-sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId,
-          force 
+          force
         })
       });
-      
+
       if (!resetResponse.ok) {
         throw new Error(`Reset failed: ${resetResponse.statusText}`);
       }
-      
+
       const resetResult = await resetResponse.json();
-      
+
       // Update the sync status
       setSyncStatus({
         loading: false,
@@ -131,7 +131,7 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
           }
         }
       });
-      
+
       // Show a success message
       setResetLoading(false);
     } catch (err) {
@@ -176,7 +176,7 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
     <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Polymarket Imported Markets</h2>
-        
+
         {isAdmin && (
           <div className="flex items-center space-x-2">
             {syncStatus?.result?.syncStatus?.inProgress && (
@@ -208,7 +208,7 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
           </div>
         )}
       </div>
-      
+
       {/* Sync status message */}
       {syncStatus && !syncStatus.loading && (
         <div className={`mb-4 p-3 rounded-md ${syncStatus.success ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
@@ -250,21 +250,21 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
           )}
         </div>
       )}
-      
+
       {/* Markets list */}
       {markets.length > 0 ? (
         <div className="space-y-4">
-          {markets.map((market) => (
+          {markets.map((market: any) => (
             <div key={market.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="flex justify-between">
                 <Link href={`/markets/${market.id}`} className="text-blue-500 hover:text-blue-700 font-medium">
                   {market.name}
                 </Link>
-                
+
                 {market.externalUrl && (
-                  <a 
-                    href={market.externalUrl} 
-                    target="_blank" 
+                  <a
+                    href={market.externalUrl}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-gray-500 hover:text-gray-700 flex items-center space-x-1"
                   >
@@ -273,20 +273,20 @@ export default function PolymarketImportedMarkets({ userId, isAdmin }: Polymarke
                   </a>
                 )}
               </div>
-              
+
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                 {market.description}
               </div>
-              
+
               <div className="mt-2 flex items-center text-xs text-gray-500">
                 <Calendar className="h-3 w-3 mr-1" />
                 <span>Ends: {formatDistanceToNow(new Date(market.endDate), { addSuffix: true })}</span>
               </div>
-              
+
               <div className="mt-2 flex flex-wrap gap-2">
                 {market.outcomes.map((outcome) => (
-                  <div 
-                    key={outcome.id} 
+                  <div
+                    key={outcome.id}
                     className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs"
                   >
                     {outcome.name}
