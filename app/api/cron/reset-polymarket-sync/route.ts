@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
-import { isAdmin } from '@/lib/user-utils';
+import { isAdmin } from '@/lib/utils';
 
 // Allowed cron API key
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -26,24 +26,24 @@ export async function POST(req: NextRequest) {
     // Check authorization - either CRON_SECRET or admin user
     const authHeader = req.headers.get('authorization');
     const apiKey = authHeader ? authHeader.replace('Bearer ', '') : '';
-    
+
     // Parse the request body for user ID
     const data = await req.json();
     const userId = data.userId;
     const force = data.force === true;
-    
+
     let authorized = false;
-    
+
     // Check if authorized via API key
     if (CRON_SECRET && apiKey === CRON_SECRET) {
       authorized = true;
     }
-    
+
     // Check if authorized via admin user
     if (!authorized && userId) {
       authorized = await isAdmin(userId);
     }
-    
+
     if (!authorized) {
       console.error('Unauthorized attempt to reset Polymarket sync');
       return NextResponse.json(
@@ -51,12 +51,12 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-    
+
     console.log('Resetting Polymarket sync state...');
-    
+
     // Get current sync status first
     const currentStatus = await kv.get(KV_KEYS.SYNC_STATUS);
-    
+
     // Reset the sync status
     await kv.set(KV_KEYS.SYNC_STATUS, {
       lastRun: new Date().toISOString(),
@@ -69,14 +69,14 @@ export async function POST(req: NextRequest) {
       marketsUpdated: currentStatus ? (currentStatus as any).marketsUpdated || 0 : 0,
       errors: currentStatus ? (currentStatus as any).errors || 0 : 0
     });
-    
+
     // Reset the cursor if forced
     if (force) {
       await kv.set(KV_KEYS.LAST_CURSOR, '');
       await kv.set(KV_KEYS.LAST_UPDATED, new Date().toISOString());
       console.log('Reset Polymarket sync cursor to beginning');
     }
-    
+
     return NextResponse.json(
       {
         success: true,
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('Error resetting Polymarket sync state:', error);
-    
+
     return NextResponse.json(
       {
         success: false,
