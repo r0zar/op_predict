@@ -1341,7 +1341,6 @@ export default function AdminPage() {
 
                                     {user && user.id && (
                                         <div className="mt-6">
-                                            {/* @ts-expect-error - Dynamic component import */}
                                             <PolymarketImportedMarkets
                                                 userId={user.id}
                                                 isAdmin={true}
