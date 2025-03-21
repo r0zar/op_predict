@@ -16,8 +16,8 @@ import dynamic from 'next/dynamic';
 
 // Dynamically import the PolymarketImportedMarkets component
 const PolymarketImportedMarkets = dynamic(
-  () => import('@/components/polymarket-imported-markets'),
-  { ssr: false, loading: () => <div className="p-4">Loading Polymarket integration...</div> }
+    () => import('@/components/polymarket-imported-markets'),
+    { ssr: false, loading: () => <div className="p-4">Loading Polymarket integration...</div> }
 );
 import { ADMIN_USER_IDS } from "@/lib/utils";
 import {
@@ -1334,17 +1334,17 @@ export default function AdminPage() {
                             <CardContent>
                                 <div className="space-y-6">
                                     <p className="text-sm">
-                                        This feature automatically imports relevant markets from Polymarket 
-                                        and creates them as prediction markets in op_predict. The sync runs 
+                                        This feature automatically imports relevant markets from Polymarket
+                                        and creates them as prediction markets in op_predict. The sync runs
                                         daily via a cron job.
                                     </p>
-                                    
+
                                     {user && user.id && (
                                         <div className="mt-6">
-                                            {/* @ts-ignore - Dynamic component import */}
-                                            <PolymarketImportedMarkets 
-                                                userId={user.id} 
-                                                isAdmin={true} 
+                                            {/* @ts-expect-error - Dynamic component import */}
+                                            <PolymarketImportedMarkets
+                                                userId={user.id}
+                                                isAdmin={true}
                                             />
                                         </div>
                                     )}
